@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Cosmos } from '@/components/layout/Cosmos';
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useAuth } from '@/store/auth';
 import { parentApi } from '@/lib/api';
 
 export function Onboarding() {
+  const { t } = useTranslation();
   const { user, setOnboarding } = useAuth();
   const navigate = useNavigate();
 
@@ -30,68 +33,69 @@ export function Onboarding() {
   return (
     <>
       <Cosmos />
+      <div className="absolute top-4 right-4 z-20"><LanguageSwitcher /></div>
       <div className="h-screen flex items-center justify-center px-6">
         <div className="glass-panel w-full max-w-lg p-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">Let's personalize your journey</h2>
-            <span className="text-xs text-slate-400">Step {step + 1}/{totalSteps}</span>
+            <h2 className="text-2xl font-bold text-white">{t('onboarding.personalize')}</h2>
+            <span className="text-xs text-slate-400">{t('onboarding.step')} {step + 1}{t('onboarding.of')}{totalSteps}</span>
           </div>
 
           {step === 0 && (
-            <Section title="What's your goal?">
+            <Section title={t('onboarding.goal.title')}>
               {([
-                ['travel','✈️','Travel & everyday English'],
-                ['school','🎒','School / general English'],
-                ['ielts','📜','IELTS preparation'],
-                ['dtm','🎓','DTM / university entrance'],
-                ['work','💼','Work & business'],
-              ] as const).map(([id, e, t]) => (
-                <Choice key={id} active={goal === id} onClick={() => setGoal(id)} emoji={e} text={t} />
+                ['travel','✈️', t('onboarding.goal.travel')],
+                ['school','🎒', t('onboarding.goal.school')],
+                ['ielts','📜', t('onboarding.goal.ielts')],
+                ['dtm','🎓', t('onboarding.goal.dtm')],
+                ['work','💼', t('onboarding.goal.work')],
+              ] as const).map(([id, e, label]) => (
+                <Choice key={id} active={goal === id} onClick={() => setGoal(id as typeof goal)} emoji={e} text={label} />
               ))}
             </Section>
           )}
 
           {step === 1 && (
-            <Section title="What's your current level?">
+            <Section title={t('onboarding.level.title')}>
               {(['beginner','intermediate','advanced','mastery'] as const).map(l => (
                 <Choice key={l} active={level === l} onClick={() => setLevel(l)}
                         emoji={l === 'beginner' ? '🌱' : l === 'intermediate' ? '🌿' : l === 'advanced' ? '🌳' : '🏆'}
-                        text={l[0].toUpperCase() + l.slice(1)} />
+                        text={t(`onboarding.level.${l}`)} />
               ))}
             </Section>
           )}
 
           {step === 2 && isAdult && (
-            <Section title="IELTS target band & exam date">
-              <label className="text-xs text-slate-300">Target band</label>
+            <Section title={t('onboarding.ielts.title')}>
+              <label className="text-xs text-slate-300">{t('onboarding.ielts.target')}</label>
               <input type="range" min={4.5} max={9} step={0.5} value={bandTarget}
                      onChange={e => setBandTarget(Number(e.target.value))}
                      className="w-full accent-cosmic-mint" />
               <p className="text-3xl font-extrabold text-white mb-3">{bandTarget.toFixed(1)}</p>
 
-              <label className="text-xs text-slate-300">Exam date (optional)</label>
+              <label className="text-xs text-slate-300">{t('onboarding.ielts.examDate')}</label>
               <input type="date" className="input-glass" value={examDate}
                      onChange={e => setExamDate(e.target.value)} />
             </Section>
           )}
 
           {(step === (isAdult ? 3 : 2)) && (
-            <Section title="Daily study goal">
+            <Section title={t('onboarding.daily.title')}>
               {[15, 30, 45, 60].map(m => (
                 <Choice key={m} active={dailyMinutes === m} onClick={() => setDailyMinutes(m)}
                         emoji={m <= 15 ? '⚡' : m <= 30 ? '🔥' : m <= 45 ? '💪' : '🏆'}
-                        text={`${m} minutes / day`} />
+                        text={`${m} ${t('onboarding.daily.perDay')}`} />
               ))}
             </Section>
           )}
 
           <div className="flex justify-between mt-6">
             <button className="btn-ghost" onClick={() => setStep(s => Math.max(0, s - 1))}
-                    disabled={step === 0}>Back</button>
+                    disabled={step === 0}>{t('common.back')}</button>
             {step < totalSteps - 1 ? (
-              <button className="btn-mint" onClick={() => setStep(s => s + 1)}>Next →</button>
+              <button className="btn-mint" onClick={() => setStep(s => s + 1)}>{t('common.next')} →</button>
             ) : (
-              <button className="btn-mint" onClick={finish}>Start learning →</button>
+              <button className="btn-mint" onClick={finish}>{t('onboarding.startLearning')}</button>
             )}
           </div>
         </div>
@@ -103,6 +107,7 @@ export function Onboarding() {
 // ---------------- Parent onboarding (link a child via SMS code) ----------------
 
 function ParentOnboarding() {
+  const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const [childName, setChildName] = useState('');
   const [code, setCode] = useState<string | null>(null);
@@ -122,29 +127,30 @@ function ParentOnboarding() {
   return (
     <>
       <Cosmos />
+      <div className="absolute top-4 right-4 z-20"><LanguageSwitcher /></div>
       <div className="h-screen flex items-center justify-center px-6">
         <div className="glass-panel w-full max-w-md p-8">
-          <h2 className="text-2xl font-bold text-white mb-2">Link your child</h2>
+          <h2 className="text-2xl font-bold text-white mb-2">{t('onboarding.parent.title')}</h2>
           <p className="text-sm text-slate-400 mb-6">
-            Generate a 6-digit code and have your child enter it in their LingRow app to link the accounts.
+            {t('onboarding.parent.desc')}
           </p>
 
           {step === 0 ? (
             <div className="flex flex-col gap-3">
-              <input className="input-glass" placeholder="Child's name" value={childName}
+              <input className="input-glass" placeholder={t('onboarding.parent.childName')} value={childName}
                      onChange={e => setChildName(e.target.value)} />
               <button className="btn-mint" onClick={generateCode} disabled={!childName || loading}>
-                {loading ? 'Generating…' : 'Generate link code'}
+                {loading ? t('onboarding.parent.generating') : t('onboarding.parent.generate')}
               </button>
-              <button className="btn-ghost" onClick={() => navigate('/parent')}>Skip for now →</button>
+              <button className="btn-ghost" onClick={() => navigate('/parent')}>{t('onboarding.parent.skipForNow')}</button>
             </div>
           ) : (
             <div className="text-center">
-              <p className="text-xs text-slate-300 mb-3">Share this code with your child:</p>
+              <p className="text-xs text-slate-300 mb-3">{t('onboarding.parent.shareCode')}</p>
               <div className="text-5xl font-extrabold tracking-[0.4em] text-white py-6 mb-4
                               bg-white/5 rounded-2xl border border-white/10">{code}</div>
-              <p className="text-xs text-slate-400 mb-5">The code expires in 10 minutes.</p>
-              <button className="btn-mint w-full" onClick={() => navigate('/parent')}>Done — go to dashboard</button>
+              <p className="text-xs text-slate-400 mb-5">{t('onboarding.parent.expiresIn')}</p>
+              <button className="btn-mint w-full" onClick={() => navigate('/parent')}>{t('onboarding.parent.doneGo')}</button>
             </div>
           )}
         </div>

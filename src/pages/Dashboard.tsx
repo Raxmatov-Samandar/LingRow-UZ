@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Cosmos } from '@/components/layout/Cosmos';
 import { AppShell } from '@/components/layout/AppShell';
 import { Topbar } from '@/components/layout/Topbar';
@@ -10,6 +11,7 @@ import { getTodaysArticle } from '@/data/articles/daily-articles';
 import { useUserArticles } from '@/store/userArticles';
 
 export function Dashboard() {
+  const { t } = useTranslation();
   const { data: levels } = useQuery({ queryKey: ['levels'], queryFn: learning.getLevels });
   const xp = useProgress(s => s.xp);
   const streak = useProgress(s => s.streak);
@@ -24,14 +26,14 @@ export function Dashboard() {
           <div className="flex flex-col gap-5 min-w-0">
             <div className="px-1">
               <h2 className="text-4xl font-extrabold tracking-tight bg-gradient-to-b from-white to-blue-200 bg-clip-text text-transparent">
-                Choose a Level
+                {t('dashboard.chooseLevel')}
               </h2>
               <p className="mt-2 text-sm text-slate-400">
-                Choose your level to start your language learning journey
+                {t('dashboard.chooseLevelSub')}
               </p>
               <div className="mt-3 flex gap-3 text-xs">
-                <span className="px-3 py-1.5 rounded-full bg-cosmic-mint/15 border border-cosmic-mint/40 text-cosmic-mint">🔥 Streak: {streak} days</span>
-                <span className="px-3 py-1.5 rounded-full bg-cosmic-sky/15 border border-cosmic-sky/40 text-cosmic-sky">⭐ XP: {xp.toLocaleString()}</span>
+                <span className="px-3 py-1.5 rounded-full bg-cosmic-mint/15 border border-cosmic-mint/40 text-cosmic-mint">🔥 {t('dashboard.streak')}: {streak} {t('dashboard.daysSuffix')}</span>
+                <span className="px-3 py-1.5 rounded-full bg-cosmic-sky/15 border border-cosmic-sky/40 text-cosmic-sky">⭐ {t('dashboard.xp')}: {xp.toLocaleString()}</span>
               </div>
             </div>
 
@@ -50,6 +52,7 @@ export function Dashboard() {
 }
 
 function LevelCard({ l }: { l: Lesson }) {
+  const { t } = useTranslation();
   function onMove(e: React.MouseEvent<HTMLDivElement>) {
     const el = e.currentTarget;
     const r = el.getBoundingClientRect();
@@ -77,20 +80,12 @@ function LevelCard({ l }: { l: Lesson }) {
         <span className="shine" />
 
         <div>
-          <h3 className="text-2xl font-bold text-white">{l.title}</h3>
-          <p className="text-xs text-slate-400 mt-1">{l.description}</p>
-        </div>
-
-        <div className="mt-3 relative z-10">
-          <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#7ef7d3"
-               strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 5h7M6.5 5v3"/><path d="M3 13c2-3 5-5 7-5"/>
-            <path d="M14 21l5-12 5 12"/><path d="M16 17h6"/>
-          </svg>
+          <h3 className="text-2xl font-bold text-white">{t(`dashboard.${l.level}`)}</h3>
+          <p className="text-xs text-slate-400 mt-1">{t('dashboard.levelDescription')}</p>
         </div>
 
         <div className="flex items-center justify-between mt-3 relative z-10">
-          <span className="text-sm text-slate-200">Learn</span>
+          <span className="text-sm text-slate-200">{t('dashboard.learn')}</span>
           <span className="grid place-items-center w-14 h-10 rounded-2xl transition-transform group-hover:scale-110"
                 style={{ background: 'linear-gradient(135deg, #7ef7d3, #4fd6a6)',
                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5), 0 8px 22px rgba(80,220,170,0.35)' }}>
@@ -107,6 +102,7 @@ function LevelCard({ l }: { l: Lesson }) {
 // ───────────────────────── Daily Article strip ─────────────────────────
 
 function DailyArticleStrip() {
+  const { t } = useTranslation();
   const userList = useUserArticles(s => s.list);
   const a = getTodaysArticle(userList);
   return (
@@ -115,16 +111,17 @@ function DailyArticleStrip() {
       {a.cover && (
         <img src={a.cover} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0 border border-white/10" />
       )}
-      <span className="px-1.5 py-0.5 rounded-full bg-cosmic-mint text-slate-900 text-[8px] font-bold tracking-widest uppercase whitespace-nowrap">📰 Today</span>
+      <span className="px-1.5 py-0.5 rounded-full bg-cosmic-mint text-slate-900 text-[8px] font-bold tracking-widest uppercase whitespace-nowrap">📰 {t('dashboard.todayBadge')}</span>
       <span className="px-1 py-0.5 rounded text-[9px] font-bold border bg-blue-500/15 text-blue-200 border-blue-500/40">{a.cefr}</span>
-      <span className="text-[10px] text-slate-400 whitespace-nowrap">{a.readingMin} min</span>
+      <span className="text-[10px] text-slate-400 whitespace-nowrap">{a.readingMin} {t('dashboard.minRead')}</span>
       <h3 className="text-sm font-bold text-white truncate flex-1 min-w-0 group-hover:text-cosmic-mint transition">{a.title}</h3>
-      <span className="text-cosmic-mint text-xs font-bold whitespace-nowrap shrink-0">Read →</span>
+      <span className="text-cosmic-mint text-xs font-bold whitespace-nowrap shrink-0">{t('dashboard.readArrow')}</span>
     </Link>
   );
 }
 
 function NextLessonCard() {
+  const { t } = useTranslation();
   function onMove(e: React.MouseEvent<HTMLElement>) {
     const el = e.currentTarget;
     const r = el.getBoundingClientRect();
@@ -141,9 +138,9 @@ function NextLessonCard() {
       <span className="shine" />
 
       <div className="w-full text-left mb-4 relative z-10">
-        <p className="text-sm text-slate-300/80">Lesson 1:</p>
-        <h3 className="text-3xl font-extrabold text-white leading-none tracking-tight">Greetings</h3>
-        <p className="text-sm text-slate-300/70 mt-2">30 lessons / 30 play</p>
+        <p className="text-sm text-slate-300/80">{t('dashboard.nextLessonNum')}</p>
+        <h3 className="text-3xl font-extrabold text-white leading-none tracking-tight">{t('dashboard.nextLessonTitle')}</h3>
+        <p className="text-sm text-slate-300/70 mt-2">{t('dashboard.lessonsCount')}</p>
       </div>
 
       <Link to="/lesson" className="relative w-[168px] h-[168px] my-3 grid place-items-center hover:scale-105 transition">

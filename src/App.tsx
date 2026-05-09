@@ -27,6 +27,8 @@ import { Reports }         from '@/pages/parent/Reports';
 import { ParentSettings }  from '@/pages/parent/ParentSettings';
 import { Billing }         from '@/pages/parent/Billing';
 
+import { DevPanel } from '@/pages/dev/DevPanel';
+
 import GlassSignInDemo  from '@/pages/GlassSignInDemo';
 
 import { NotFound } from '@/pages/NotFound';
@@ -72,6 +74,13 @@ export default function App() {
         <Route path="/parent/reports"    element={<Reports />} />
         <Route path="/parent/settings"   element={<ParentSettings />} />
         <Route path="/parent/billing"    element={<Billing />} />
+      </Route>
+
+      {/* Dev route — gating happens inside DevPanel via isDevUser(email).
+          The route is registered for ANY authenticated user so the
+          friendly redirect inside DevPanel runs instead of a 404. */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/dev" element={<DevPanel />} />
       </Route>
 
       {/* Convenience redirect */}

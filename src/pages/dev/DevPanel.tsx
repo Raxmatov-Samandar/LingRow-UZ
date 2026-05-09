@@ -1,0 +1,672 @@
+// =============================================================================
+// Dev Panel — single-account content admin.
+// Tabs:
+//   • Audio    — upload Listening MP3s, mapped by slot key (c18-t1-p1)
+//   • Articles — link to the existing public article editor
+//   • Lessons  — create/edit custom lessons stored in localStorage
+//   • Stats    — content counts + storage usage
+// =============================================================================
+import { useMemo, useRef, useState } from 'react'
+import { Link, Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { Cosmos } from '@/components/layout/Cosmos'
+import { AppShell } from '@/components/layout/AppShell'
+import { Topbar } from '@/components/layout/Topbar'
+import { useAuth } from '@/store/auth'
+import { useDevContent, type LessonKind, type LessonLevel, type BookKind, type DevBook } from '@/store/devContent'
+import { useUserArticles } from '@/store/userArticles'
+import { isDevUser, DEV_EMAIL } from '@/lib/dev'
+import { cn } from '@/lib/cn'
+import { extractPdfText, parseCambridgeReading } from '@/lib/pdfParser'
+import { MediaPlayer } from '@/components/ui/MediaPlayer'
+
+type Tab = 'audio' | 'articles' | 'books' | 'lessons' | 'stats'
+
+export function DevPanel() {
+  const { t } = useTranslation()
+  const user = useAuth(s => s.user)
+  const [tab, setTab] = useState<Tab>('audio')
+
+  if (!isDevUser(user)) {
+    // Block non-dev users
+    return <Navigate to="/home" replace />
+  }
+
+  return (
+    <>
+      <Cosmos />
+      <AppShell>
+        <Topbar variant="banner" bannerTitle={t('dev.panel')} bannerSubtitle={t('dev.panelSub')} />
+
+        {/* Tabs */}
+        <div className="glass-panel px-4 py-3 flex items-center gap-2 flex-wrap">
+          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-cosmic-mint/20 text-cosmic-mint border border-cosmic-mint/40 mr-2">{t('dev.badge')}</span>
+          {([
+            ['audio',    '🎧', t('dev.tabs.audio')],
+            ['articles', '📰', t('dev.tabs.articles')],
+            ['books',    '📚', t('dev.tabs.books')],
+            ['lessons',  '🎬', t('dev.tabs.lessons')],
+            ['stats',    '📊', t('dev.tabs.stats')],
+          ] as const).map(([id, emoji, label]) => (
+            <button key={id} onClick={() => setTab(id as Tab)}
+                    className={cn('px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5',
+                      tab === id
+                        ? 'bg-cosmic-mint/15 border border-cosmic-mint/45 text-cosmic-mint'
+                        : 'border border-white/10 text-slate-300 hover:bg-white/[0.05]')}>
+              <span>{emoji}</span>{label}
+            </button>
+          ))}
+          <span className="ml-auto text-[11px] text-slate-500 font-mono">
+            {DEV_EMAIL}
+          </span>
+        </div>
+
+        <section className="flex-1 min-h-0 overflow-auto">
+          {tab === 'audio'    && <AudioTab />}
+          {tab === 'articles' && <ArticlesTab />}
+          {tab === 'books'    && <BooksTab />}
+          {tab === 'lessons'  && <LessonsTab />}
+          {tab === 'stats'    && <StatsTab />}
+        </section>
+      </AppShell>
+    </>
+  )
+}
+
+// ───────────────────────── Audio ─────────────────────────
+
+function AudioTab() {
+  const { t } = useTranslation()
+  const audio   = useDevContent(s => s.audio)
+  const addAudio = useDevContent(s => s.addAudio)
+  const removeAudio = useDevContent(s => s.removeAudio)
+
+  const [slot, setSlot] = useState('')
+  const [picked, setPicked] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const ok = slot.trim().length >= 3 && !!picked
+
+  async function upload() {
+    if (!ok || !picked) return
+    setUploading(true)
+    try {
+      const dataUrl = await fileToDataUrl(picked)
+      addAudio({
+        slot:      slot.trim(),
+        filename:  picked.name,
+        mime:      picked.type || 'audio/mpeg',
+        dataUrl,
+        sizeBytes: picked.size,
+      })
+      setSlot('')
+      setPicked(null)
+      if (fileRef.current) fileRef.current.value = ''
+    } finally { setUploading(false) }
+  }
+
+  return (
+    <div className="grid grid-cols-[1fr_1fr] gap-5 p-1">
+      {/* Upload card */}
+      <div className="glass-panel p-5 flex flex-col gap-3 h-fit">
+        <header>
+          <h3 className="text-lg font-bold text-white">{t('dev.audio.title')}</h3>
+          <p className="text-xs text-slate-400 mt-1 leading-relaxed">{t('dev.audio.sub')}</p>
+        </header>
+
+        <label className="text-[11px] uppercase tracking-wider text-slate-300 font-semibold">
+          {t('dev.audio.slotLabel')}
+        </label>
+        <input value={slot} onChange={e => setSlot(e.target.value)}
+               placeholder={t('dev.audio.slotPlaceholder')}
+               className="input-glass font-mono text-sm" />
+
+        <label className="text-[11px] uppercase tracking-wider text-slate-300 font-semibold mt-2">
+          MP3
+        </label>
+        <button type="button" onClick={() => fileRef.current?.click()}
+                className="rounded-2xl border-2 border-dashed border-white/15 hover:border-cosmic-mint/50 hover:bg-white/[0.03] transition px-4 py-6 text-center">
+          <p className="text-2xl mb-1">🎧</p>
+          {picked
+            ? <p className="text-sm text-cosmic-mint font-semibold truncate">{picked.name}</p>
+            : <p className="text-xs text-slate-400">{t('dev.audio.drop')}</p>}
+          {picked && <p className="text-[10px] text-slate-500 mt-1">{formatBytes(picked.size)}</p>}
+        </button>
+        <input ref={fileRef} type="file" accept="audio/mpeg,audio/mp3,audio/*"
+               className="hidden"
+               onChange={e => setPicked(e.target.files?.[0] ?? null)} />
+
+        <button onClick={upload} disabled={!ok || uploading}
+                className="btn-mint disabled:opacity-40 disabled:cursor-not-allowed">
+          {uploading ? '…' : t('dev.audio.uploadBtn')}
+        </button>
+      </div>
+
+      {/* Existing list */}
+      <div className="glass-panel p-5">
+        <h4 className="text-sm font-bold text-white mb-3">{t('dev.audio.uploaded')} ({audio.length})</h4>
+        {audio.length === 0
+          ? <p className="text-xs text-slate-400 italic">{t('dev.audio.noneYet')}</p>
+          : (
+            <div className="flex flex-col gap-2 max-h-[480px] overflow-auto pr-1">
+              {audio.map(a => (
+                <div key={a.id} className="rounded-xl p-3 bg-white/[0.03] border border-white/8">
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cosmic-sky/15 text-cosmic-sky border border-cosmic-sky/30 font-mono">{a.slot}</span>
+                    <span className="text-xs text-white truncate flex-1 min-w-0">{a.filename}</span>
+                    <span className="text-[10px] text-slate-500">{formatBytes(a.sizeBytes)}</span>
+                  </div>
+                  <audio controls preload="metadata" className="w-full mt-2 h-8" src={a.dataUrl} />
+                  <div className="mt-2 flex items-center justify-between text-[10px] text-slate-500">
+                    <span>{new Date(a.uploadedAt).toLocaleString()}</span>
+                    <button onClick={() => removeAudio(a.id)}
+                            className="text-rose-300 hover:text-rose-400">
+                      {t('dev.audio.remove')}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+      </div>
+    </div>
+  )
+}
+
+// ───────────────────────── Articles ─────────────────────────
+
+function ArticlesTab() {
+  const { t } = useTranslation()
+  const list = useUserArticles(s => s.list)
+  return (
+    <div className="grid grid-cols-[1fr_1fr] gap-5 p-1">
+      <div className="glass-panel p-6 flex flex-col gap-3">
+        <h3 className="text-lg font-bold text-white">{t('dev.articles.title')}</h3>
+        <p className="text-sm text-slate-300 leading-relaxed">{t('dev.articles.sub')}</p>
+        <Link to="/library/new" className="btn-mint w-fit">{t('dev.articles.open')}</Link>
+        <p className="text-xs text-slate-400 italic mt-2">{t('dev.articles.manage')}</p>
+      </div>
+
+      <div className="glass-panel p-5">
+        <h4 className="text-sm font-bold text-white mb-3">{list.length} {t('dev.tabs.articles')}</h4>
+        <div className="flex flex-col gap-2 max-h-[480px] overflow-auto pr-1">
+          {list.map(a => (
+            <Link key={a.id} to={`/library/${a.id}`}
+                  className="rounded-xl p-3 bg-white/[0.03] border border-white/8 hover:bg-white/[0.06] transition">
+              <p className="text-sm font-bold text-white">{a.title}</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">{a.cefr} · {a.readingMin} min · {a.topics.join(', ')}</p>
+            </Link>
+          ))}
+          {list.length === 0 && <p className="text-xs text-slate-400 italic">—</p>}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ───────────────────────── Books (PDF) ─────────────────────────
+
+const BOOK_KINDS: BookKind[] = ['cambridge_ielts', 'general', 'other']
+
+function BooksTab() {
+  const { t } = useTranslation()
+  const books = useDevContent(s => s.books)
+  const addBook = useDevContent(s => s.addBook)
+  const updateBook = useDevContent(s => s.updateBook)
+  const removeBook = useDevContent(s => s.removeBook)
+
+  const [picked, setPicked] = useState<File | null>(null)
+  const [kind, setKind] = useState<BookKind>('cambridge_ielts')
+  const [title, setTitle] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const ok = !!picked && title.trim().length >= 2 && !busy
+
+  async function uploadAndParse() {
+    if (!picked || !ok) return
+    setBusy(true)
+    setError(null)
+    try {
+      const dataUrl = await fileToDataUrl(picked)
+      const extraction = await extractPdfText(picked)
+      const parsed = kind === 'cambridge_ielts'
+        ? parseCambridgeReading(extraction)
+        : { source: '', module: 'unknown' as const, parts: [], warnings: ['Auto-parse skipped for non-Cambridge book.'] }
+
+      addBook({
+        title: title.trim(),
+        kind,
+        module: parsed.module,
+        source: parsed.source || undefined,
+        pdfDataUrl: dataUrl,
+        pdfFilename: picked.name,
+        pdfSize: picked.size,
+        numPages: extraction.numPages,
+        rawText: extraction.fullText,
+        parts: parsed.parts.map(p => ({
+          partNum: p.partNum,
+          title: p.title,
+          intro: p.intro,
+          passage: p.passage,
+          questionRange: p.questionRange,
+          questions: p.questions.map(q => ({
+            num: q.num, kind: q.kind, prompt: q.prompt,
+            options: q.options, answers: q.answers,
+          })),
+        })),
+        warnings: parsed.warnings,
+      })
+
+      setPicked(null)
+      setTitle('')
+      if (fileRef.current) fileRef.current.value = ''
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function reparse(book: DevBook) {
+    setBusy(true)
+    setError(null)
+    try {
+      // Re-extract from stored data URL
+      const blob = await (await fetch(book.pdfDataUrl)).blob()
+      const file = new File([blob], book.pdfFilename, { type: 'application/pdf' })
+      const extraction = await extractPdfText(file)
+      const parsed = parseCambridgeReading(extraction)
+      updateBook(book.id, {
+        rawText: extraction.fullText,
+        numPages: extraction.numPages,
+        module: parsed.module,
+        source: parsed.source || undefined,
+        parts: parsed.parts.map(p => ({
+          partNum: p.partNum, title: p.title, intro: p.intro,
+          passage: p.passage, questionRange: p.questionRange,
+          questions: p.questions.map(q => ({
+            num: q.num, kind: q.kind, prompt: q.prompt,
+            options: q.options, answers: q.answers,
+          })),
+        })),
+        warnings: parsed.warnings,
+      })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="grid grid-cols-[1fr_1.2fr] gap-5 p-1">
+      {/* Upload card */}
+      <div className="glass-panel p-5 flex flex-col gap-3 h-fit">
+        <header>
+          <h3 className="text-lg font-bold text-white">{t('dev.books.title')}</h3>
+          <p className="text-xs text-slate-400 mt-1 leading-relaxed">{t('dev.books.sub')}</p>
+        </header>
+
+        <Field label={t('dev.lessons.lessonTitle')}>
+          <input className="input-glass" value={title}
+                 onChange={e => setTitle(e.target.value)}
+                 placeholder="Cambridge IELTS 18 — GT" />
+        </Field>
+
+        <Field label={t('dev.books.pickKind')}>
+          <select className="input-glass" value={kind} onChange={e => setKind(e.target.value as BookKind)}>
+            {BOOK_KINDS.map(k => (
+              <option key={k} value={k} className="bg-slate-900 text-white">
+                {t(`dev.books.kinds.${k}`)}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        <button type="button" onClick={() => fileRef.current?.click()}
+                className="rounded-2xl border-2 border-dashed border-white/15 hover:border-cosmic-mint/50 hover:bg-white/[0.03] transition px-4 py-6 text-center mt-1">
+          <p className="text-2xl mb-1">📚</p>
+          {picked
+            ? <p className="text-sm text-cosmic-mint font-semibold truncate">{picked.name}</p>
+            : <p className="text-xs text-slate-400">{t('dev.books.drop')}</p>}
+          {picked && <p className="text-[10px] text-slate-500 mt-1">{formatBytes(picked.size)}</p>}
+        </button>
+        <input ref={fileRef} type="file" accept="application/pdf,.pdf"
+               className="hidden"
+               onChange={e => setPicked(e.target.files?.[0] ?? null)} />
+
+        <button onClick={uploadAndParse} disabled={!ok}
+                className="btn-mint disabled:opacity-40 disabled:cursor-not-allowed">
+          {busy ? t('dev.books.parsing') : t('dev.books.uploadBtn')}
+        </button>
+
+        {error && (
+          <p className="text-xs text-rose-300 bg-rose-500/10 border border-rose-500/30 rounded-lg p-2">
+            {error}
+          </p>
+        )}
+      </div>
+
+      {/* Existing books */}
+      <div className="glass-panel p-5">
+        <h4 className="text-sm font-bold text-white mb-3">
+          {t('dev.books.uploaded')} ({books.length})
+        </h4>
+        {books.length === 0
+          ? <p className="text-xs text-slate-400 italic">{t('dev.books.noneYet')}</p>
+          : (
+            <div className="flex flex-col gap-3 max-h-[600px] overflow-auto pr-1">
+              {books.map(b => <BookCard key={b.id} book={b}
+                                        onRemove={() => removeBook(b.id)}
+                                        onReparse={() => reparse(b)}
+                                        busy={busy} />)}
+            </div>
+          )}
+      </div>
+    </div>
+  )
+}
+
+function BookCard({ book, onRemove, onReparse, busy }: {
+  book: DevBook
+  onRemove: () => void
+  onReparse: () => void
+  busy: boolean
+}) {
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  const totalQ = book.parts.reduce((s, p) => s + p.questions.length, 0)
+
+  return (
+    <div className="rounded-xl p-3 bg-white/[0.03] border border-white/8">
+      <div className="flex items-baseline gap-2 flex-wrap">
+        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cosmic-sky/15 text-cosmic-sky border border-cosmic-sky/30">
+          {book.kind === 'cambridge_ielts' ? 'CAMB' : book.kind.toUpperCase()}
+        </span>
+        {book.module && book.module !== 'unknown' && (
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cosmic-mint/15 text-cosmic-mint border border-cosmic-mint/30">
+            {book.module}
+          </span>
+        )}
+        <p className="text-sm font-bold text-white truncate flex-1 min-w-0">{book.title}</p>
+      </div>
+      <p className="text-[10px] text-slate-500 mt-1 truncate">{book.pdfFilename} · {formatBytes(book.pdfSize)}</p>
+
+      <div className="grid grid-cols-3 gap-2 mt-2">
+        <Stat n={book.numPages} l={t('dev.books.pages')} />
+        <Stat n={book.parts.length} l={t('dev.books.parts')} />
+        <Stat n={totalQ} l={t('dev.books.questions')} />
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+        <button onClick={() => setOpen(o => !o)}
+                className="px-2.5 py-1 rounded-md border border-white/15 text-slate-200 hover:bg-white/[0.05]">
+          {open ? '▼' : '▶'} {t('dev.books.preview')}
+        </button>
+        <button onClick={onReparse} disabled={busy}
+                className="px-2.5 py-1 rounded-md border border-cosmic-mint/40 text-cosmic-mint hover:bg-cosmic-mint/10 disabled:opacity-40">
+          {t('dev.books.reparse')}
+        </button>
+        <a href={book.pdfDataUrl} target="_blank" rel="noopener noreferrer"
+           className="px-2.5 py-1 rounded-md border border-white/15 text-slate-200 hover:bg-white/[0.05]">
+          PDF ↗
+        </a>
+        <button onClick={onRemove}
+                className="ml-auto text-rose-300 hover:text-rose-400 px-2 py-1">
+          {t('dev.books.remove')}
+        </button>
+      </div>
+
+      {book.warnings.length > 0 && (
+        <details className="mt-2">
+          <summary className="text-[10px] text-amber-300 cursor-pointer">
+            ⚠ {t('dev.books.warnings')} ({book.warnings.length})
+          </summary>
+          <ul className="text-[10px] text-amber-200/80 mt-1 list-disc list-inside">
+            {book.warnings.map((w, i) => <li key={i}>{w}</li>)}
+          </ul>
+        </details>
+      )}
+
+      {open && (
+        <div className="mt-3 border-t border-white/8 pt-3 flex flex-col gap-3">
+          {book.parts.map(p => (
+            <div key={p.partNum} className="rounded-lg bg-white/[0.02] border border-white/5 p-3">
+              <p className="text-xs font-bold text-cosmic-sky">Part {p.partNum} · {p.title}</p>
+              <p className="text-[11px] text-slate-300 mt-1.5 line-clamp-4 whitespace-pre-line">{p.passage}</p>
+              {p.questions.length > 0 && (
+                <details className="mt-2">
+                  <summary className="text-[10px] text-slate-400 cursor-pointer">
+                    {p.questions.length} {t('dev.books.questions')}
+                  </summary>
+                  <ol className="text-[11px] text-slate-200 mt-1.5 space-y-1 pl-4 list-decimal">
+                    {p.questions.slice(0, 20).map(q => (
+                      <li key={q.num}>
+                        <span className="text-[9px] text-slate-500 mr-1">[{q.kind}]</span>
+                        {q.prompt}
+                      </li>
+                    ))}
+                  </ol>
+                </details>
+              )}
+            </div>
+          ))}
+          <details>
+            <summary className="text-[10px] text-slate-500 cursor-pointer">{t('dev.books.raw')}</summary>
+            <pre className="text-[10px] text-slate-400 mt-1 max-h-60 overflow-auto whitespace-pre-wrap">{book.rawText.slice(0, 5000)}{book.rawText.length > 5000 ? '\n…' : ''}</pre>
+          </details>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Stat({ n, l }: { n: number; l: string }) {
+  return (
+    <div className="rounded-md bg-white/[0.03] border border-white/8 px-2 py-1.5 text-center">
+      <p className="text-base font-bold text-white leading-tight">{n}</p>
+      <p className="text-[9px] uppercase tracking-wide text-slate-500">{l}</p>
+    </div>
+  )
+}
+
+// ───────────────────────── Lessons ─────────────────────────
+
+const LEVELS: LessonLevel[] = ['beginner', 'intermediate', 'advanced', 'mastery']
+const KINDS:  LessonKind[]  = ['video', 'reading', 'speaking', 'writing', 'quiz']
+
+function LessonsTab() {
+  const { t } = useTranslation()
+  const lessons = useDevContent(s => s.lessons)
+  const addLesson = useDevContent(s => s.addLesson)
+  const removeLesson = useDevContent(s => s.removeLesson)
+
+  const [adding, setAdding] = useState(false)
+  const [title, setTitle] = useState('')
+  const [level, setLevel] = useState<LessonLevel>('beginner')
+  const [kind,  setKind]  = useState<LessonKind>('video')
+  const [desc,  setDesc]  = useState('')
+  const [body,  setBody]  = useState('')
+  const [mediaUrl, setMediaUrl] = useState('')
+  const [duration, setDuration] = useState<number | ''>('')
+
+  function publish() {
+    if (!title.trim() || !body.trim()) return
+    addLesson({
+      title: title.trim(),
+      level, kind,
+      description: desc.trim() || undefined,
+      body: body.trim(),
+      mediaUrl: mediaUrl.trim() || undefined,
+      durationMin: typeof duration === 'number' ? duration : undefined,
+    })
+    setTitle(''); setDesc(''); setBody(''); setMediaUrl(''); setDuration('')
+    setAdding(false)
+  }
+
+  return (
+    <div className="grid grid-cols-[1.1fr_1fr] gap-5 p-1">
+      <div className="glass-panel p-5">
+        <header className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="text-lg font-bold text-white">{t('dev.lessons.title')}</h3>
+            <p className="text-xs text-slate-400 mt-1">{t('dev.lessons.sub')}</p>
+          </div>
+          {!adding && (
+            <button onClick={() => setAdding(true)} className="btn-mint text-xs">{t('dev.lessons.addBtn')}</button>
+          )}
+        </header>
+
+        {adding && (
+          <div className="rounded-2xl p-4 bg-white/[0.03] border border-cosmic-mint/30 flex flex-col gap-2 mb-4">
+            <Field label={t('dev.lessons.lessonTitle')}>
+              <input className="input-glass" value={title} onChange={e => setTitle(e.target.value)} />
+            </Field>
+            <div className="grid grid-cols-3 gap-2">
+              <Field label={t('dev.lessons.level')}>
+                <select className="input-glass" value={level} onChange={e => setLevel(e.target.value as LessonLevel)}>
+                  {LEVELS.map(l => <option key={l} value={l} className="bg-slate-900 text-white">{l}</option>)}
+                </select>
+              </Field>
+              <Field label={t('dev.lessons.kind')}>
+                <select className="input-glass" value={kind} onChange={e => setKind(e.target.value as LessonKind)}>
+                  {KINDS.map(k => <option key={k} value={k} className="bg-slate-900 text-white">{k}</option>)}
+                </select>
+              </Field>
+              <Field label={t('dev.lessons.duration')}>
+                <input type="number" className="input-glass" min={1} max={120}
+                       value={duration} onChange={e => setDuration(e.target.value ? Number(e.target.value) : '')} />
+              </Field>
+            </div>
+            <Field label={t('dev.lessons.desc')}>
+              <input className="input-glass" value={desc} onChange={e => setDesc(e.target.value)} />
+            </Field>
+            <Field label={t('dev.lessons.bodyLabel')}>
+              <textarea rows={5} className="input-glass resize-none" value={body} onChange={e => setBody(e.target.value)} />
+            </Field>
+            <Field label={t('dev.lessons.mediaUrl')}>
+              <input className="input-glass" value={mediaUrl} onChange={e => setMediaUrl(e.target.value)}
+                     placeholder="YouTube / Vimeo / mp3 / mp4 URL" />
+              <MediaPreview url={mediaUrl} />
+            </Field>
+            <div className="flex gap-2 justify-end mt-1">
+              <button onClick={() => setAdding(false)} className="btn-ghost px-4 py-2 text-xs">×</button>
+              <button onClick={publish} disabled={!title.trim() || !body.trim()}
+                      className="btn-mint text-xs disabled:opacity-40">
+                {t('dev.lessons.save')}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {lessons.length === 0 && !adding
+          ? <p className="text-xs text-slate-400 italic">{t('dev.lessons.noneYet')}</p>
+          : (
+            <div className="flex flex-col gap-2 max-h-[480px] overflow-auto pr-1">
+              {lessons.map(l => (
+                <div key={l.id} className="rounded-xl p-3 bg-white/[0.03] border border-white/8 group">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-cosmic-sky/15 text-cosmic-sky border border-cosmic-sky/30 capitalize">{l.level}</span>
+                    <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-white/[0.06] text-slate-300 border border-white/10 capitalize">{l.kind}</span>
+                    {l.durationMin && <span className="text-[10px] text-slate-500">{l.durationMin} min</span>}
+                    <button onClick={() => removeLesson(l.id)}
+                            className="ml-auto text-rose-300 hover:text-rose-400 text-xs opacity-0 group-hover:opacity-100 transition">
+                      ×
+                    </button>
+                  </div>
+                  <p className="text-sm font-bold text-white">{l.title}</p>
+                  {l.description && <p className="text-[11px] text-slate-300 mt-0.5">{l.description}</p>}
+                  <p className="text-[11px] text-slate-400 mt-1 line-clamp-2">{l.body}</p>
+                  {l.mediaUrl && <MediaPreview url={l.mediaUrl} compact />}
+                </div>
+              ))}
+            </div>
+          )}
+      </div>
+
+      <div className="glass-panel p-5 h-fit">
+        <h4 className="text-sm font-bold text-white mb-2">📘 Quick reference</h4>
+        <ul className="text-[11px] text-slate-300 space-y-1.5 leading-relaxed">
+          <li>• <b className="text-white">video</b> — paste mediaUrl + transcript in body</li>
+          <li>• <b className="text-white">reading</b> — passage text in body, mediaUrl optional</li>
+          <li>• <b className="text-white">speaking</b> — cue card / prompts in body</li>
+          <li>• <b className="text-white">writing</b> — task description in body</li>
+          <li>• <b className="text-white">quiz</b> — questions JSON in body</li>
+        </ul>
+      </div>
+    </div>
+  )
+}
+
+// ───────────────────────── Stats ─────────────────────────
+
+function StatsTab() {
+  const { t } = useTranslation()
+  const audio = useDevContent(s => s.audio)
+  const books = useDevContent(s => s.books)
+  const lessons = useDevContent(s => s.lessons)
+  const articles = useUserArticles(s => s.list)
+
+  const totalSize = useMemo(
+    () => audio.reduce((sum, a) => sum + a.sizeBytes, 0),
+    [audio]
+  )
+
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-5 gap-5 p-1">
+      <StatCard label={t('dev.stats.audio')}    value={audio.length}    emoji="🎧" />
+      <StatCard label={t('dev.tabs.books')}     value={books.length}    emoji="📚" />
+      <StatCard label={t('dev.stats.articles')} value={articles.length} emoji="📰" />
+      <StatCard label={t('dev.stats.lessons')}  value={lessons.length}  emoji="🎬" />
+      <StatCard label={t('dev.stats.sizeUsed')} value={formatBytes(totalSize)} emoji="💾" />
+    </div>
+  )
+}
+
+// ───────────────────────── helpers ─────────────────────────
+
+function StatCard({ label, value, emoji }: { label: string; value: string | number; emoji: string }) {
+  return (
+    <div className="glass-panel p-5">
+      <div className="text-3xl mb-1.5">{emoji}</div>
+      <p className="text-3xl font-extrabold text-white">{value}</p>
+      <p className="text-xs text-slate-400 mt-0.5">{label}</p>
+    </div>
+  )
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold">{label}</span>
+      <div className="mt-1">{children}</div>
+    </label>
+  )
+}
+
+function MediaPreview({ url, compact }: { url: string; compact?: boolean }) {
+  if (!url || url.trim().length < 4) return null
+  return (
+    <div className={cn('mt-2', compact && 'max-w-md')}>
+      <MediaPlayer url={url} />
+    </div>
+  )
+}
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload  = () => resolve(reader.result as string)
+    reader.onerror = () => reject(reader.error ?? new Error('read failed'))
+    reader.readAsDataURL(file)
+  })
+}
+
+function formatBytes(b: number): string {
+  if (b < 1024)        return `${b} B`
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`
+  return `${(b / 1024 / 1024).toFixed(1)} MB`
+}

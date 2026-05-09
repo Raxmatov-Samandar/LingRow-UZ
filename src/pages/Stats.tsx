@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Cosmos } from '@/components/layout/Cosmos';
 import { AppShell } from '@/components/layout/AppShell';
 import { Topbar } from '@/components/layout/Topbar';
@@ -22,6 +23,7 @@ const DAILY_DATA = [
 const STREAK_DATA = Array.from({ length: 28 }, (_, i) => ({ d: i + 1, v: 6 + Math.round(Math.sin(i / 2) * 4 + Math.random() * 2) }));
 
 export function Stats() {
+  const { t } = useTranslation();
   const { data: badges }      = useQuery({ queryKey: ['badges'],      queryFn: gamify.getBadges });
   const { data: leaderboard } = useQuery({ queryKey: ['leaderboard'], queryFn: gamify.getLeaderboard });
 
@@ -29,14 +31,14 @@ export function Stats() {
     <>
       <Cosmos />
       <AppShell>
-        <Topbar variant="banner" bannerTitle="My Learning Stats" />
+        <Topbar variant="banner" bannerTitle={t('stats.title')} />
 
         <section className="flex-1 min-h-0 overflow-auto flex flex-col gap-5">
           {/* Top row */}
           <div className="grid gap-5" style={{ gridTemplateColumns: '1fr 1fr 1.6fr' }}>
             {/* Donut */}
             <div className="glass-panel p-5 text-center">
-              <h4 className="text-base font-bold text-white text-left mb-3">Daily Goal</h4>
+              <h4 className="text-base font-bold text-white text-left mb-3">{t('stats.dailyGoal')}</h4>
               <div className="relative w-[200px] h-[200px] mx-auto grid place-items-center mb-3">
                 <svg viewBox="0 0 120 120" className="w-full h-full">
                   <defs>
@@ -51,23 +53,23 @@ export function Stats() {
                 </svg>
                 <div className="absolute inset-0 grid place-items-center">
                   <div>
-                    <div className="bg-white text-slate-900 text-[10px] font-bold px-2.5 py-0.5 rounded-full mx-auto inline-block mb-1">Today</div>
+                    <div className="bg-white text-slate-900 text-[10px] font-bold px-2.5 py-0.5 rounded-full mx-auto inline-block mb-1">{t('common.today')}</div>
                     <div className="text-3xl font-extrabold text-white leading-none">85%</div>
-                    <div className="text-[11px] text-slate-400 mt-0.5">Daily Learning Goal</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">{t('stats.todayPercent')}</div>
                     <div className="text-[10px] text-slate-500 mt-0.5">965 XP</div>
                   </div>
                 </div>
               </div>
               <div className="grid grid-cols-3 border-t border-white/10 pt-3 text-center">
-                <div><b className="text-base text-white">803</b><br/><span className="text-[11px] text-slate-400">Lessons Done</span></div>
-                <div><b className="text-base text-white">35 min</b><br/><span className="text-[11px] text-slate-400">Minutes Spoken</span></div>
-                <div><b className="text-base text-white">23</b><br/><span className="text-[11px] text-slate-400">Quiz Correct</span></div>
+                <div><b className="text-base text-white">803</b><br/><span className="text-[11px] text-slate-400">{t('stats.lessonsDone')}</span></div>
+                <div><b className="text-base text-white">35 {t('common.minutes').slice(0,3)}</b><br/><span className="text-[11px] text-slate-400">{t('stats.minutesSpoken')}</span></div>
+                <div><b className="text-base text-white">23</b><br/><span className="text-[11px] text-slate-400">{t('stats.quizCorrect')}</span></div>
               </div>
             </div>
 
             {/* Daily bar */}
             <div className="glass-panel p-5">
-              <h4 className="text-base font-bold text-white mb-3">XP This Week</h4>
+              <h4 className="text-base font-bold text-white mb-3">{t('stats.xpThisWeek')}</h4>
               <div className="h-[200px]">
                 <ResponsiveContainer>
                   <BarChart data={DAILY_DATA}>
@@ -87,10 +89,10 @@ export function Stats() {
 
             {/* Progress overview */}
             <div className="glass-panel p-5">
-              <h4 className="text-base font-bold text-white mb-3">Progress Overview</h4>
+              <h4 className="text-base font-bold text-white mb-3">{t('stats.progressOverview')}</h4>
               <div className="grid grid-cols-2 gap-5">
                 <div>
-                  <p className="text-xs text-slate-400 mb-2">Vocabulary Acquired</p>
+                  <p className="text-xs text-slate-400 mb-2">{t('stats.vocabAcquired')}</p>
                   <div className="h-[140px]">
                     <ResponsiveContainer>
                       <BarChart data={VOCAB_DATA}>
@@ -101,7 +103,7 @@ export function Stats() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400 mb-2">Grammar Lessons Completed</p>
+                  <p className="text-xs text-slate-400 mb-2">{t('stats.grammarCompleted')}</p>
                   <div className="h-2 rounded bg-white/10 mb-1">
                     <div className="h-full rounded shadow-[0_0_10px_#5aa9ff]"
                          style={{ width: '50%', background: 'linear-gradient(90deg, #5aa9ff, #7ef7d3)' }}/>
@@ -110,7 +112,7 @@ export function Stats() {
                     <span>0</span><span>20</span><span>50</span><span>100</span>
                   </div>
 
-                  <p className="text-xs text-slate-400 mb-1 mt-3">Study Streak (Days)</p>
+                  <p className="text-xs text-slate-400 mb-1 mt-3">{t('stats.studyStreak')}</p>
                   <div className="h-[70px]">
                     <ResponsiveContainer>
                       <AreaChart data={STREAK_DATA}>
@@ -132,7 +134,7 @@ export function Stats() {
           {/* Bottom row */}
           <div className="grid gap-5" style={{ gridTemplateColumns: '1fr 1.4fr' }}>
             <div className="glass-panel p-5">
-              <h4 className="text-base font-bold text-white mb-3">Badges Gallery</h4>
+              <h4 className="text-base font-bold text-white mb-3">{t('stats.badges')}</h4>
               <div className="grid grid-cols-4 gap-3.5">
                 {badges?.slice(0, 4).map(b => (
                   <div key={b.id} className={`text-center flex flex-col items-center gap-1.5 ${!b.unlocked ? 'opacity-50 grayscale' : ''}`}>
@@ -150,12 +152,12 @@ export function Stats() {
             </div>
 
             <div className="glass-panel p-5">
-              <h4 className="text-base font-bold text-white mb-3">Community Leaderboard</h4>
+              <h4 className="text-base font-bold text-white mb-3">{t('stats.leaderboard')}</h4>
               <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-3.5">
-                <h5 className="text-base font-bold text-white mb-3">Leaderboard</h5>
+                <h5 className="text-base font-bold text-white mb-3">{t('stats.leaderboard')}</h5>
                 <div className="grid text-[12px] text-slate-400 px-1.5 pb-2 border-b border-white/5"
                      style={{ gridTemplateColumns: '50px 1.4fr 70px 1fr 70px' }}>
-                  <span>Rank</span><span>User</span><span>Country</span><span>Streak</span><span>Level</span>
+                  <span>{t('stats.rank')}</span><span>{t('stats.user')}</span><span>{t('stats.country')}</span><span>{t('stats.streak')}</span><span>{t('stats.level')}</span>
                 </div>
                 {leaderboard?.map(e => (
                   <div key={e.userId}
@@ -179,7 +181,7 @@ export function Stats() {
             </div>
           </div>
 
-          <p className="text-center text-[11px] text-slate-500 py-1">My Learning Stats | Powered by LingRow V2.1</p>
+          <p className="text-center text-[11px] text-slate-500 py-1">{t('stats.poweredBy')} V2.1</p>
         </section>
 
         <FloatingDecor />

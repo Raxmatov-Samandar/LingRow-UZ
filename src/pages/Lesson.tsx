@@ -3,9 +3,12 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Topbar } from '@/components/layout/Topbar';
 import { SUBTITLE_CARDS } from '@/data/mock';
 import { motion, useReducedMotion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { useActivity } from '@/store/activity';
 import { useUi } from '@/store/ui';
+import { useDevContent, type DevLesson } from '@/store/devContent';
+import { MediaPlayer } from '@/components/ui/MediaPlayer';
 
 interface VocabRow {
   word:   string;
@@ -81,18 +84,31 @@ const VOCAB_ROWS: VocabRow[] = [
 ];
 
 export function Lesson() {
+  const { id } = useParams<{ id: string }>();
   const [activeIdx, setActiveIdx] = useState(0);
   const log = useActivity(s => s.log);
   const setSidebar = useUi(s => s.setSidebar);
+
+  const lessons = useDevContent(s => s.lessons);
+  // Active lesson: matched by URL param, otherwise first video lesson, otherwise undefined.
+  const activeLesson = useMemo<DevLesson | undefined>(() => {
+    if (id) return lessons.find(l => l.id === id);
+    return lessons.find(l => l.kind === 'video' && !!l.mediaUrl) ?? lessons[0];
+  }, [lessons, id]);
+
+  const lessonTitle = activeLesson?.title ?? 'Greetings in English';
 
   // Auto-collapse sidebar on lesson pages for focus mode (one-time, on mount)
   useEffect(() => { setSidebar(true); }, []); // eslint-disable-line
 
   // Mark this lesson as started + completed when user reaches the end
-  useEffect(() => { log('lesson_started', { lesson: 'Greetings in English' }); }, []); // eslint-disable-line
+  useEffect(() => { log('lesson_started', { lesson: lessonTitle }); }, [lessonTitle]); // eslint-disable-line
   useEffect(() => {
-    if (activeIdx === SUBTITLE_CARDS.length - 1) log('lesson_completed', { lesson: 'Greetings in English' });
-  }, [activeIdx]); // eslint-disable-line
+    if (activeIdx === SUBTITLE_CARDS.length - 1) log('lesson_completed', { lesson: lessonTitle });
+  }, [activeIdx, lessonTitle]); // eslint-disable-line
+
+  // Keep idx in range when switching lessons
+  useEffect(() => { setActiveIdx(0); }, [activeLesson?.id]);
 
   return (
     <>
@@ -103,23 +119,13 @@ export function Lesson() {
         <section className="grid grid-cols-[1fr_320px] gap-5 flex-1 min-h-0 overflow-auto">
           {/* Video block */}
           <div className="glass-panel flex flex-col gap-4 p-5">
-            <div className="relative rounded-2xl overflow-hidden aspect-video"
-                 style={{ background: 'linear-gradient(135deg,#3a4d8c,#1a2350)' }}>
-              <img className="w-full h-full object-cover"
-                   src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1200&q=85" alt="Teacher" />
-              <div className="absolute top-4 left-5 text-2xl font-bold text-white drop-shadow-lg">
-                Greetings in <em className="not-italic font-medium">English</em>
-              </div>
-              <button className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[70px] h-[70px] rounded-full grid place-items-center cursor-pointer"
-                      style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.45)',
-                               backdropFilter: 'blur(8px)', boxShadow: '0 0 30px rgba(120,180,255,0.5)' }}>
-                <svg viewBox="0 0 24 24" width="28" height="28" fill="#fff"><path d="M8 5.5v13l11-6.5z"/></svg>
-              </button>
-              <div className="absolute left-5 right-5 bottom-3 flex items-center gap-3 text-white text-xs">
-                <div className="flex-1 h-1 rounded bg-gradient-to-r from-cosmic-mint via-cosmic-mint/60 to-white/20" />
-                <span>3:45 / 8:20</span>
-              </div>
-            </div>
+            {activeLesson?.mediaUrl ? (
+              <MediaPlayer url={activeLesson.mediaUrl} title={activeLesson.title} />
+            ) : (
+              <DemoVideoPlaceholder title={lessonTitle} />
+            )}
+
+            {lessons.length > 0 && <LessonSwitcher lessons={lessons} activeId={activeLesson?.id} />}
 
             <SubtitleBar activeIdx={activeIdx} setActiveIdx={setActiveIdx} />
           </div>
@@ -163,6 +169,58 @@ export function Lesson() {
         </section>
       </AppShell>
     </>
+  );
+}
+
+// ───────────────────────────── DemoVideoPlaceholder ─────────────────────────────
+// Shown when the dev hasn't uploaded any video lesson yet — keeps the page
+// presentable for first-time visitors.
+
+function DemoVideoPlaceholder({ title }: { title: string }) {
+  return (
+    <div className="relative rounded-2xl overflow-hidden aspect-video"
+         style={{ background: 'linear-gradient(135deg,#3a4d8c,#1a2350)' }}>
+      <img className="w-full h-full object-cover"
+           src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1200&q=85" alt="Teacher" />
+      <div className="absolute top-4 left-5 text-2xl font-bold text-white drop-shadow-lg">
+        {title}
+      </div>
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[70px] h-[70px] rounded-full grid place-items-center"
+           style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.45)',
+                    backdropFilter: 'blur(8px)', boxShadow: '0 0 30px rgba(120,180,255,0.5)' }}>
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="#fff"><path d="M8 5.5v13l11-6.5z"/></svg>
+      </div>
+      <div className="absolute left-5 right-5 bottom-3 flex items-center gap-3 text-white text-xs">
+        <div className="flex-1 h-1 rounded bg-gradient-to-r from-cosmic-mint via-cosmic-mint/60 to-white/20" />
+        <span className="opacity-80">Demo</span>
+      </div>
+    </div>
+  );
+}
+
+// ───────────────────────────── LessonSwitcher ─────────────────────────────
+// Horizontal chip list of all dev-uploaded lessons. Click → /lesson/<id>.
+
+function LessonSwitcher({ lessons, activeId }: { lessons: DevLesson[]; activeId: string | undefined }) {
+  return (
+    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
+      {lessons.map(l => (
+        <Link
+          key={l.id}
+          to={`/lesson/${l.id}`}
+          className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full transition border text-[12px]
+                      ${l.id === activeId
+                        ? 'bg-cosmic-mint/15 border-cosmic-mint/45 text-cosmic-mint'
+                        : 'border-white/8 text-slate-300 hover:text-white hover:bg-white/[0.05]'}`}
+        >
+          <span className="text-[11px]">
+            {l.kind === 'video' ? '🎬' : l.kind === 'reading' ? '📖' : l.kind === 'speaking' ? '🎤' : l.kind === 'writing' ? '✍️' : '🧠'}
+          </span>
+          <span className="font-semibold whitespace-nowrap max-w-[180px] truncate">{l.title}</span>
+          <span className="text-[9px] uppercase tracking-wider opacity-70">{l.level}</span>
+        </Link>
+      ))}
+    </div>
   );
 }
 

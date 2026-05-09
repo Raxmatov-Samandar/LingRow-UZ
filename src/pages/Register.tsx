@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Cosmos } from '@/components/layout/Cosmos';
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useAuth } from '@/store/auth';
 import type { UserRole } from '@/types';
 
 export function Register() {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [age, setAge] = useState<number | ''>('');
   const [email, setEmail] = useState('');
@@ -24,49 +27,50 @@ export function Register() {
       storeSetRole(user.role);
       navigate('/onboarding');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
+      setError(err instanceof Error ? err.message : t('common.error'));
     } finally { setLoading(false); }
   }
 
   return (
     <>
       <Cosmos />
+      <div className="absolute top-4 right-4 z-20"><LanguageSwitcher /></div>
       <div className="h-screen flex items-center justify-center px-6">
         <form onSubmit={submit} className="glass-panel w-full max-w-md p-8 flex flex-col gap-3">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-12 h-12 bg-no-repeat"
                  style={{ backgroundImage: "url('/logo.png')", backgroundPosition: 'center', backgroundSize: '180% auto',
                           filter: 'drop-shadow(0 0 12px rgba(126,247,180,0.4))' }} />
-            <h1 className="text-2xl font-bold text-white">Create account</h1>
+            <h1 className="text-2xl font-bold text-white">{t('register.title')}</h1>
           </div>
 
           <div className="flex gap-2 mb-2">
             {(['student', 'adult', 'parent'] as UserRole[]).map(r => (
               <button key={r} type="button" onClick={() => setRole(r)}
-                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold capitalize transition
+                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition
                                   ${role === r
                                     ? 'bg-cosmic-mint/20 border border-cosmic-mint/50 text-cosmic-mint'
                                     : 'border border-white/10 text-slate-300 hover:bg-white/5'}`}>
-                {r === 'adult' ? 'Adult / IELTS' : r}
+                {t(`role.${r}`)}
               </button>
             ))}
           </div>
 
-          <input className="input-glass" placeholder="Full name" value={name} onChange={e => setName(e.target.value)} required />
+          <input className="input-glass" placeholder={t('register.fullName')} value={name} onChange={e => setName(e.target.value)} required />
           {role !== 'parent' && (
-            <input className="input-glass" type="number" placeholder="Age" min={6} max={99}
+            <input className="input-glass" type="number" placeholder={t('register.age')} min={6} max={99}
                    value={age} onChange={e => setAge(e.target.value ? Number(e.target.value) : '')} required />
           )}
-          <input className="input-glass" type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
-          <input className="input-glass" type="password" placeholder="Password (min 6 chars)"
+          <input className="input-glass" type="email" placeholder={t('register.emailLabel')} value={email} onChange={e => setEmail(e.target.value)} required />
+          <input className="input-glass" type="password" placeholder={t('register.passwordLabel')}
                  value={password} onChange={e => setPassword(e.target.value)} minLength={6} required />
 
           {error && <p className="text-xs text-red-300">{error}</p>}
 
-          <button className="btn-mint mt-2" disabled={loading}>{loading ? 'Creating…' : 'Create account'}</button>
+          <button className="btn-mint mt-2" disabled={loading}>{loading ? t('register.creating') : t('register.submit')}</button>
 
           <p className="text-xs text-slate-400 text-center mt-2">
-            Already have an account? <Link to="/login" className="text-cosmic-mint">Sign in</Link>
+            {t('register.haveAccount')} <Link to="/login" className="text-cosmic-mint">{t('common.signIn')}</Link>
           </p>
         </form>
       </div>

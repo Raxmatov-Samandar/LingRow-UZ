@@ -1,16 +1,20 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Cosmos } from '@/components/layout/Cosmos';
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useAuth } from '@/store/auth';
 import type { UserRole } from '@/types';
 
-const ROLES: { id: UserRole; emoji: string; title: string; sub: string }[] = [
-  { id: 'student', emoji: '👦', title: 'Student',     sub: '10–16 years • Gamified learning' },
-  { id: 'adult',   emoji: '🎓', title: 'Adult / IELTS', sub: '16+ • Cambridge tests, AI feedback' },
-  { id: 'parent',  emoji: '👨‍👩‍👧', title: 'Parent',     sub: 'Track and guide your child' },
+interface RoleDef { id: UserRole; emoji: string; titleKey: string; subKey: string }
+const ROLES: RoleDef[] = [
+  { id: 'student', emoji: '👦', titleKey: 'role.student', subKey: 'role.studentSub' },
+  { id: 'adult',   emoji: '🎓', titleKey: 'role.adult',   subKey: 'role.adultSub' },
+  { id: 'parent',  emoji: '👨‍👩‍👧', titleKey: 'role.parent',  subKey: 'role.parentSub' },
 ];
 
 export function Login() {
+  const { t } = useTranslation();
   const [step, setStep] = useState<'role' | 'creds'>('role');
   const [role, setRoleLocal] = useState<UserRole>('student');
   const [email, setEmail] = useState('');
@@ -29,13 +33,16 @@ export function Login() {
       setRole(user.role);
       navigate(user.role === 'parent' ? '/parent' : '/home');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Sign-in failed');
+      setError(err instanceof Error ? err.message : t('common.error'));
     } finally { setLoading(false); }
   }
+
+  const activeRoleTitle = t(ROLES.find(r => r.id === role)?.titleKey ?? 'role.student');
 
   return (
     <>
       <Cosmos />
+      <div className="absolute top-4 right-4 z-20"><LanguageSwitcher /></div>
       <div className="h-screen flex items-center justify-center px-6">
         <div className="glass-panel w-full max-w-md p-8">
           <div className="flex items-center gap-3 mb-6">
@@ -47,8 +54,8 @@ export function Login() {
 
           {step === 'role' ? (
             <>
-              <h2 className="text-xl font-bold text-white mb-1">Welcome!</h2>
-              <p className="text-sm text-slate-400 mb-6">Who are you signing in as?</p>
+              <h2 className="text-xl font-bold text-white mb-1">{t('login.welcome')}</h2>
+              <p className="text-sm text-slate-400 mb-6">{t('login.pickRole')}</p>
 
               <div className="flex flex-col gap-3 mb-6">
                 {ROLES.map(r => (
@@ -58,44 +65,44 @@ export function Login() {
                     <div className="flex items-center gap-3">
                       <span className="text-3xl">{r.emoji}</span>
                       <div>
-                        <p className="font-bold text-white">{r.title}</p>
-                        <p className="text-xs text-slate-400">{r.sub}</p>
+                        <p className="font-bold text-white">{t(r.titleKey)}</p>
+                        <p className="text-xs text-slate-400">{t(r.subKey)}</p>
                       </div>
                     </div>
                   </button>
                 ))}
               </div>
 
-              <button className="btn-mint w-full" onClick={() => setStep('creds')}>Continue</button>
+              <button className="btn-mint w-full" onClick={() => setStep('creds')}>{t('common.continue')}</button>
 
               <p className="text-xs text-slate-400 text-center mt-5">
-                Don't have an account? <Link to="/register" className="text-cosmic-mint">Sign up</Link>
+                {t('login.noAccount')} <Link to="/register" className="text-cosmic-mint">{t('common.signUp')}</Link>
               </p>
             </>
           ) : (
             <form onSubmit={submit} className="flex flex-col gap-3">
-              <button type="button" onClick={() => setStep('role')} className="text-xs text-slate-400 self-start mb-1">← Change role</button>
-              <h2 className="text-xl font-bold text-white">Sign in as <span className="text-cosmic-mint">{ROLES.find(r => r.id === role)?.title}</span></h2>
-              <p className="text-xs text-slate-400 mb-2">Demo: any email / any password works.</p>
+              <button type="button" onClick={() => setStep('role')} className="text-xs text-slate-400 self-start mb-1">{t('login.changeRole')}</button>
+              <h2 className="text-xl font-bold text-white">{t('login.signInAs')} <span className="text-cosmic-mint">{activeRoleTitle}</span></h2>
+              <p className="text-xs text-slate-400 mb-2">{t('login.demoNote')}</p>
 
-              <input className="input-glass" type="email" placeholder="Email"
+              <input className="input-glass" type="email" placeholder={t('login.email')}
                      value={email} onChange={e => setEmail(e.target.value)} required />
-              <input className="input-glass" type="password" placeholder="Password"
+              <input className="input-glass" type="password" placeholder={t('login.password')}
                      value={password} onChange={e => setPassword(e.target.value)} required />
 
               {error && <p className="text-xs text-red-300">{error}</p>}
 
-              <button className="btn-mint mt-3" disabled={loading}>{loading ? 'Signing in…' : 'Sign in'}</button>
+              <button className="btn-mint mt-3" disabled={loading}>{loading ? t('login.signingIn') : t('login.signIn')}</button>
 
               <div className="my-3 flex items-center gap-2 text-xs text-slate-500">
-                <div className="flex-1 h-px bg-white/10"/>OR<div className="flex-1 h-px bg-white/10"/>
+                <div className="flex-1 h-px bg-white/10"/>{t('login.or')}<div className="flex-1 h-px bg-white/10"/>
               </div>
 
-              <button type="button" className="btn-ghost py-2.5">Continue with Google</button>
-              <button type="button" className="btn-ghost py-2.5">Sign in with phone (OTP)</button>
+              <button type="button" className="btn-ghost py-2.5">{t('login.continueGoogle')}</button>
+              <button type="button" className="btn-ghost py-2.5">{t('login.signInPhone')}</button>
 
               <p className="text-xs text-slate-400 text-center mt-3">
-                New here? <Link to="/register" className="text-cosmic-mint">Create an account</Link>
+                {t('login.newHere')} <Link to="/register" className="text-cosmic-mint">{t('login.createOne')}</Link>
               </p>
             </form>
           )}

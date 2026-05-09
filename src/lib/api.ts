@@ -12,6 +12,7 @@ import {
   PARENT_CHILDREN, PARENTAL_CONTROLS, DAILY_REPORTS,
 } from '@/data/mock';
 import { supabase, isSupabaseConfigured } from './supabase';
+import { isDevEmail, DEV_PASSWORD } from './dev';
 
 const useMock = (import.meta.env.VITE_USE_MOCK_API ?? 'true') === 'true' || !isSupabaseConfigured();
 const wait    = (ms = 250) => new Promise(r => setTimeout(r, ms));
@@ -44,6 +45,14 @@ export const auth = {
   async signIn(email: string, password: string): Promise<User> {
     if (useMock) {
       await wait();
+      // Dev-account guard: in mock mode, the dev email is locked behind a
+      // specific password configured via VITE_DEV_PASSWORD. Other emails
+      // accept anything (it's still a demo).
+      if (isDevEmail(email)) {
+        if (!DEV_PASSWORD || password !== DEV_PASSWORD) {
+          throw new Error('Invalid credentials.');
+        }
+      }
       return makeDemoUser(email, 'student');
     }
     const { data, error } = await supabase!.auth.signInWithPassword({ email, password });
@@ -54,6 +63,10 @@ export const auth = {
   async signUp(opts: { name: string; email: string; password: string; role: UserRole; age?: number }): Promise<User> {
     if (useMock) {
       await wait();
+      // Block someone else from signing up under the dev email.
+      if (isDevEmail(opts.email)) {
+        throw new Error('This email is reserved.');
+      }
       return { ...makeDemoUser(opts.email, opts.role), name: opts.name, age: opts.age };
     }
     const { data, error } = await supabase!.auth.signUp({

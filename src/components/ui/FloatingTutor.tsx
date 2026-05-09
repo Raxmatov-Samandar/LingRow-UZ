@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { useActivity, computeWeeklyStats } from '@/store/activity';
 import { Mascot } from './Mascot';
 
@@ -10,6 +11,7 @@ import { Mascot } from './Mascot';
  * on auth screens.
  */
 export function FloatingTutor() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -48,28 +50,28 @@ export function FloatingTutor() {
               <div className="w-9 h-9 rounded-xl grid place-items-center text-base
                               bg-gradient-to-br from-cosmic-mint to-cosmic-sky border border-white/20">🎓</div>
               <div>
-                <p className="font-bold text-white text-sm leading-tight">Professor Linguo</p>
-                <p className="text-[10px] text-slate-400">Band 9.0 IELTS coach</p>
+                <p className="font-bold text-white text-sm leading-tight">{t('floatingTutor.profName')}</p>
+                <p className="text-[10px] text-slate-400">{t('floatingTutor.profSub')}</p>
               </div>
             </div>
 
             {/* Mini progress glance */}
             <div className="grid grid-cols-3 gap-2 mb-3 text-center">
-              <Stat label="Lessons" value={stats.lessonsDone} />
-              <Stat label="Vocab"   value={stats.vocabReviewed} />
-              <Stat label="Quiz %"  value={stats.avgQuizScore ?? '—'} />
+              <Stat label={t('floatingTutor.miniLessons')} value={stats.lessonsDone} />
+              <Stat label={t('floatingTutor.miniVocab')}   value={stats.vocabReviewed} />
+              <Stat label={t('floatingTutor.miniQuiz')}    value={stats.avgQuizScore ?? '—'} />
             </div>
 
-            <p className="text-[11px] text-slate-400 mb-2">Quick ask:</p>
+            <p className="text-[11px] text-slate-400 mb-2">{t('floatingTutor.quickAsk')}</p>
             <div className="flex flex-col gap-1.5">
               <Quick onClick={() => { setOpen(false); go('/tutor', `Looking at my last week: lessons ${stats.lessonsDone}, vocab ${stats.vocabReviewed}, quizzes ${stats.quizzesTaken}. Where am I weakest right now?`); }}
-                     text="Diagnose my weakest area" />
+                     text={t('floatingTutor.diagnose')} />
               <Quick onClick={() => { setOpen(false); go('/tutor', 'Build me a 7-day study plan based on my recent activity.'); }}
-                     text="Plan my next 7 days" />
+                     text={t('floatingTutor.plan7')} />
               <Quick onClick={() => { setOpen(false); go('/tutor', 'Predict my IELTS band based on what I\'ve done so far.'); }}
-                     text="Predict my band" />
+                     text={t('floatingTutor.predictBand')} />
               <Quick onClick={() => { setOpen(false); go('/tutor'); }}
-                     text="Open full chat →" highlight />
+                     text={t('floatingTutor.openChat')} highlight />
             </div>
           </motion.div>
         )}

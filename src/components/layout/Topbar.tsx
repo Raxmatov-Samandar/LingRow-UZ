@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/store/auth';
 import { useActivity, type ActivityEvent } from '@/store/activity';
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import type { User } from '@/types';
 
 interface Props {
@@ -13,6 +15,7 @@ interface Props {
 
 export function Topbar({ variant = 'search', bannerTitle, bannerSubtitle }: Props) {
   const user = useAuth(s => s.user);
+  const { t } = useTranslation();
 
   return (
     <header className="flex items-center justify-between gap-4 pt-1 relative z-30">
@@ -21,20 +24,21 @@ export function Topbar({ variant = 'search', bannerTitle, bannerSubtitle }: Prop
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
             <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
           </svg>
-          <input className="bg-transparent border-0 outline-none text-white w-full text-sm placeholder:text-slate-400" placeholder="Search lessons, words, or ask Linguo…" />
+          <input className="bg-transparent border-0 outline-none text-white w-full text-sm placeholder:text-slate-400" placeholder={t('topbar.searchPlaceholder')} />
         </div>
       ) : (
         <div className="glass-soft flex-1 max-w-[720px] flex items-center gap-3.5 pl-2 pr-4 py-2 rounded-2xl">
           <img className="w-14 h-14 rounded-xl object-cover"
                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&q=80" alt="" />
           <div className="text-left">
-            <h3 className="text-lg font-bold text-white">{bannerTitle ?? 'My Learning Stats'}</h3>
-            <p className="text-xs text-slate-400">{bannerSubtitle ?? 'Your Journey to Language Mastery'}</p>
+            <h3 className="text-lg font-bold text-white">{bannerTitle ?? t('stats.title')}</h3>
+            <p className="text-xs text-slate-400">{bannerSubtitle ?? t('stats.subtitle')}</p>
           </div>
         </div>
       )}
 
       <div className="flex items-center gap-3.5">
+        <LanguageSwitcher />
         <AppsButton />
         <NotificationsButton />
         <AvatarMenu user={user} />
@@ -46,25 +50,26 @@ export function Topbar({ variant = 'search', bannerTitle, bannerSubtitle }: Prop
 // ─────────────────────────────── Apps menu ───────────────────────────────
 
 const SHORTCUTS = [
-  { to: '/home',       label: 'Dashboard',  icon: '🏠' },
-  { to: '/tutor',      label: 'AI Tutor',   icon: '🎓' },
-  { to: '/lesson',     label: 'Lesson',     icon: '🎬' },
-  { to: '/reading',    label: 'Reading',    icon: '📖' },
-  { to: '/speaking',   label: 'Speaking',   icon: '🎤' },
-  { to: '/writing',    label: 'Writing',    icon: '✍️' },
-  { to: '/vocabulary', label: 'Vocab',      icon: '🗂' },
-  { to: '/stats',      label: 'Stats',      icon: '📊' },
+  { to: '/home',       labelKey: 'nav.dashboard',  icon: '🏠' },
+  { to: '/tutor',      labelKey: 'nav.aiTutor',    icon: '🎓' },
+  { to: '/lesson',     labelKey: 'nav.lesson',     icon: '🎬' },
+  { to: '/reading',    labelKey: 'nav.reading',    icon: '📖' },
+  { to: '/speaking',   labelKey: 'nav.speaking',   icon: '🎤' },
+  { to: '/writing',    labelKey: 'nav.writing',    icon: '✍️' },
+  { to: '/vocabulary', labelKey: 'nav.vocabulary', icon: '🗂' },
+  { to: '/stats',      labelKey: 'nav.stats',      icon: '📊' },
 ];
 
 function AppsButton() {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   useOutsideClick(wrapRef, () => setOpen(false));
+  const { t } = useTranslation();
 
   return (
     <div ref={wrapRef} className="relative">
       <button onClick={() => setOpen(o => !o)}
-              aria-label="Quick apps"
+              aria-label={t('topbar.appsLabel')}
               className={`w-10 h-10 grid place-items-center rounded-xl transition
                           ${open ? 'bg-white/10 text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white'}`}>
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -78,13 +83,13 @@ function AppsButton() {
       <AnimatePresence>
         {open && (
           <Popover>
-            <p className="text-[10px] tracking-[0.2em] text-slate-400 mb-2">SHORTCUTS</p>
+            <p className="text-[10px] tracking-[0.2em] text-slate-400 mb-2">{t('topbar.shortcuts')}</p>
             <div className="grid grid-cols-3 gap-1.5">
               {SHORTCUTS.map(s => (
                 <Link key={s.to} to={s.to} onClick={() => setOpen(false)}
                       className="flex flex-col items-center gap-1 p-2.5 rounded-xl hover:bg-white/[0.06] transition group">
                   <span className="text-xl group-hover:scale-110 transition">{s.icon}</span>
-                  <span className="text-[10px] text-slate-300 group-hover:text-white">{s.label}</span>
+                  <span className="text-[10px] text-slate-300 group-hover:text-white">{t(s.labelKey)}</span>
                 </Link>
               ))}
             </div>
@@ -101,6 +106,7 @@ function NotificationsButton() {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   useOutsideClick(wrapRef, () => setOpen(false));
+  const { t } = useTranslation();
 
   const events = useActivity(s => s.events);
   const recent = useMemo(
@@ -112,7 +118,7 @@ function NotificationsButton() {
   return (
     <div ref={wrapRef} className="relative">
       <button onClick={() => setOpen(o => !o)}
-              aria-label="Notifications"
+              aria-label={t('topbar.notifications')}
               className={`relative w-10 h-10 grid place-items-center rounded-xl transition
                           ${open ? 'bg-white/10 text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white'}`}>
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
@@ -127,14 +133,14 @@ function NotificationsButton() {
         {open && (
           <Popover wide>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-bold text-white">Notifications</p>
-              <span className="text-[10px] text-slate-400">{recent.length} recent</span>
+              <p className="text-sm font-bold text-white">{t('topbar.notifications')}</p>
+              <span className="text-[10px] text-slate-400">{recent.length} {t('topbar.recent')}</span>
             </div>
 
             {recent.length === 0 ? (
               <div className="text-center py-6 text-xs text-slate-400">
                 <p className="text-2xl mb-2">🌙</p>
-                Nothing yet — start learning to fill this up!
+                {t('topbar.nothing')}
               </div>
             ) : (
               <div className="flex flex-col gap-1 max-h-[320px] overflow-y-auto pr-1">
@@ -193,6 +199,7 @@ function AvatarMenu({ user }: { user: User | null }) {
   useOutsideClick(wrapRef, () => setOpen(false));
   const navigate = useNavigate();
   const signOut = useAuth(s => s.signOut);
+  const { t } = useTranslation();
 
   return (
     <div ref={wrapRef} className="relative">
@@ -225,15 +232,15 @@ function AvatarMenu({ user }: { user: User | null }) {
               </div>
             </div>
 
-            <MenuLink to="/profile" icon="👤" label="Profile"  onClick={() => setOpen(false)} />
-            <MenuLink to="/stats"   icon="📊" label="My Stats" onClick={() => setOpen(false)} />
-            <MenuLink to="/tutor"   icon="🎓" label="AI Tutor" onClick={() => setOpen(false)} />
+            <MenuLink to="/profile" icon="👤" label={t('nav.profile')} onClick={() => setOpen(false)} />
+            <MenuLink to="/stats"   icon="📊" label={t('nav.stats')}   onClick={() => setOpen(false)} />
+            <MenuLink to="/tutor"   icon="🎓" label={t('nav.aiTutor')} onClick={() => setOpen(false)} />
 
             <div className="my-2 h-px bg-white/10" />
 
             <button onClick={async () => { setOpen(false); await signOut(); navigate('/login'); }}
                     className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-rose-300 hover:bg-rose-500/10 transition">
-              <span>🚪</span> Sign out
+              <span>🚪</span> {t('common.signOut')}
             </button>
           </Popover>
         )}

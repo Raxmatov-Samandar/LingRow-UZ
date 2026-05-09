@@ -10,3 +10,6 @@ dist-ssr
 !.vscode/settings.json
 .idea
 *.log
+
+# TypeScript incremental build cache
+*.tsbuildinfo

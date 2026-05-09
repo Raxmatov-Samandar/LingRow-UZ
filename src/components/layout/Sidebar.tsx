@@ -1,27 +1,29 @@
 import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/store/auth';
 import { useUi } from '@/store/ui';
+import { isDevUser } from '@/lib/dev';
 import { cn } from '@/lib/cn';
 
 const STUDENT_NAV = [
-  { to: '/home',       label: 'Dashboard',     icon: 'home'    },
-  { to: '/tutor',      label: 'AI Tutor',      icon: 'sparkle' },
-  { to: '/lesson',     label: 'Lesson',        icon: 'play'    },
-  { to: '/listening',  label: 'Listening',     icon: 'headphones' },
-  { to: '/reading',    label: 'Reading',       icon: 'book'    },
-  { to: '/library',    label: 'Library',       icon: 'news'    },
-  { to: '/speaking',   label: 'Speaking',      icon: 'mic'     },
-  { to: '/writing',    label: 'Writing',       icon: 'pen'     },
-  { to: '/vocabulary', label: 'Vocabulary',    icon: 'cards'   },
-  { to: '/stats',      label: 'My Stats',      icon: 'chart'   },
+  { to: '/home',       labelKey: 'nav.dashboard',  icon: 'home'    },
+  { to: '/tutor',      labelKey: 'nav.aiTutor',    icon: 'sparkle' },
+  { to: '/lesson',     labelKey: 'nav.lesson',     icon: 'play'    },
+  { to: '/listening',  labelKey: 'nav.listening',  icon: 'headphones' },
+  { to: '/reading',    labelKey: 'nav.reading',    icon: 'book'    },
+  { to: '/library',    labelKey: 'nav.library',    icon: 'news'    },
+  { to: '/speaking',   labelKey: 'nav.speaking',   icon: 'mic'     },
+  { to: '/writing',    labelKey: 'nav.writing',    icon: 'pen'     },
+  { to: '/vocabulary', labelKey: 'nav.vocabulary', icon: 'cards'   },
+  { to: '/stats',      labelKey: 'nav.stats',      icon: 'chart'   },
 ];
 
 const PARENT_NAV = [
-  { to: '/parent',           label: 'Dashboard', icon: 'home'  },
-  { to: '/parent/reports',   label: 'Reports',   icon: 'chart' },
-  { to: '/parent/settings',  label: 'Controls',  icon: 'cog'   },
-  { to: '/parent/billing',   label: 'Billing',   icon: 'card'  },
+  { to: '/parent',          labelKey: 'nav.dashboard', icon: 'home'  },
+  { to: '/parent/reports',  labelKey: 'nav.reports',   icon: 'chart' },
+  { to: '/parent/settings', labelKey: 'nav.controls',  icon: 'cog'   },
+  { to: '/parent/billing',  labelKey: 'nav.billing',   icon: 'card'  },
 ];
 
 const Icon = ({ name }: { name: string }) => {
@@ -39,6 +41,7 @@ const Icon = ({ name }: { name: string }) => {
     case 'sparkle':    return <svg viewBox="0 0 24 24" {...props}><path d="M12 3l1.8 5.4L19 10l-5.2 1.6L12 17l-1.8-5.4L5 10l5.2-1.6L12 3z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16z"/></svg>;
     case 'headphones': return <svg viewBox="0 0 24 24" {...props}><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1v-7h3v5zM3 19a2 2 0 002 2h1v-7H3v5z"/></svg>;
     case 'news':       return <svg viewBox="0 0 24 24" {...props}><path d="M4 4h13a2 2 0 012 2v12a2 2 0 002 2H6a2 2 0 01-2-2V4z"/><path d="M8 8h7M8 12h7M8 16h4"/></svg>;
+    case 'wrench':     return <svg viewBox="0 0 24 24" {...props}><path d="M14.7 6.3a4 4 0 105.7 5.7l-7.7 7.7a4 4 0 11-5.7-5.7l7.7-7.7z"/><path d="M3 21l3-3"/></svg>;
     default: return null;
   }
 };
@@ -48,6 +51,8 @@ export function Sidebar() {
   const collapsed = useUi(s => s.sidebarCollapsed);
   const toggle    = useUi(s => s.toggleSidebar);
   const items     = user?.role === 'parent' ? PARENT_NAV : STUDENT_NAV;
+  const { t }     = useTranslation();
+  const isDev     = isDevUser(user);
 
   return (
     <aside className="glass-panel relative flex flex-col p-3 pb-5 overflow-hidden"
@@ -90,31 +95,59 @@ export function Sidebar() {
       </div>
 
       <nav className="flex flex-col gap-1">
-        {items.map(it => (
-          <NavLink
-            key={it.to}
-            to={it.to}
-            title={collapsed ? it.label : undefined}
-            className={({ isActive }) =>
-              cn('nav-item', isActive && 'active', collapsed && 'justify-center px-2')
-            }
-          >
-            <span className="opacity-90 shrink-0"><Icon name={it.icon} /></span>
-            {!collapsed && <span className="truncate">{it.label}</span>}
-          </NavLink>
-        ))}
+        {items.map(it => {
+          const label = t(it.labelKey);
+          return (
+            <NavLink
+              key={it.to}
+              to={it.to}
+              title={collapsed ? label : undefined}
+              className={({ isActive }) =>
+                cn('nav-item', isActive && 'active', collapsed && 'justify-center px-2')
+              }
+            >
+              <span className="opacity-90 shrink-0"><Icon name={it.icon} /></span>
+              {!collapsed && <span className="truncate">{label}</span>}
+            </NavLink>
+          );
+        })}
       </nav>
 
       <div className="my-4 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
 
-      <div className="mt-auto">
+      <div className="mt-auto flex flex-col gap-1">
+        {isDev && (
+          <NavLink
+            to="/dev"
+            title={collapsed ? t('dev.panel') : undefined}
+            className={({ isActive }) =>
+              cn(
+                'nav-item relative',
+                isActive && 'active',
+                collapsed && 'justify-center px-2',
+                'border border-cosmic-mint/25 bg-cosmic-mint/[0.05]',
+              )
+            }
+          >
+            <span className="opacity-90 shrink-0 text-cosmic-mint"><Icon name="wrench" /></span>
+            {!collapsed && (
+              <>
+                <span className="text-cosmic-mint">{t('dev.panel')}</span>
+                <span className="ml-auto text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded bg-cosmic-mint/20 text-cosmic-mint">
+                  {t('dev.badge')}
+                </span>
+              </>
+            )}
+          </NavLink>
+        )}
+
         <NavLink
           to="/profile"
-          title={collapsed ? 'Settings' : undefined}
+          title={collapsed ? t('common.settings') : undefined}
           className={({ isActive }) => cn('nav-item', isActive && 'active', collapsed && 'justify-center px-2')}
         >
           <span className="opacity-90 shrink-0"><Icon name="cog" /></span>
-          {!collapsed && <span>Settings</span>}
+          {!collapsed && <span>{t('common.settings')}</span>}
         </NavLink>
       </div>
     </aside>
