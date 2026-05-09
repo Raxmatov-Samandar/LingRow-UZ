@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LingRow — Reading</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div id="cosmos-mount"></div>
+
+<div class="app">
+  <div id="sidebar-mount" data-active="reading"></div>
+
+  <main class="main">
+
+    <header class="topbar audio-topbar">
+      <div class="audio-player glass-soft">
+        <button class="audio-play"><svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><path d="M8 5.5v13l11-6.5z"/></svg></button>
+        <div class="audio-bar"><div class="audio-fill"></div></div>
+        <span class="audio-time">1:30 / 3:15</span>
+      </div>
+
+      <div class="topbar-actions">
+        <button class="icon-btn"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
+        <button class="icon-btn has-dot"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8a6 6 0 1112 0c0 7 3 8 3 8H3s3-1 3-8z"/><path d="M10 21a2 2 0 004 0"/></svg></button>
+        <div class="avatar"><div class="avatar-ring"></div><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80" alt="" onerror="this.style.display='none'"/></div>
+      </div>
+    </header>
+
+    <section class="reading-page">
+      <div class="reading-grid">
+
+        <article class="reading-block glass-panel">
+          <h2 class="reading-title">THE KEY TO CONSTANT PRACTICE</h2>
+          <div class="reading-cols">
+            <div class="reading-col">
+              <p>My early studies were focused on vocabulary. Gradually, I began to realize that speaking and writing are components <span class="hl">[crucial]</span> to overall mastery. This [crucial] insight led to a change in strategy…</p>
+              <p class="muted">[This is where the user has clicked "crucial".]</p>
+              <p>The next phase introduced active production. I started building short dialogues, integrating new words into spoken practice, and reviewing them daily. This shift from passive recognition to active use accelerated progress significantly.</p>
+            </div>
+            <div class="reading-col">
+              <p>By making each word part of a sentence and repeating them at spaced intervals, retention improved dramatically over the first few weeks of practice.</p>
+
+              <div class="defcard">
+                <div class="def-head">
+                  <h3>[crucial]</h3>
+                  <button class="def-speak"><svg viewBox="0 0 24 24" width="22" height="22" fill="#7ef7d3"><path d="M3 9v6h4l5 4V5L7 9H3zm13 3a4 4 0 00-2-3.46v6.92A4 4 0 0016 12z"/></svg></button>
+                </div>
+                <p><b>Definition:</b></p>
+                <p>1. Of the greatest importance; decisive.<br/>(AI Synonyms: pivotal, vital, decisive, critical)</p>
+                <p><b>Example:</b> The key factor; a crucial moment.</p>
+                <p><b>Synonym cloud:</b></p>
+                <p class="syn-cloud"><span class="syn lg">Decisive</span>, <span class="syn md">Vital</span>, <span class="syn sm">Pivotal</span></p>
+                <p><b>Audio Pronunciation:</b> Play [CRU-shuhl]</p>
+                <p><b>AI Confidence:</b> High [98%]</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="speech-tip">
+            <img class="char-3d" src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=200&q=80" alt="" onerror="this.parentElement.classList.add('no-img')"/>
+            <div class="bubble">Deep comprehension makes perfect practice!</div>
+          </div>
+        </article>
+
+        <aside class="quiz-block glass-panel">
+          <p class="quiz-eyebrow">COMPREHENSION QUIZ</p>
+          <div class="quiz-card">
+            <h4>Quiz: The Key to Constant Practice</h4>
+            <p class="q-num">1. According to the text, what was the author's initial focus?</p>
+            <label class="q-opt"><input type="radio" name="q1"/><span class="r-mark"></span>(A) Speaking</label>
+            <label class="q-opt sel"><input type="radio" name="q1" checked/><span class="r-mark cross"></span>[x] Vocabulary</label>
+            <label class="q-opt"><input type="radio" name="q1"/><span class="r-mark"></span>(C) Grammar</label>
+            <label class="q-opt"><input type="radio" name="q1"/><span class="r-mark"></span>(D) Listening</label>
+
+            <p class="q-num">Question 2: What insight was described as 'crucial'?</p>
+            <label class="q-opt"><input type="radio" name="q2"/><span class="r-mark"></span>(A) …</label>
+            <p class="q-num">Question 3:</p>
+          </div>
+
+          <button class="btn-primary">Submit Quiz</button>
+          <a class="need-help" href="#">Need Help?</a>
+        </aside>
+      </div>
+    </section>
+
+    <span class="float-coin coin-1">XP</span>
+    <span class="float-coin coin-2">+5</span>
+    <span class="float-glyph letter-A">A</span>
+    <span class="float-glyph letter-B">B</span>
+    <span class="float-glyph letter-Q">Q</span>
+    <span class="float-glyph fg-4 sparkle"></span>
+
+  </main>
+</div>
+
+<script src="shared.js"></script>
+</body>
+</html>

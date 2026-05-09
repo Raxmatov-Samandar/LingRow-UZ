@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LingRow — Speaking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div id="cosmos-mount"></div>
+
+<div class="app">
+  <div id="sidebar-mount" data-active="speaking"></div>
+
+  <main class="main">
+
+    <header class="topbar teacher-topbar">
+      <div class="teacher-banner glass-soft">
+        <img class="t-avatar" src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&q=80" alt="" onerror="this.style.display='none'"/>
+        <div class="t-text">
+          <h3>Speaking Practice</h3>
+          <p>Your Journey to Language Mastery</p>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <div class="avatar"><div class="avatar-ring"></div><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80" alt="" onerror="this.style.display='none'"/></div>
+      </div>
+    </header>
+
+    <section class="speaking-page">
+
+      <div class="speak-row">
+        <div class="speak-card glass-panel">
+          <h4>Target Sentence</h4>
+          <p class="zh-big">"I want to practice my speaking."</p>
+          <p class="en-sub">Repeat the sentence clearly into the mic.</p>
+          <div class="metric-row">
+            <div class="metric"><div class="ring blue" style="--p:98"><span>98%</span></div><label>Accuracy</label></div>
+            <div class="metric"><div class="ring green" style="--p:95"><span>95%</span></div><label>Fluency</label></div>
+            <div class="metric"><div class="ring green" style="--p:92"><span>92%</span></div><label>Pronunciation</label></div>
+          </div>
+        </div>
+
+        <div class="orb-wrap">
+          <div class="orb">
+            <div class="orb-glow"></div>
+            <div class="orb-shell"></div>
+            <svg class="waveform" viewBox="0 0 200 80" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="waveGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%"  stop-color="#5aa9ff"/>
+                  <stop offset="50%" stop-color="#a59bff"/>
+                  <stop offset="100%" stop-color="#7ef7d3"/>
+                </linearGradient>
+              </defs>
+              <path d="M0 40 Q10 38 18 40 T35 40 Q42 12 50 40 T68 40 Q76 4 86 40 T104 40 Q112 18 120 40 T138 40 Q146 8 156 40 T172 40 Q182 30 200 40"
+                    stroke="url(#waveGrad)" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="speak-card glass-panel">
+          <div class="t-mini">
+            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=80" alt="" onerror="this.style.display='none'"/>
+            <h4>AI Feedback</h4>
+          </div>
+          <p class="en-big">Great pronunciation!</p>
+          <p class="en-big">Try slowing down on "practice" for clarity.</p>
+          <div class="metric-row">
+            <div class="metric"><div class="ring blue" style="--p:98"><span>98%</span></div><label>Accuracy</label></div>
+            <div class="metric"><div class="ring green" style="--p:95"><span>95%</span></div><label>Fluency</label></div>
+            <div class="metric"><div class="ring green" style="--p:92"><span>92%</span></div><label>Pronunciation</label></div>
+          </div>
+        </div>
+      </div>
+
+      <button class="hold-to-speak">
+        <span class="hts-glow"></span>
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="3" width="6" height="12" rx="3"/>
+          <path d="M5 11a7 7 0 0014 0"/>
+          <path d="M12 18v3"/>
+        </svg>
+        <span>Hold to Speak</span>
+      </button>
+
+    </section>
+
+    <span class="float-coin coin-1">XP</span>
+    <span class="float-coin coin-2">+10</span>
+    <span class="float-glyph letter-A">A</span>
+    <span class="float-glyph letter-B">B</span>
+    <span class="float-glyph letter-Q">Q</span>
+    <span class="float-glyph fg-4 sparkle"></span>
+
+  </main>
+</div>
+
+<script src="shared.js"></script>
+</body>
+</html>

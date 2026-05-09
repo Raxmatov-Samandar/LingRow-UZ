@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LingRow — Lesson</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div id="cosmos-mount"></div>
+
+<div class="app">
+  <div id="sidebar-mount" data-active="lesson"></div>
+
+  <main class="main">
+
+    <header class="topbar">
+      <div class="search glass-soft">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+          <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
+        </svg>
+        <input type="text" placeholder="Search" />
+      </div>
+
+      <div class="topbar-actions">
+        <button class="icon-btn"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
+        <button class="icon-btn has-dot"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1112 0c0 7 3 8 3 8H3s3-1 3-8z"/><path d="M10 21a2 2 0 004 0"/></svg></button>
+        <div class="avatar"><div class="avatar-ring"></div><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80" alt="" onerror="this.style.display='none'"/></div>
+      </div>
+    </header>
+
+    <section class="lesson-page">
+      <div class="lesson-grid">
+
+        <div class="video-block glass-panel">
+          <div class="video-frame">
+            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1200&q=85" alt="Teacher" onerror="this.style.background='linear-gradient(135deg,#3a4d8c,#1a2350)'"/>
+            <div class="video-overlay">
+              <div class="whiteboard-text">Greetings in <em>English</em></div>
+            </div>
+            <button class="video-play">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="#fff"><path d="M8 5.5v13l11-6.5z"/></svg>
+            </button>
+            <div class="video-progress">
+              <div class="vp-fill"></div>
+              <span class="vp-time">3:45 / 8:20</span>
+            </div>
+          </div>
+
+          <div class="subtitle-cards">
+            <h4 class="block-title">Subtitle Cards</h4>
+            <div class="sub-row">
+              <div class="sub-card active"><div class="sub-num">1</div><div class="sub-zh">Hello</div><div class="sub-en">/həˈloʊ/ — Greeting</div></div>
+              <div class="sub-card"><div class="sub-num">2</div><div class="sub-zh">Good morning</div><div class="sub-en">/ɡʊd ˈmɔːr.nɪŋ/ — Morning greeting</div></div>
+              <div class="sub-card"><div class="sub-num">3</div><div class="sub-zh">How are you?</div><div class="sub-en">/haʊ ɑːr juː/ — Polite question</div></div>
+              <div class="sub-card"><div class="sub-num">4</div><div class="sub-zh">Nice to meet you</div><div class="sub-en">/naɪs tuː miːt juː/ — Introduction</div></div>
+              <div class="sub-card"><div class="sub-num">5</div><div class="sub-zh">Goodbye</div><div class="sub-en">/ˌɡʊdˈbaɪ/ — Farewell</div></div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="lesson-side">
+
+          <div class="vocab-panel glass-panel">
+            <h4 class="block-title">Lesson Vocabulary</h4>
+            <div class="vocab-head">
+              <span>Word</span><span>Phonetic</span><span>Definition</span>
+            </div>
+            <div class="vocab-row active">
+              <span class="vw"><span class="dot blue"></span>Hello</span>
+              <span>/həˈloʊ/</span>
+              <span>Greeting</span>
+            </div>
+            <div class="vocab-row"><span class="vw">Hi</span><span>/haɪ/</span><span>Casual greeting</span></div>
+            <div class="vocab-row"><span class="vw">Good morning</span><span>/ɡʊd mɔːr.nɪŋ/</span><span>Morning greet…</span></div>
+            <div class="vocab-row"><span class="vw">How</span><span>/haʊ/</span><span>In what way</span></div>
+            <div class="vocab-row"><span class="vw">Welcome</span><span>/ˈwel.kəm/</span><span>Receive warm…</span></div>
+            <div class="vocab-row"><span class="vw">Thank you</span><span>/θæŋk juː/</span><span>Gratitude</span></div>
+            <div class="vocab-row"><span class="vw">Please</span><span>/pliːz/</span><span>Polite request</span></div>
+          </div>
+
+          <div class="progress-panel glass-panel">
+            <h4 class="block-title">Progress Tracker</h4>
+            <ul class="track">
+              <li class="done"><span class="bullet"></span>Intro</li>
+              <li class="active"><span class="bullet"></span>Lesson</li>
+              <li><span class="bullet"></span>Vocabulary</li>
+              <li><span class="bullet"></span>Review</li>
+              <li><span class="bullet"></span>Quiz</li>
+            </ul>
+          </div>
+
+        </aside>
+      </div>
+    </section>
+
+    <span class="float-glyph fg-1"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#7ef7d3" stroke-width="1.6"><path d="M6 4h4M8 4v3"/><path d="M14 19l4-9 4 9"/></svg></span>
+    <span class="float-glyph letter-A">A</span>
+    <span class="float-glyph letter-B">B</span>
+    <span class="float-glyph letter-Q">Q</span>
+    <span class="float-glyph fg-4 sparkle"></span>
+
+  </main>
+</div>
+
+<script src="shared.js"></script>
+</body>
+</html>

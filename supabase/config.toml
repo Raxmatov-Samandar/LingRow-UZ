@@ -1,0 +1,75 @@
+project_id = "lingrow"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://127.0.0.1"
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["https://lingrow.uz", "https://app.lingrow.uz"]
+jwt_expiry = 3600
+enable_signup = true
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+[auth.sms]
+enable_signup = false
+enable_confirmations = true
+template = "Your LingRow verification code is {{ .Code }}"
+
+# We use Eskiz via custom edge function instead of built-in SMS provider.
+
+[auth.external.google]
+enabled = true
+client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_GOOGLE_CLIENT_SECRET)"
+redirect_uri = ""
+url = ""
+
+[edge_runtime]
+enabled = true
+policy = "per_worker"
+inspector_port = 8083
+
+[functions]
+verify_jwt = true
+
+[functions.payme-merchant]
+verify_jwt = false  # called by Payme servers
+
+[functions.click-merchant]
+verify_jwt = false  # called by Click servers
+
+[functions.otp-send]
+verify_jwt = false  # called by anonymous users during sign-in
+
+[functions.otp-verify]
+verify_jwt = false
+
+[functions.parent-link-redeem]
+verify_jwt = true
+
+[functions.daily-report]
+verify_jwt = false  # called by cron with internal secret

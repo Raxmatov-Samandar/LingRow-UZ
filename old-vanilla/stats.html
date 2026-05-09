@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LingRow — My Learning Stats</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div id="cosmos-mount"></div>
+
+<div class="app">
+  <div id="sidebar-mount" data-active="stats"></div>
+
+  <main class="main">
+
+    <header class="topbar teacher-topbar">
+      <div class="teacher-banner glass-soft">
+        <img class="t-avatar" src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&q=80" alt="" onerror="this.style.display='none'"/>
+        <div class="t-text">
+          <h3>My Learning Stats</h3>
+          <p>Your Journey to Language Mastery</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <div class="avatar"><div class="avatar-ring"></div><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80" alt="" onerror="this.style.display='none'"/></div>
+      </div>
+    </header>
+
+    <section class="stats-page">
+
+      <div class="stats-row top-row">
+
+        <div class="glass-panel goal-card">
+          <h4 class="block-title">Daily Goal</h4>
+          <div class="donut">
+            <svg viewBox="0 0 120 120">
+              <defs>
+                <linearGradient id="dg" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#5aa9ff"/>
+                  <stop offset="100%" stop-color="#7ef7d3"/>
+                </linearGradient>
+              </defs>
+              <circle cx="60" cy="60" r="48" stroke="rgba(255,255,255,0.10)" stroke-width="14" fill="none"/>
+              <circle cx="60" cy="60" r="48" stroke="url(#dg)" stroke-width="14" fill="none" stroke-linecap="round"
+                      stroke-dasharray="301" stroke-dashoffset="45" transform="rotate(-90 60 60)"/>
+            </svg>
+            <div class="donut-center">
+              <div class="dc-pill">Today</div>
+              <div class="dc-pct">85%</div>
+              <div class="dc-sub">Daily Learning Goal</div>
+              <div class="dc-tiny">965 XP</div>
+            </div>
+          </div>
+          <div class="goal-stats">
+            <div><b>803</b><span>Lessons Done</span></div>
+            <div><b>35 min</b><span>Minutes Spoken</span></div>
+            <div><b>23</b><span>Quiz Correct</span></div>
+          </div>
+          <span class="badge-coin coin-a">XP</span>
+          <span class="badge-coin coin-b">+10</span>
+        </div>
+
+        <div class="glass-panel chart-card">
+          <h4 class="block-title">Daily Goal</h4>
+          <div class="bar-chart">
+            <div class="y-axis"><span>1,500</span><span>1,000</span><span>500</span><span>0</span></div>
+            <div class="bars">
+              <div class="bar"><i style="height:30%"></i><span>Mon</span></div>
+              <div class="bar"><i style="height:55%"></i><span>Tue</span></div>
+              <div class="bar"><i style="height:80%"></i><span>Wed</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-panel progress-card">
+          <h4 class="block-title">Progress Overview</h4>
+          <div class="po-grid">
+            <div>
+              <p class="po-lbl">Vocabulary Acquired</p>
+              <div class="bar-chart small">
+                <div class="y-axis"><span>250</span><span>200</span><span>150</span><span>100</span><span>50</span><span>0</span></div>
+                <div class="bars">
+                  <div class="bar"><i style="height:42%"></i><span>Mon</span></div>
+                  <div class="bar"><i style="height:36%"></i><span>Tue</span></div>
+                  <div class="bar"><i style="height:55%"></i><span>Wed</span></div>
+                  <div class="bar"><i style="height:80%"></i><span>Thu</span></div>
+                  <div class="bar"><i style="height:90%"></i><span>Fri</span></div>
+                  <div class="bar"><i style="height:65%"></i><span>Sat</span></div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <p class="po-lbl">Grammar Lessons Completed</p>
+              <div class="row-flex">
+                <span class="po-sub">Progress Tracker</span><span class="po-sub">Progress</span>
+              </div>
+              <div class="line-bar">
+                <div class="lb-fill"></div>
+                <div class="lb-ticks"><span>0</span><span>20</span><span>50</span><span>100</span></div>
+              </div>
+
+              <p class="po-lbl mt">Study Streak (Days)</p>
+              <svg class="streak-chart" viewBox="0 0 240 80" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="rgba(126,247,211,0.5)"/>
+                    <stop offset="100%" stop-color="rgba(126,247,211,0)"/>
+                  </linearGradient>
+                </defs>
+                <path d="M0 60 L20 50 L40 55 L60 35 L80 45 L100 30 L120 40 L140 20 L160 35 L180 25 L200 45 L220 30 L240 40 L240 80 L0 80 Z" fill="url(#sg)"/>
+                <path d="M0 60 L20 50 L40 55 L60 35 L80 45 L100 30 L120 40 L140 20 L160 35 L180 25 L200 45 L220 30 L240 40" stroke="#7ef7d3" stroke-width="2" fill="none"/>
+              </svg>
+              <div class="streak-x"><span>1</span><span>3</span><span>7</span><span>9</span><span>12</span><span>15</span><span>17</span><span>19</span><span>21</span><span>28</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="stats-row bottom-row">
+
+        <div class="glass-panel badges-card">
+          <h4 class="block-title">Badges Gallery</h4>
+          <div class="badges-row">
+            <div class="badge-item">
+              <div class="badge-emblem b-trophy">🏆<span class="b-mark">A+</span></div>
+              <p class="b-name">English Master</p>
+              <p class="b-sub">Top Learner</p>
+            </div>
+            <div class="badge-item">
+              <div class="badge-emblem b-quill">🪶</div>
+              <p class="b-name">Polyglot</p>
+              <p class="b-sub">Vocabulary</p>
+            </div>
+            <div class="badge-item">
+              <div class="badge-emblem b-compass">🧭</div>
+              <p class="b-name">Perfect Score</p>
+              <p class="b-sub">100% Quiz</p>
+            </div>
+            <div class="badge-item locked">
+              <div class="badge-emblem b-lock">🔒</div>
+              <p class="b-name">Locked</p>
+              <p class="b-sub">Keep Going</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-panel leaderboard-card">
+          <h4 class="block-title">Community Leaderboard</h4>
+          <div class="lb-card">
+            <h5 class="lb-title">Leaderboard</h5>
+            <div class="lb-head"><span>Rank</span><span>User</span><span>Country</span><span>Streak</span><span>Level</span></div>
+            <div class="lb-row">
+              <span class="rank">1</span>
+              <span class="user"><i class="ua"></i>Jackson R.</span>
+              <span class="flag">🇺🇸</span>
+              <span class="streak"><i class="hi-pill">Streak</i> 27</span>
+              <span class="lvl">2500</span>
+            </div>
+            <div class="lb-row me">
+              <span class="rank">2</span>
+              <span class="user"><i class="ua red"></i>You</span>
+              <span class="flag">🇺🇿</span>
+              <span class="streak"><i class="hi-pill">Streak</i> 24</span>
+              <span class="lvl">2000</span>
+            </div>
+            <div class="lb-row">
+              <span class="rank">3</span>
+              <span class="user"><i class="ua"></i>Mary J.</span>
+              <span class="flag">🇬🇧</span>
+              <span class="streak"><i class="hi-pill">Streak</i> 16</span>
+              <span class="lvl">1700</span>
+            </div>
+            <div class="lb-row">
+              <span class="rank">4</span>
+              <span class="user"><i class="ua"></i>Emma</span>
+              <span class="flag">🇮🇹</span>
+              <span class="streak"><i class="hi-pill">Streak</i> 6</span>
+              <span class="lvl">1500</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <p class="stats-foot">My Learning Stats | Powered by LingRow V2.1</p>
+    </section>
+
+    <span class="float-coin coin-1">XP</span>
+    <span class="float-coin coin-2">+25</span>
+    <span class="float-glyph letter-A">A</span>
+    <span class="float-glyph letter-B">B</span>
+    <span class="float-glyph letter-Q">Q</span>
+    <span class="float-glyph fg-4 sparkle"></span>
+
+  </main>
+</div>
+
+<script src="shared.js"></script>
+</body>
+</html>

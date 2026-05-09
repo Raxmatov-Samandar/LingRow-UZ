@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LingRow — Writing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div id="cosmos-mount"></div>
+
+<div class="app">
+  <div id="sidebar-mount" data-active="writing"></div>
+
+  <main class="main">
+
+    <header class="topbar teacher-topbar">
+      <div class="teacher-banner glass-soft">
+        <img class="t-avatar" src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&q=80" alt="" onerror="this.style.display='none'"/>
+        <div class="t-text">
+          <h3>Writing Practice</h3>
+          <p>Your Journey to Language Mastery</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <div class="avatar"><div class="avatar-ring"></div><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80" alt="" onerror="this.style.display='none'"/></div>
+      </div>
+    </header>
+
+    <section class="writing-page">
+      <div class="writing-grid">
+
+        <div class="essay-card glass-panel paper">
+          <div class="essay-meta">
+            <div class="meta-pill">Word Count: <b>185 / 500</b></div>
+            <div class="meta-pill">Time Remaining: <b>28:45</b></div>
+          </div>
+          <div class="essay-topic">Essay Topic: <b>The Importance of Practice</b></div>
+
+          <div class="essay-body">
+            <p>Effective language learning requires constant practice. My initial studies <span class="hl-grammar">were</span> focused on vocabulary. Gradually, I began to realize that speaking and writing are <span class="hl-vocab">crucial</span> components of overall mastery.</p>
+            <p>This insight led to a change in my approach: I started practicing speaking aloud daily, writing short paragraphs about my day, and reviewing AI feedback after every session.</p>
+            <p class="muted">Continue typing your essay here…</p>
+          </div>
+
+          <div class="teacher-pin">
+            <span>Teacher<br/>Support</span>
+            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=80&q=80" alt="" onerror="this.style.display='none'"/>
+          </div>
+
+          <div class="essay-actions">
+            <button class="btn-primary">Submit Essay</button>
+          </div>
+        </div>
+
+        <aside class="feedback-col">
+
+          <div class="score-card glass-panel">
+            <div class="score-row">
+              <div>
+                <p class="lbl">Overall Score Breakdown</p>
+                <p class="big-score">93%</p>
+              </div>
+              <div class="metric-row">
+                <div class="metric"><div class="ring blue" style="--p:98"><span>98%</span></div><label>Accuracy</label></div>
+                <div class="metric"><div class="ring green" style="--p:95"><span>95%</span></div><label>Fluency</label></div>
+                <div class="metric"><div class="ring green" style="--p:92"><span>92%</span></div><label>Pronunciation</label></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="fb-item glass-panel">
+            <div class="fb-head"><h5>Grammar</h5><span class="fb-tick blue">✓</span></div>
+            <p>Line 2: "My initial studies <u class="er">was</u> focused…"<br/>Error: "was" → "were"</p>
+            <div class="fb-callout red">Grammar Error: Subject-Verb Agreement. The subject "studies" is plural, so use <b>were</b> instead of <b>was</b>.</div>
+          </div>
+
+          <div class="fb-item glass-panel">
+            <div class="fb-head"><h5>Vocabulary Suggestion</h5><span class="fb-tick red">✕</span></div>
+            <p>Line 5: "…are <u class="hl-vocab">crucial</u> components…"<br/>Suggestion: Use a more precise word.</p>
+            <div class="fb-callout green">Consider using "pivotal" or "imperative" for a more formal academic tone.</div>
+          </div>
+
+          <div class="fb-item glass-panel">
+            <div class="fb-head"><h5>Style</h5></div>
+            <p>Line 4: Sentence is repetitive.<br/>Suggestion: Vary your sentence structure for better flow.</p>
+          </div>
+
+          <div class="fb-item glass-panel">
+            <div class="fb-head"><h5>Vocabulary Suggestion</h5><span class="fb-tick blue">✓</span></div>
+            <p>Line 3: "started practicing speaking aloud" — clear and active. Good choice of verbs.</p>
+          </div>
+
+          <button class="ask-teacher">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 11.5a8.4 8.4 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.4 8.4 0 01-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.4 8.4 0 013.8-.9h.5a8.5 8.5 0 018 8v.5z"/></svg>
+            Ask Teacher
+          </button>
+
+        </aside>
+      </div>
+    </section>
+
+    <span class="float-coin coin-1">XP</span>
+    <span class="float-coin coin-2">+15</span>
+    <span class="float-glyph letter-A">A</span>
+    <span class="float-glyph letter-B">B</span>
+    <span class="float-glyph letter-Q">Q</span>
+    <span class="float-glyph fg-4 sparkle"></span>
+
+  </main>
+</div>
+
+<script src="shared.js"></script>
+</body>
+</html>
