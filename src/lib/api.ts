@@ -42,7 +42,7 @@ async function fn<T>(name: string, body?: unknown, init: RequestInit = {}): Prom
 // ----------------------- AUTH -----------------------
 
 export const auth = {
-  async signIn(email: string, password: string): Promise<User> {
+  async signIn(email: string, password: string, role: UserRole = 'student'): Promise<User> {
     if (useMock) {
       await wait();
       // Dev-account guard: in mock mode, the dev email is locked behind a
@@ -53,7 +53,10 @@ export const auth = {
           throw new Error('Invalid credentials.');
         }
       }
-      return makeDemoUser(email, 'student');
+      // Mock honours the role chosen on the Login screen so the demo lands on
+      // the right dashboard. Real Supabase ignores this — the role comes from
+      // the profiles row.
+      return makeDemoUser(email, role);
     }
     const { data, error } = await supabase!.auth.signInWithPassword({ email, password });
     if (error || !data.user) throw error ?? new Error('Sign-in failed');

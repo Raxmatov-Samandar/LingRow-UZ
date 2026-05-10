@@ -30,7 +30,9 @@ export function Login() {
     e.preventDefault();
     setError(null); setLoading(true);
     try {
-      const user = await signIn(email, password);
+      // Pass the chosen role to signIn so mock mode lands on the right
+      // dashboard. Real Supabase ignores this and reads role from profiles.
+      const user = await signIn(email, password, role);
       setRole(user.role);
       navigate(
         user.role === 'parent' ? '/parent'

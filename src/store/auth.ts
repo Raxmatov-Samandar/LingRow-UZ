@@ -10,7 +10,7 @@ interface AuthState {
 
   setRole: (role: UserRole) => void;
   setOnboarding: (patch: Partial<OnboardingState>) => void;
-  signIn: (email: string, password: string) => Promise<User>;
+  signIn: (email: string, password: string, role?: UserRole) => Promise<User>;
   signUp: (opts: { name: string; email: string; password: string; role: UserRole; age?: number }) => Promise<User>;
   signOut: () => Promise<void>;
 }
@@ -25,8 +25,8 @@ export const useAuth = create<AuthState>()(
       setRole: role => set({ selectedRole: role }),
       setOnboarding: patch => set({ onboarding: { ...get().onboarding, ...patch } }),
 
-      async signIn(email, password) {
-        const user = await auth.signIn(email, password);
+      async signIn(email, password, role) {
+        const user = await auth.signIn(email, password, role ?? get().selectedRole ?? 'student');
         set({ user });
         return user;
       },
