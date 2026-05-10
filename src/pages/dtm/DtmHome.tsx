@@ -35,6 +35,7 @@ export function DtmHome() {
       <Cosmos />
       <AppShell>
         <Topbar variant="banner"
+                bannerEmoji="🎯"
                 bannerTitle={t('dtm.home.title')}
                 bannerSubtitle={t('dtm.home.subtitle', { name: user?.name?.split(' ')[0] ?? '' })} />
 

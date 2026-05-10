@@ -36,7 +36,7 @@ export function DevPanel() {
     <>
       <Cosmos />
       <AppShell>
-        <Topbar variant="banner" bannerTitle={t('dev.panel')} bannerSubtitle={t('dev.panelSub')} />
+        <Topbar variant="banner" bannerEmoji="🛠️" bannerTitle={t('dev.panel')} bannerSubtitle={t('dev.panelSub')} />
 
         {/* Tabs */}
         <div className="glass-panel px-4 py-3 flex items-center gap-2 flex-wrap">

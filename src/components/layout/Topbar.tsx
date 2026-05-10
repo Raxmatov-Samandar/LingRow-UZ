@@ -11,9 +11,20 @@ interface Props {
   variant?: 'search' | 'banner';
   bannerTitle?: string;
   bannerSubtitle?: string;
+  /** Emoji to show as the banner avatar (preferred). Mutually exclusive with bannerImage. */
+  bannerEmoji?: string;
+  /** Custom image URL for the banner avatar. Falls back to a default photo if omitted. */
+  bannerImage?: string;
+  /** Tailwind-friendly background gradient class for the emoji bubble. */
+  bannerTint?: string;
 }
 
-export function Topbar({ variant = 'search', bannerTitle, bannerSubtitle }: Props) {
+const DEFAULT_BANNER_IMAGE = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&q=80';
+
+export function Topbar({
+  variant = 'search', bannerTitle, bannerSubtitle,
+  bannerEmoji, bannerImage, bannerTint,
+}: Props) {
   const user = useAuth(s => s.user);
   const { t } = useTranslation();
 
@@ -28,8 +39,15 @@ export function Topbar({ variant = 'search', bannerTitle, bannerSubtitle }: Prop
         </div>
       ) : (
         <div className="glass-soft flex-1 max-w-[720px] flex items-center gap-3.5 pl-2 pr-4 py-2 rounded-2xl">
-          <img className="w-14 h-14 rounded-xl object-cover"
-               src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&q=80" alt="" />
+          {bannerEmoji ? (
+            <div className="w-14 h-14 rounded-xl grid place-items-center text-3xl shrink-0 border border-white/12"
+                 style={{ background: bannerTint ?? 'linear-gradient(135deg, rgba(126,247,211,0.18), rgba(90,169,255,0.10))' }}>
+              {bannerEmoji}
+            </div>
+          ) : (
+            <img className="w-14 h-14 rounded-xl object-cover"
+                 src={bannerImage ?? DEFAULT_BANNER_IMAGE} alt="" />
+          )}
           <div className="text-left">
             <h3 className="text-lg font-bold text-white">{bannerTitle ?? t('stats.title')}</h3>
             <p className="text-xs text-slate-400">{bannerSubtitle ?? t('stats.subtitle')}</p>

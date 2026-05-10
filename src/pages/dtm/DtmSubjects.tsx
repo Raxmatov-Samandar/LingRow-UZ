@@ -28,7 +28,7 @@ function Shell({ titleKey, subtitleKey, accent, emoji, topics, ctaTo, ctaKey }: 
     <>
       <Cosmos />
       <AppShell>
-        <Topbar variant="banner" bannerTitle={t(titleKey)} bannerSubtitle={t(subtitleKey)} />
+        <Topbar variant="banner" bannerEmoji={emoji} bannerTitle={t(titleKey)} bannerSubtitle={t(subtitleKey)} />
 
         <section className="flex-1 min-h-0 overflow-auto flex flex-col gap-5">
           {/* Hero */}
@@ -188,7 +188,7 @@ export function DtmStats() {
     <>
       <Cosmos />
       <AppShell>
-        <Topbar variant="banner" bannerTitle={t('dtm.stats.title')} bannerSubtitle={t('dtm.stats.subtitle')} />
+        <Topbar variant="banner" bannerEmoji="📊" bannerTitle={t('dtm.stats.title')} bannerSubtitle={t('dtm.stats.subtitle')} />
         <section className="flex-1 min-h-0 overflow-auto flex flex-col gap-5">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Tile label={t('dtm.stats.solved')}     value="0" />
