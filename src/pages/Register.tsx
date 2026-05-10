@@ -44,10 +44,10 @@ export function Register() {
             <h1 className="text-2xl font-bold text-white">{t('register.title')}</h1>
           </div>
 
-          <div className="flex gap-2 mb-2">
-            {(['student', 'adult', 'parent'] as UserRole[]).map(r => (
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            {(['student', 'adult', 'dtm', 'parent'] as UserRole[]).map(r => (
               <button key={r} type="button" onClick={() => setRole(r)}
-                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition
+                      className={`py-2 px-3 rounded-xl text-xs font-bold transition
                                   ${role === r
                                     ? 'bg-cosmic-mint/20 border border-cosmic-mint/50 text-cosmic-mint'
                                     : 'border border-white/10 text-slate-300 hover:bg-white/5'}`}>

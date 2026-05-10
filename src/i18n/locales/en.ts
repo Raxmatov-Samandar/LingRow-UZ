@@ -44,6 +44,8 @@ export const en = {
     studentSub: '10–16 years • Gamified learning',
     adult: 'Adult / IELTS',
     adultSub: '16+ • Cambridge tests, AI feedback',
+    dtm: 'DTM (O‘zbekiston)',
+    dtmSub: '16–18 • National university entrance exam prep',
     parent: 'Parent',
     parentSub: 'Track and guide your child',
   },

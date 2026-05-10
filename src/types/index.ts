@@ -2,9 +2,9 @@
 // LingRow — Type definitions (mirrors Plan v2 DB schema)
 // =============================================================
 
-export type UserRole = 'student' | 'adult' | 'parent';
+export type UserRole = 'student' | 'adult' | 'dtm' | 'parent';
 
-export type Plan = 'kids' | 'teen' | 'ielts' | 'corporate' | 'family';
+export type Plan = 'kids' | 'teen' | 'ielts' | 'dtm' | 'corporate' | 'family';
 
 export interface User {
   id: string;

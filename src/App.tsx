@@ -53,7 +53,7 @@ export default function App() {
       </Route>
 
       {/* Student / Adult routes */}
-      <Route element={<ProtectedRoute roles={['student', 'adult']} />}>
+      <Route element={<ProtectedRoute roles={['student', 'adult', 'dtm']} />}>
         <Route path="/home"        element={<Dashboard />} />
         <Route path="/lesson"      element={<Lesson />} />
         <Route path="/lesson/:id"  element={<Lesson />} />

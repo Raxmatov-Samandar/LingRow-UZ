@@ -8,8 +8,9 @@ import type { UserRole } from '@/types';
 
 interface RoleDef { id: UserRole; emoji: string; titleKey: string; subKey: string }
 const ROLES: RoleDef[] = [
-  { id: 'student', emoji: '👦', titleKey: 'role.student', subKey: 'role.studentSub' },
-  { id: 'adult',   emoji: '🎓', titleKey: 'role.adult',   subKey: 'role.adultSub' },
+  { id: 'student', emoji: '👦',   titleKey: 'role.student', subKey: 'role.studentSub' },
+  { id: 'adult',   emoji: '🎓',   titleKey: 'role.adult',   subKey: 'role.adultSub' },
+  { id: 'dtm',     emoji: '🎯',   titleKey: 'role.dtm',     subKey: 'role.dtmSub' },
   { id: 'parent',  emoji: '👨‍👩‍👧', titleKey: 'role.parent',  subKey: 'role.parentSub' },
 ];
 

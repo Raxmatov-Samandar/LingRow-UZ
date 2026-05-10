@@ -112,8 +112,8 @@ function makeDemoUser(email: string, role: UserRole): User {
     name: email.split('@')[0] || 'Demo User',
     email,
     role,
-    age: role === 'student' ? 14 : role === 'adult' ? 22 : 38,
-    plan: role === 'student' ? 'teen' : role === 'adult' ? 'ielts' : 'family',
+    age: role === 'student' ? 14 : role === 'adult' ? 22 : role === 'dtm' ? 17 : 38,
+    plan: role === 'student' ? 'teen' : role === 'adult' ? 'ielts' : role === 'dtm' ? 'dtm' : 'family',
     avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',
     createdAt: new Date().toISOString(),
   };

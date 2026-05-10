@@ -43,6 +43,8 @@ export const uz: Translation = {
     studentSub: '10–16 yosh • Geymifikatsiyalangan ta\'lim',
     adult: 'Katta / IELTS',
     adultSub: '16+ • Cambridge testlari, AI fikr-mulohazalari',
+    dtm: 'DTM (Abituriyent)',
+    dtmSub: "16–18 • Milliy oliy o'quv yurti imtihoniga tayyorgarlik",
     parent: 'Ota-ona',
     parentSub: "Farzandingizni kuzating va yo'naltiring",
   },
