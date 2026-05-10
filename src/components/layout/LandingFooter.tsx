@@ -15,12 +15,12 @@ export function LandingFooter() {
   const yearLabel = yearNow > COPYRIGHT_YEAR_START ? `${COPYRIGHT_YEAR_START}–${yearNow}` : String(COPYRIGHT_YEAR_START)
 
   return (
-    <footer className="w-full max-w-5xl mt-14 mx-auto px-4">
+    <footer className="w-full max-w-5xl mt-14 mx-auto px-4 pb-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <ContactCard
           icon={<MailIcon />}
-          accent="from-cosmic-sky/20 to-transparent"
-          ring="border-cosmic-sky/25 hover:border-cosmic-sky/55"
+          dot="bg-cosmic-sky shadow-[0_0_10px_rgba(90,169,255,0.7)]"
+          glow="hover:shadow-[0_18px_40px_-12px_rgba(90,169,255,0.45)]"
           title={t('footer.contactTitle')}
           email={EMAIL_HELLO}
           subject="Hello LingRow"
@@ -28,8 +28,8 @@ export function LandingFooter() {
         />
         <ContactCard
           icon={<LifeRingIcon />}
-          accent="from-cosmic-mint/20 to-transparent"
-          ring="border-cosmic-mint/25 hover:border-cosmic-mint/55"
+          dot="bg-cosmic-mint shadow-[0_0_10px_rgba(126,247,211,0.7)]"
+          glow="hover:shadow-[0_18px_40px_-12px_rgba(126,247,211,0.45)]"
           title={t('footer.supportTitle')}
           email={EMAIL_SUPPORT}
           subject="Support request"
@@ -37,8 +37,8 @@ export function LandingFooter() {
         />
         <ContactCard
           icon={<ShieldIcon />}
-          accent="from-violet-400/20 to-transparent"
-          ring="border-violet-400/25 hover:border-violet-400/55"
+          dot="bg-violet-400 shadow-[0_0_10px_rgba(196,181,253,0.7)]"
+          glow="hover:shadow-[0_18px_40px_-12px_rgba(167,139,250,0.45)]"
           title={t('footer.legalTitle')}
           email={EMAIL_LEGAL}
           subject="Legal inquiry"
@@ -46,11 +46,11 @@ export function LandingFooter() {
           extra={
             <div className="mt-3 flex gap-2">
               <Link to="/legal/privacy"
-                    className="px-2.5 py-1 rounded-full text-[11px] font-semibold border border-white/12 text-slate-200 hover:text-white hover:border-white/30 transition">
+                    className="px-2.5 py-1 rounded-full text-[11px] font-semibold border border-white/15 text-slate-200 hover:text-white hover:bg-white/[0.08] hover:border-white/30 transition">
                 {t('footer.privacy')}
               </Link>
               <Link to="/legal/terms"
-                    className="px-2.5 py-1 rounded-full text-[11px] font-semibold border border-white/12 text-slate-200 hover:text-white hover:border-white/30 transition">
+                    className="px-2.5 py-1 rounded-full text-[11px] font-semibold border border-white/15 text-slate-200 hover:text-white hover:bg-white/[0.08] hover:border-white/30 transition">
                 {t('footer.terms')}
               </Link>
             </div>
@@ -59,7 +59,7 @@ export function LandingFooter() {
       </div>
 
       {/* Bottom bar: brand + copyright */}
-      <div className="mt-6 mb-3 flex items-center justify-center gap-2 text-[11px] text-slate-500">
+      <div className="mt-7 flex items-center justify-center gap-2 text-[11px] text-slate-500">
         <span className="font-bold text-slate-300">{BRAND_NAME}</span>
         <span className="opacity-40">·</span>
         <span>{BRAND_DOMAIN}</span>
@@ -72,10 +72,10 @@ export function LandingFooter() {
 
 // ─────────────────────────── Card ───────────────────────────
 
-function ContactCard({ icon, accent, ring, title, email, subject, hint, extra }: {
+function ContactCard({ icon, dot, glow, title, email, subject, hint, extra }: {
   icon:    React.ReactNode
-  accent:  string
-  ring:    string
+  dot:     string
+  glow:    string
   title:   string
   email:   string
   subject: string
@@ -85,31 +85,28 @@ function ContactCard({ icon, accent, ring, title, email, subject, hint, extra }:
   return (
     <a
       href={mailto(email, subject)}
-      className={`group relative rounded-2xl p-5 bg-white/[0.03] border ${ring} transition-all duration-200
-                  hover:bg-white/[0.06] hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(0,0,0,0.25)]`}
+      className={`glass-panel block p-5 transition-all duration-300 hover:-translate-y-1 ${glow}`}
     >
-      {/* soft accent gradient at top-right */}
-      <div className={`pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-bl ${accent} opacity-60 group-hover:opacity-90 transition-opacity`} />
-
-      <div className="relative">
-        <div className="flex items-center gap-2.5">
-          <span className="w-9 h-9 rounded-xl grid place-items-center bg-white/[0.06] border border-white/10 text-slate-200 group-hover:bg-white/[0.1]">
-            {icon}
-          </span>
-          <span className="text-[10px] uppercase tracking-[0.18em] font-bold text-slate-400 group-hover:text-slate-300">
-            {title}
-          </span>
-        </div>
-
-        <p className="mt-3 text-[15px] font-bold text-white break-all leading-tight">
-          {email}
-        </p>
-        <p className="mt-1.5 text-[11.5px] text-slate-400 leading-relaxed">
-          {hint}
-        </p>
-
-        {extra}
+      {/* header row */}
+      <div className="flex items-center gap-2.5">
+        <span className="relative w-10 h-10 rounded-xl grid place-items-center bg-white/[0.07] border border-white/12 text-white">
+          {icon}
+          <span className={`absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full ${dot}`} />
+        </span>
+        <span className="text-[11px] uppercase tracking-[0.18em] font-bold text-slate-300">
+          {title}
+        </span>
       </div>
+
+      {/* email */}
+      <p className="mt-3.5 text-[15px] font-extrabold text-white break-all leading-tight tracking-tight">
+        {email}
+      </p>
+      <p className="mt-1.5 text-[11.5px] text-slate-400 leading-relaxed">
+        {hint}
+      </p>
+
+      {extra}
     </a>
   )
 }
