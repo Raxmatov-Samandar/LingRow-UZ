@@ -29,6 +29,8 @@ import { Billing }         from '@/pages/parent/Billing';
 
 import { DevPanel } from '@/pages/dev/DevPanel';
 
+import { Privacy, Terms } from '@/pages/Legal';
+
 import GlassSignInDemo  from '@/pages/GlassSignInDemo';
 
 import { NotFound } from '@/pages/NotFound';
@@ -41,6 +43,8 @@ export default function App() {
       <Route path="/login"     element={<Login />} />
       <Route path="/register"  element={<Register />} />
       <Route path="/demo/sign-in" element={<GlassSignInDemo />} />
+      <Route path="/legal/privacy" element={<Privacy />} />
+      <Route path="/legal/terms"   element={<Terms />} />
 
       {/* Authenticated (any role) */}
       <Route element={<ProtectedRoute />}>

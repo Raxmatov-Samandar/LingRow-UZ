@@ -171,6 +171,8 @@ export const uz: Translation = {
 
   profile: {
     free: 'Bepul',
+    help: "Yordam kerakmi? Support'ga yozing",
+    deleteAccount: "Akkauntimni o'chirish",
     fields: {
       goal: 'Maqsad',
       level: 'Daraja',
@@ -545,5 +547,41 @@ export const uz: Translation = {
       sizeUsed: 'Ishlatilgan xotira',
     },
     forbidden: "Sizda bu sahifaga ruxsat yo'q.",
+  },
+
+  footer: {
+    contactTitle: "Bog'lanish",
+    contactHint: "Umumiy savollar, hamkorlik, matbuot.",
+    supportTitle: 'Yordam',
+    supportHint: "Akkaunt, to'lov yoki texnik yordam.",
+    legalTitle: 'Yuridik',
+    legalHint: "Maxfiylik, shartlar, akkauntni o'chirish.",
+    privacy: 'Maxfiylik',
+    terms: 'Shartlar',
+  },
+
+  legal: {
+    privacy: {
+      title: 'Maxfiylik siyosati',
+      intro: "LingRow sizning maxfiyligingizni hurmat qiladi. Bu sahifa biz nima yig'ishimiz va undan qanday foydalanishimizning qisqacha mazmunidir. Ommaviy ishga tushirishdan oldin to'liq yuridik matn bilan almashtiriladi.",
+      collectTitle: "Biz nima yig'amiz",
+      collect: "Akkaunt ma'lumotlari (ism, email, telefon), o'rganish jarayoni (tugatilgan darslar, lug'at, ballar) va asosiy foydalanish statistikasi.",
+      useTitle: "Qanday ishlatamiz",
+      use: "O'rganishingizni shaxsiylashtirish, qurilmalar bo'ylab progressni sinxronlash va platformani yaxshilash uchun. Shaxsiy ma'lumotlarni sotmaymiz.",
+      contactTitle: "Bog'lanish",
+      contact: "Maxfiylik bo'yicha savollar yoki ma'lumotlarni o'chirish so'rovlari uchun yozing:",
+    },
+    terms: {
+      title: 'Foydalanish shartlari',
+      intro: "LingRow'dan foydalanish bilan ushbu shartlarga rozilik bildirasiz. Ommaviy ishga tushirishdan oldin to'liq yuridik matn bilan almashtiriladi.",
+      useTitle: "Xizmatdan foydalanish",
+      use: "LingRow'dan shaxsiy, notijoriy til o'rganish maqsadida foydalanishingiz mumkin. Platformani noto'g'ri ishlatmaslik yoki ruxsatsiz kirish urinishini qilmaslikka rozilik bildirasiz.",
+      accountsTitle: 'Akkauntlar',
+      accounts: "Parolingizni xavfsiz saqlash sizning mas'uliyatingiz. Ruxsatsiz kirish shubhasi bo'lsa, darhol bizga xabar bering.",
+      contentTitle: 'Kontent',
+      content: "Yuborgan yozuv, audio va maqolalaringiz egaligi sizda qoladi. Ularni joylash bilan LingRow'ga ilovada ko'rsatish uchun eksklyuziv bo'lmagan litsenziya berasiz.",
+      contactTitle: "Bog'lanish",
+      support: "Umumiy savollar uchun yozing:",
+    },
   },
 }

@@ -178,6 +178,8 @@ export const en = {
   // ──────────────── Profile ────────────────
   profile: {
     free: 'Free',
+    help: 'Need help? Email support',
+    deleteAccount: 'Delete my account',
     fields: {
       goal: 'Goal',
       level: 'Level',
@@ -565,6 +567,42 @@ export const en = {
       sizeUsed: 'Storage used',
     },
     forbidden: 'You do not have access to this page.',
+  },
+
+  footer: {
+    contactTitle: 'Contact',
+    contactHint: 'General questions, partnerships, press.',
+    supportTitle: 'Support',
+    supportHint: 'Account, billing or technical help.',
+    legalTitle: 'Legal',
+    legalHint: 'Privacy, terms, account deletion.',
+    privacy: 'Privacy',
+    terms: 'Terms',
+  },
+
+  legal: {
+    privacy: {
+      title: 'Privacy Policy',
+      intro: 'LingRow respects your privacy. This page summarizes what we collect and how we use it. The full legal text will replace this summary before public launch.',
+      collectTitle: 'What we collect',
+      collect: 'Account info (name, email, phone), learning progress (lessons completed, vocabulary, scores), and basic usage analytics.',
+      useTitle: 'How we use it',
+      use: 'To personalize your learning, sync progress across devices, and improve the platform. We do not sell personal data.',
+      contactTitle: 'Contact',
+      contact: 'For privacy questions or data deletion requests, email',
+    },
+    terms: {
+      title: 'Terms of Service',
+      intro: 'By using LingRow you agree to these terms. The full legal text will replace this summary before public launch.',
+      useTitle: 'Use of the service',
+      use: 'You may use LingRow for personal, non-commercial language learning. You agree not to misuse the platform or attempt to access it in unauthorized ways.',
+      accountsTitle: 'Accounts',
+      accounts: 'You are responsible for keeping your password safe. Notify us immediately if you suspect unauthorized access.',
+      contentTitle: 'Content',
+      content: 'You retain ownership of writing, recordings and articles you submit. By posting them you grant LingRow a non-exclusive license to display them in the app.',
+      contactTitle: 'Contact',
+      support: 'For general questions, write to',
+    },
   },
 }
 

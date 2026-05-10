@@ -4,6 +4,8 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Topbar } from '@/components/layout/Topbar';
 import { useAuth } from '@/store/auth';
 import { isDevUser } from '@/lib/dev';
+import { EMAIL_SUPPORT, EMAIL_LEGAL, mailto } from '@/lib/contacts';
+import { Link } from 'react-router-dom';
 
 export function Profile() {
   const { t } = useTranslation();
@@ -35,6 +37,18 @@ export function Profile() {
               {user?.role ? t(`role.${user.role}`) : ''} · {user?.plan ?? t('profile.free')}
             </p>
             <button className="mt-5 btn-ghost w-full" onClick={signOut}>{t('common.signOut')}</button>
+
+            {/* Help & legal links */}
+            <div className="mt-5 pt-4 border-t border-white/8 flex flex-col gap-2 text-[12px]">
+              <a href={mailto(EMAIL_SUPPORT, 'Support request from LingRow profile')}
+                 className="text-slate-300 hover:text-white">📨 {t('profile.help')}</a>
+              <Link to="/legal/privacy" className="text-slate-400 hover:text-white">{t('footer.privacy')}</Link>
+              <Link to="/legal/terms"   className="text-slate-400 hover:text-white">{t('footer.terms')}</Link>
+              <a href={mailto(EMAIL_LEGAL, 'Account deletion request')}
+                 className="text-slate-500 hover:text-rose-300 text-[11px] mt-1">
+                {t('profile.deleteAccount')}
+              </a>
+            </div>
           </aside>
 
           <div className="grid grid-cols-2 gap-5 content-start">

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Cosmos } from '@/components/layout/Cosmos';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
+import { LandingFooter } from '@/components/layout/LandingFooter';
 
 export function Landing() {
   const { t } = useTranslation();
@@ -17,7 +18,8 @@ export function Landing() {
     <>
       <Cosmos />
       <div className="absolute top-4 right-4 z-20"><LanguageSwitcher /></div>
-      <div className="h-screen flex items-center justify-center px-6">
+      <div className="min-h-screen flex flex-col items-center justify-between py-10 px-6">
+        <div className="flex-1 flex items-center justify-center w-full">
         <div className="text-center max-w-2xl">
           <div className="mx-auto mb-8 w-32 h-32 bg-no-repeat"
                style={{
@@ -50,6 +52,8 @@ export function Landing() {
             ))}
           </div>
         </div>
+        </div>
+        <LandingFooter />
       </div>
     </>
   );
