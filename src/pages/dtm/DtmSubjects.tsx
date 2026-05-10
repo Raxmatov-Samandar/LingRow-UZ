@@ -1,8 +1,10 @@
 // =============================================================================
-// DTM subject pages — placeholder content (Grammar, Vocabulary, Reading,
-// Listening, Mock Tests, Past Papers, Stats).
-// Each page has the same shell: banner topbar + main panel with subject-specific
-// teaser content. Real exercises will be wired in once content is ready.
+// DTM subject pages — three core subjects per Uzbekistan university entrance
+// exam: Mathematics, English, Native language (Ona tili va Adabiyot).
+// Plus Mock Tests, Past Papers and personal Stats.
+//
+// Each subject page follows the same shell. Real exercises will be wired in
+// once content (PDFs, structured questions) is uploaded via Dev Panel.
 // =============================================================================
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -70,86 +72,71 @@ function Shell({ titleKey, subtitleKey, accent, emoji, topics, ctaTo, ctaKey }: 
   )
 }
 
-// ───────────────────── Grammar ─────────────────────
-export function DtmGrammar() {
+// ───────────────────── Mathematics ─────────────────────
+export function DtmMath() {
   return (
     <Shell
-      titleKey="dtm.grammar.title"
-      subtitleKey="dtm.grammar.subtitle"
-      emoji="📝"
+      titleKey="dtm.math.title"
+      subtitleKey="dtm.math.subtitle"
+      emoji="🔢"
       accent="rgba(90,169,255,0.10)"
-      ctaTo="/dtm/grammar"
-      ctaKey="dtm.grammar.startDrill"
+      ctaTo="/dtm/math"
+      ctaKey="dtm.math.startDrill"
       topics={[
-        { titleKey: 'dtm.grammar.t.tenses',     descKey: 'dtm.grammar.t.tensesDesc',    count: 320 },
-        { titleKey: 'dtm.grammar.t.articles',   descKey: 'dtm.grammar.t.articlesDesc',  count: 95  },
-        { titleKey: 'dtm.grammar.t.modals',     descKey: 'dtm.grammar.t.modalsDesc',    count: 140 },
-        { titleKey: 'dtm.grammar.t.conditionals', descKey: 'dtm.grammar.t.conditionalsDesc', count: 110 },
-        { titleKey: 'dtm.grammar.t.passive',    descKey: 'dtm.grammar.t.passiveDesc',   count: 85  },
-        { titleKey: 'dtm.grammar.t.reported',   descKey: 'dtm.grammar.t.reportedDesc',  count: 70  },
-        { titleKey: 'dtm.grammar.t.prepositions', descKey: 'dtm.grammar.t.prepositionsDesc', count: 220 },
-        { titleKey: 'dtm.grammar.t.phrasal',    descKey: 'dtm.grammar.t.phrasalDesc',   count: 200 },
+        { titleKey: 'dtm.math.t.algebra',   descKey: 'dtm.math.t.algebraDesc',   count: 0 },
+        { titleKey: 'dtm.math.t.functions', descKey: 'dtm.math.t.functionsDesc', count: 0 },
+        { titleKey: 'dtm.math.t.geometry',  descKey: 'dtm.math.t.geometryDesc',  count: 0 },
+        { titleKey: 'dtm.math.t.trig',      descKey: 'dtm.math.t.trigDesc',      count: 0 },
+        { titleKey: 'dtm.math.t.progression', descKey: 'dtm.math.t.progressionDesc', count: 0 },
+        { titleKey: 'dtm.math.t.equations', descKey: 'dtm.math.t.equationsDesc', count: 0 },
+        { titleKey: 'dtm.math.t.inequalities', descKey: 'dtm.math.t.inequalitiesDesc', count: 0 },
+        { titleKey: 'dtm.math.t.combinatorics', descKey: 'dtm.math.t.combinatoricsDesc', count: 0 },
+        { titleKey: 'dtm.math.t.probability', descKey: 'dtm.math.t.probabilityDesc', count: 0 },
       ]}
     />
   )
 }
 
-// ───────────────────── Vocabulary ─────────────────────
-export function DtmVocabulary() {
+// ───────────────────── English ─────────────────────
+export function DtmEnglish() {
   return (
     <Shell
-      titleKey="dtm.vocab.title"
-      subtitleKey="dtm.vocab.subtitle"
-      emoji="📚"
-      accent="rgba(126,247,211,0.10)"
-      ctaTo="/dtm/vocabulary"
-      ctaKey="dtm.vocab.startDrill"
-      topics={[
-        { titleKey: 'dtm.vocab.t.high',     descKey: 'dtm.vocab.t.highDesc',    count: 800 },
-        { titleKey: 'dtm.vocab.t.synonyms', descKey: 'dtm.vocab.t.synonymsDesc', count: 600 },
-        { titleKey: 'dtm.vocab.t.antonyms', descKey: 'dtm.vocab.t.antonymsDesc', count: 400 },
-        { titleKey: 'dtm.vocab.t.collocations', descKey: 'dtm.vocab.t.collocationsDesc', count: 500 },
-        { titleKey: 'dtm.vocab.t.idioms',   descKey: 'dtm.vocab.t.idiomsDesc',  count: 300 },
-        { titleKey: 'dtm.vocab.t.confusable', descKey: 'dtm.vocab.t.confusableDesc', count: 400 },
-      ]}
-    />
-  )
-}
-
-// ───────────────────── Reading ─────────────────────
-export function DtmReading() {
-  return (
-    <Shell
-      titleKey="dtm.reading.title"
-      subtitleKey="dtm.reading.subtitle"
+      titleKey="dtm.english.title"
+      subtitleKey="dtm.english.subtitle"
       emoji="📖"
-      accent="rgba(167,139,250,0.10)"
-      ctaTo="/dtm/reading"
-      ctaKey="dtm.reading.startDrill"
+      accent="rgba(126,247,211,0.10)"
+      ctaTo="/dtm/english"
+      ctaKey="dtm.english.startDrill"
       topics={[
-        { titleKey: 'dtm.reading.t.short',   descKey: 'dtm.reading.t.shortDesc',   count: 60 },
-        { titleKey: 'dtm.reading.t.cloze',   descKey: 'dtm.reading.t.clozeDesc',   count: 40 },
-        { titleKey: 'dtm.reading.t.gist',    descKey: 'dtm.reading.t.gistDesc',    count: 35 },
-        { titleKey: 'dtm.reading.t.detail',  descKey: 'dtm.reading.t.detailDesc',  count: 45 },
+        { titleKey: 'dtm.english.t.grammar',     descKey: 'dtm.english.t.grammarDesc',     count: 0 },
+        { titleKey: 'dtm.english.t.vocabulary',  descKey: 'dtm.english.t.vocabularyDesc',  count: 0 },
+        { titleKey: 'dtm.english.t.reading',     descKey: 'dtm.english.t.readingDesc',     count: 0 },
+        { titleKey: 'dtm.english.t.cloze',       descKey: 'dtm.english.t.clozeDesc',       count: 0 },
+        { titleKey: 'dtm.english.t.tenses',      descKey: 'dtm.english.t.tensesDesc',      count: 0 },
+        { titleKey: 'dtm.english.t.phrasal',     descKey: 'dtm.english.t.phrasalDesc',     count: 0 },
       ]}
     />
   )
 }
 
-// ───────────────────── Listening ─────────────────────
-export function DtmListening() {
+// ───────────────────── Native (Ona tili) ─────────────────────
+export function DtmNative() {
   return (
     <Shell
-      titleKey="dtm.listening.title"
-      subtitleKey="dtm.listening.subtitle"
-      emoji="🎧"
-      accent="rgba(252,165,165,0.10)"
-      ctaTo="/dtm/listening"
-      ctaKey="dtm.listening.startDrill"
+      titleKey="dtm.native.title"
+      subtitleKey="dtm.native.subtitle"
+      emoji="✍️"
+      accent="rgba(167,139,250,0.10)"
+      ctaTo="/dtm/native"
+      ctaKey="dtm.native.startDrill"
       topics={[
-        { titleKey: 'dtm.listening.t.dialogue',  descKey: 'dtm.listening.t.dialogueDesc',  count: 25 },
-        { titleKey: 'dtm.listening.t.monologue', descKey: 'dtm.listening.t.monologueDesc', count: 20 },
-        { titleKey: 'dtm.listening.t.gapfill',   descKey: 'dtm.listening.t.gapfillDesc',   count: 15 },
+        { titleKey: 'dtm.native.t.fonetika',   descKey: 'dtm.native.t.fonetikaDesc',   count: 0 },
+        { titleKey: 'dtm.native.t.leksika',    descKey: 'dtm.native.t.leksikaDesc',    count: 0 },
+        { titleKey: 'dtm.native.t.morfologiya', descKey: 'dtm.native.t.morfologiyaDesc', count: 0 },
+        { titleKey: 'dtm.native.t.sintaksis',  descKey: 'dtm.native.t.sintaksisDesc',  count: 0 },
+        { titleKey: 'dtm.native.t.imlo',       descKey: 'dtm.native.t.imloDesc',       count: 0 },
+        { titleKey: 'dtm.native.t.uslubiyat',  descKey: 'dtm.native.t.uslubiyatDesc',  count: 0 },
+        { titleKey: 'dtm.native.t.adabiyot',   descKey: 'dtm.native.t.adabiyotDesc',   count: 0 },
       ]}
     />
   )
@@ -166,9 +153,9 @@ export function DtmMock() {
       ctaTo="/dtm/mock"
       ctaKey="dtm.mock.startDrill"
       topics={[
-        { titleKey: 'dtm.mock.t.full',  descKey: 'dtm.mock.t.fullDesc',  count: 12 },
-        { titleKey: 'dtm.mock.t.mini',  descKey: 'dtm.mock.t.miniDesc',  count: 24 },
-        { titleKey: 'dtm.mock.t.timed', descKey: 'dtm.mock.t.timedDesc', count: 18 },
+        { titleKey: 'dtm.mock.t.full',  descKey: 'dtm.mock.t.fullDesc',  count: 0 },
+        { titleKey: 'dtm.mock.t.mini',  descKey: 'dtm.mock.t.miniDesc',  count: 0 },
+        { titleKey: 'dtm.mock.t.timed', descKey: 'dtm.mock.t.timedDesc', count: 0 },
       ]}
     />
   )
@@ -185,11 +172,10 @@ export function DtmPastPapers() {
       ctaTo="/dtm/past-papers"
       ctaKey="dtm.past.startDrill"
       topics={[
-        { titleKey: 'dtm.past.t.y2024', descKey: 'dtm.past.t.yDesc', count: 4 },
-        { titleKey: 'dtm.past.t.y2023', descKey: 'dtm.past.t.yDesc', count: 4 },
-        { titleKey: 'dtm.past.t.y2022', descKey: 'dtm.past.t.yDesc', count: 4 },
-        { titleKey: 'dtm.past.t.y2021', descKey: 'dtm.past.t.yDesc', count: 4 },
-        { titleKey: 'dtm.past.t.y2020', descKey: 'dtm.past.t.yDesc', count: 4 },
+        { titleKey: 'dtm.past.t.y2025', descKey: 'dtm.past.t.yDesc', count: 0 },
+        { titleKey: 'dtm.past.t.y2024', descKey: 'dtm.past.t.yDesc', count: 0 },
+        { titleKey: 'dtm.past.t.y2023', descKey: 'dtm.past.t.yDesc', count: 0 },
+        { titleKey: 'dtm.past.t.y2022', descKey: 'dtm.past.t.yDesc', count: 0 },
       ]}
     />
   )

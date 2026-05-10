@@ -23,12 +23,11 @@ export function DtmHome() {
   ]
 
   const subjects = [
-    { to: '/dtm/grammar',     emoji: '📝', titleKey: 'dtm.subjects.grammar.title',     descKey: 'dtm.subjects.grammar.desc',     count: 1240 },
-    { to: '/dtm/vocabulary',  emoji: '📚', titleKey: 'dtm.subjects.vocabulary.title',  descKey: 'dtm.subjects.vocabulary.desc',  count: 3000 },
-    { to: '/dtm/reading',     emoji: '📖', titleKey: 'dtm.subjects.reading.title',     descKey: 'dtm.subjects.reading.desc',     count: 180 },
-    { to: '/dtm/listening',   emoji: '🎧', titleKey: 'dtm.subjects.listening.title',   descKey: 'dtm.subjects.listening.desc',   count: 60 },
-    { to: '/dtm/mock',        emoji: '🎯', titleKey: 'dtm.subjects.mock.title',        descKey: 'dtm.subjects.mock.desc',        count: 12 },
-    { to: '/dtm/past-papers', emoji: '🗂️', titleKey: 'dtm.subjects.pastPapers.title', descKey: 'dtm.subjects.pastPapers.desc',  count: 8  },
+    { to: '/dtm/math',        emoji: '🔢', titleKey: 'dtm.subjects.math.title',       descKey: 'dtm.subjects.math.desc',       count: 0 },
+    { to: '/dtm/english',     emoji: '📖', titleKey: 'dtm.subjects.english.title',    descKey: 'dtm.subjects.english.desc',    count: 0 },
+    { to: '/dtm/native',      emoji: '✍️', titleKey: 'dtm.subjects.native.title',     descKey: 'dtm.subjects.native.desc',     count: 0 },
+    { to: '/dtm/mock',        emoji: '🎯', titleKey: 'dtm.subjects.mock.title',       descKey: 'dtm.subjects.mock.desc',       count: 0 },
+    { to: '/dtm/past-papers', emoji: '🗂️', titleKey: 'dtm.subjects.pastPapers.title', descKey: 'dtm.subjects.pastPapers.desc', count: 0 },
   ]
 
   return (
@@ -60,7 +59,7 @@ export function DtmHome() {
               <h3 className="mt-1 text-xl font-bold text-white">{t('dtm.home.todayTitle')}</h3>
               <p className="mt-1 text-sm text-slate-300">{t('dtm.home.todayDesc')}</p>
             </div>
-            <Link to="/dtm/grammar" className="btn-mint">{t('dtm.home.startBtn')}</Link>
+            <Link to="/dtm/math" className="btn-mint">{t('dtm.home.startBtn')}</Link>
           </div>
 
           {/* Subjects grid */}

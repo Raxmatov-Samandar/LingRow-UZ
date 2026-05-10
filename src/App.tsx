@@ -33,7 +33,7 @@ import { Privacy, Terms } from '@/pages/Legal';
 
 import { DtmHome } from '@/pages/dtm/DtmHome';
 import {
-  DtmGrammar, DtmVocabulary, DtmReading, DtmListening,
+  DtmMath, DtmEnglish, DtmNative,
   DtmMock, DtmPastPapers, DtmStats,
 } from '@/pages/dtm/DtmSubjects';
 
@@ -80,10 +80,9 @@ export default function App() {
       {/* DTM routes — separate landing for the Uzbekistan university entrance exam track */}
       <Route element={<ProtectedRoute roles={['dtm']} />}>
         <Route path="/dtm/home"        element={<DtmHome />} />
-        <Route path="/dtm/grammar"     element={<DtmGrammar />} />
-        <Route path="/dtm/vocabulary"  element={<DtmVocabulary />} />
-        <Route path="/dtm/reading"     element={<DtmReading />} />
-        <Route path="/dtm/listening"   element={<DtmListening />} />
+        <Route path="/dtm/math"        element={<DtmMath />} />
+        <Route path="/dtm/english"     element={<DtmEnglish />} />
+        <Route path="/dtm/native"      element={<DtmNative />} />
         <Route path="/dtm/mock"        element={<DtmMock />} />
         <Route path="/dtm/past-papers" element={<DtmPastPapers />} />
         <Route path="/dtm/stats"       element={<DtmStats />} />
