@@ -31,6 +31,12 @@ import { DevPanel } from '@/pages/dev/DevPanel';
 
 import { Privacy, Terms } from '@/pages/Legal';
 
+import { DtmHome } from '@/pages/dtm/DtmHome';
+import {
+  DtmGrammar, DtmVocabulary, DtmReading, DtmListening,
+  DtmMock, DtmPastPapers, DtmStats,
+} from '@/pages/dtm/DtmSubjects';
+
 import GlassSignInDemo  from '@/pages/GlassSignInDemo';
 
 import { NotFound } from '@/pages/NotFound';
@@ -69,6 +75,18 @@ export default function App() {
         <Route path="/library/:id"      element={<ArticleDetail />} />
         <Route path="/stats"       element={<Stats />} />
         <Route path="/tutor"       element={<AiTutor />} />
+      </Route>
+
+      {/* DTM routes — separate landing for the Uzbekistan university entrance exam track */}
+      <Route element={<ProtectedRoute roles={['dtm']} />}>
+        <Route path="/dtm/home"        element={<DtmHome />} />
+        <Route path="/dtm/grammar"     element={<DtmGrammar />} />
+        <Route path="/dtm/vocabulary"  element={<DtmVocabulary />} />
+        <Route path="/dtm/reading"     element={<DtmReading />} />
+        <Route path="/dtm/listening"   element={<DtmListening />} />
+        <Route path="/dtm/mock"        element={<DtmMock />} />
+        <Route path="/dtm/past-papers" element={<DtmPastPapers />} />
+        <Route path="/dtm/stats"       element={<DtmStats />} />
       </Route>
 
       {/* Parent routes */}

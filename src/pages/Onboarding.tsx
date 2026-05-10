@@ -15,6 +15,7 @@ export function Onboarding() {
   if (user.role === 'parent') return <ParentOnboarding />;
 
   const isAdult = user.role === 'adult';
+  const isDtm   = user.role === 'dtm';
   const [step, setStep] = useState(0);
   const [goal, setGoal] = useState<'travel' | 'school' | 'ielts' | 'dtm' | 'work'>('school');
   const [level, setLevel] = useState<'beginner' | 'intermediate' | 'advanced' | 'mastery'>('beginner');
@@ -25,7 +26,7 @@ export function Onboarding() {
   function finish() {
     setOnboarding({ goal, level, bandTarget: isAdult ? bandTarget : undefined,
                     examDate: examDate || undefined, dailyMinutes });
-    navigate('/home');
+    navigate(isDtm ? '/dtm/home' : '/home');
   }
 
   const totalSteps = isAdult ? 4 : 3;

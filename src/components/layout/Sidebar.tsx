@@ -26,6 +26,17 @@ const PARENT_NAV = [
   { to: '/parent/billing',  labelKey: 'nav.billing',   icon: 'card'  },
 ];
 
+const DTM_NAV = [
+  { to: '/dtm/home',         labelKey: 'dtm.nav.dashboard',  icon: 'home'    },
+  { to: '/dtm/grammar',      labelKey: 'dtm.nav.grammar',    icon: 'pen'     },
+  { to: '/dtm/vocabulary',   labelKey: 'dtm.nav.vocabulary', icon: 'cards'   },
+  { to: '/dtm/reading',      labelKey: 'dtm.nav.reading',    icon: 'book'    },
+  { to: '/dtm/listening',    labelKey: 'dtm.nav.listening',  icon: 'headphones' },
+  { to: '/dtm/mock',         labelKey: 'dtm.nav.mock',       icon: 'target'  },
+  { to: '/dtm/past-papers',  labelKey: 'dtm.nav.pastPapers', icon: 'archive' },
+  { to: '/dtm/stats',        labelKey: 'dtm.nav.stats',      icon: 'chart'   },
+];
+
 const Icon = ({ name }: { name: string }) => {
   const props = { width: 20, height: 20, fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
   switch (name) {
@@ -42,6 +53,8 @@ const Icon = ({ name }: { name: string }) => {
     case 'headphones': return <svg viewBox="0 0 24 24" {...props}><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1v-7h3v5zM3 19a2 2 0 002 2h1v-7H3v5z"/></svg>;
     case 'news':       return <svg viewBox="0 0 24 24" {...props}><path d="M4 4h13a2 2 0 012 2v12a2 2 0 002 2H6a2 2 0 01-2-2V4z"/><path d="M8 8h7M8 12h7M8 16h4"/></svg>;
     case 'wrench':     return <svg viewBox="0 0 24 24" {...props}><path d="M14.7 6.3a4 4 0 105.7 5.7l-7.7 7.7a4 4 0 11-5.7-5.7l7.7-7.7z"/><path d="M3 21l3-3"/></svg>;
+    case 'target':     return <svg viewBox="0 0 24 24" {...props}><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>;
+    case 'archive':    return <svg viewBox="0 0 24 24" {...props}><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a2 2 0 002 2h10a2 2 0 002-2V8"/><path d="M10 13h4"/></svg>;
     default: return null;
   }
 };
@@ -50,7 +63,9 @@ export function Sidebar() {
   const user      = useAuth(s => s.user);
   const collapsed = useUi(s => s.sidebarCollapsed);
   const toggle    = useUi(s => s.toggleSidebar);
-  const items     = user?.role === 'parent' ? PARENT_NAV : STUDENT_NAV;
+  const items     = user?.role === 'parent' ? PARENT_NAV
+                  : user?.role === 'dtm'    ? DTM_NAV
+                  : STUDENT_NAV;
   const { t }     = useTranslation();
   const isDev     = isDevUser(user);
 

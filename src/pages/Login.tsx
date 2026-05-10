@@ -32,7 +32,11 @@ export function Login() {
     try {
       const user = await signIn(email, password);
       setRole(user.role);
-      navigate(user.role === 'parent' ? '/parent' : '/home');
+      navigate(
+        user.role === 'parent' ? '/parent'
+      : user.role === 'dtm'    ? '/dtm/home'
+      : '/home'
+      );
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t('common.error'));
     } finally { setLoading(false); }
