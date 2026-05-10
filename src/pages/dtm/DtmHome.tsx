@@ -22,10 +22,12 @@ export function DtmHome() {
     { label: t('dtm.home.stats.daysLeft'), value: '—',       hint: t('dtm.home.stats.daysLeftHint') },
   ]
 
-  const subjects = [
-    { to: '/dtm/math',        emoji: '🔢', titleKey: 'dtm.subjects.math.title',       descKey: 'dtm.subjects.math.desc',       count: 0 },
-    { to: '/dtm/english',     emoji: '📖', titleKey: 'dtm.subjects.english.title',    descKey: 'dtm.subjects.english.desc',    count: 0 },
-    { to: '/dtm/native',      emoji: '✍️', titleKey: 'dtm.subjects.native.title',     descKey: 'dtm.subjects.native.desc',     count: 0 },
+  const subjects: Array<{
+    to: string; emoji: string; image?: string; titleKey: string; descKey: string; count: number
+  }> = [
+    { to: '/dtm/math',        emoji: '🔢', image: '/icons/dtm/math.avif',    titleKey: 'dtm.subjects.math.title',       descKey: 'dtm.subjects.math.desc',       count: 0 },
+    { to: '/dtm/english',     emoji: '📖', image: '/icons/dtm/english.webp', titleKey: 'dtm.subjects.english.title',    descKey: 'dtm.subjects.english.desc',    count: 0 },
+    { to: '/dtm/native',      emoji: '✍️', image: '/icons/dtm/native.jpg',  titleKey: 'dtm.subjects.native.title',     descKey: 'dtm.subjects.native.desc',     count: 0 },
     { to: '/dtm/mock',        emoji: '🎯', titleKey: 'dtm.subjects.mock.title',       descKey: 'dtm.subjects.mock.desc',       count: 0 },
     { to: '/dtm/past-papers', emoji: '🗂️', titleKey: 'dtm.subjects.pastPapers.title', descKey: 'dtm.subjects.pastPapers.desc', count: 0 },
   ]
@@ -71,7 +73,9 @@ export function DtmHome() {
                 <Link key={s.to} to={s.to}
                       className="glass-panel p-5 group hover:-translate-y-1 transition-all duration-200 hover:shadow-[0_18px_40px_-12px_rgba(126,247,211,0.35)]">
                   <div className="flex items-start gap-3">
-                    <div className="text-4xl">{s.emoji}</div>
+                    {s.image
+                      ? <img src={s.image} alt="" className="w-14 h-14 rounded-xl object-cover border border-white/10 shrink-0" />
+                      : <div className="text-4xl">{s.emoji}</div>}
                     <div className="flex-1 min-w-0">
                       <p className="text-[15px] font-bold text-white leading-tight">{t(s.titleKey)}</p>
                       <p className="mt-1 text-[11.5px] text-slate-400 leading-relaxed">{t(s.descKey)}</p>

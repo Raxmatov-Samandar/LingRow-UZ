@@ -14,11 +14,12 @@ import { Topbar } from '@/components/layout/Topbar'
 
 interface Topic { titleKey: string; descKey: string; count: number }
 
-function Shell({ titleKey, subtitleKey, accent, emoji, topics, ctaTo, ctaKey }: {
+function Shell({ titleKey, subtitleKey, accent, emoji, image, topics, ctaTo, ctaKey }: {
   titleKey:    string
   subtitleKey: string
   accent:      string
   emoji:       string
+  image?:      string
   topics:      Topic[]
   ctaTo:       string
   ctaKey:      string
@@ -28,13 +29,20 @@ function Shell({ titleKey, subtitleKey, accent, emoji, topics, ctaTo, ctaKey }: 
     <>
       <Cosmos />
       <AppShell>
-        <Topbar variant="banner" bannerEmoji={emoji} bannerTitle={t(titleKey)} bannerSubtitle={t(subtitleKey)} />
+        <Topbar variant="banner"
+                bannerImage={image}
+                bannerEmoji={image ? undefined : emoji}
+                bannerTitle={t(titleKey)} bannerSubtitle={t(subtitleKey)} />
 
         <section className="flex-1 min-h-0 overflow-auto flex flex-col gap-5">
           {/* Hero */}
           <div className="glass-panel p-6 flex flex-col md:flex-row items-start md:items-center gap-5"
                style={{ background: `linear-gradient(120deg, ${accent}, transparent 70%)` }}>
-            <div className="text-6xl">{emoji}</div>
+            {image ? (
+              <img src={image} alt="" className="w-24 h-24 rounded-2xl object-cover border border-white/12 shrink-0" />
+            ) : (
+              <div className="text-6xl">{emoji}</div>
+            )}
             <div className="flex-1">
               <h2 className="text-2xl font-extrabold text-white">{t(titleKey)}</h2>
               <p className="mt-1.5 text-sm text-slate-300 leading-relaxed max-w-2xl">{t(subtitleKey)}</p>
@@ -79,6 +87,7 @@ export function DtmMath() {
       titleKey="dtm.math.title"
       subtitleKey="dtm.math.subtitle"
       emoji="🔢"
+      image="/icons/dtm/math.avif"
       accent="rgba(90,169,255,0.10)"
       ctaTo="/dtm/math"
       ctaKey="dtm.math.startDrill"
@@ -104,6 +113,7 @@ export function DtmEnglish() {
       titleKey="dtm.english.title"
       subtitleKey="dtm.english.subtitle"
       emoji="📖"
+      image="/icons/dtm/english.webp"
       accent="rgba(126,247,211,0.10)"
       ctaTo="/dtm/english"
       ctaKey="dtm.english.startDrill"
@@ -126,6 +136,7 @@ export function DtmNative() {
       titleKey="dtm.native.title"
       subtitleKey="dtm.native.subtitle"
       emoji="✍️"
+      image="/icons/dtm/native.jpg"
       accent="rgba(167,139,250,0.10)"
       ctaTo="/dtm/native"
       ctaKey="dtm.native.startDrill"
