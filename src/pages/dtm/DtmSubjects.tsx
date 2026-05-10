@@ -160,6 +160,7 @@ export function DtmMock() {
       titleKey="dtm.mock.title"
       subtitleKey="dtm.mock.subtitle"
       emoji="🎯"
+      image="/icons/dtm/mock.png"
       accent="rgba(251,191,36,0.10)"
       ctaTo="/dtm/mock"
       ctaKey="dtm.mock.startDrill"

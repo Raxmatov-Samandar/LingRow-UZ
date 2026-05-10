@@ -28,7 +28,7 @@ export function DtmHome() {
     { to: '/dtm/math',        emoji: '🔢', image: '/icons/dtm/math.avif',    titleKey: 'dtm.subjects.math.title',       descKey: 'dtm.subjects.math.desc',       count: 0 },
     { to: '/dtm/english',     emoji: '📖', image: '/icons/dtm/english.webp', titleKey: 'dtm.subjects.english.title',    descKey: 'dtm.subjects.english.desc',    count: 0 },
     { to: '/dtm/native',      emoji: '✍️', image: '/icons/dtm/native.jpg',  titleKey: 'dtm.subjects.native.title',     descKey: 'dtm.subjects.native.desc',     count: 0 },
-    { to: '/dtm/mock',        emoji: '🎯', titleKey: 'dtm.subjects.mock.title',       descKey: 'dtm.subjects.mock.desc',       count: 0 },
+    { to: '/dtm/mock',        emoji: '🎯', image: '/icons/dtm/mock.png',    titleKey: 'dtm.subjects.mock.title',       descKey: 'dtm.subjects.mock.desc',       count: 0 },
     { to: '/dtm/past-papers', emoji: '🗂️', titleKey: 'dtm.subjects.pastPapers.title', descKey: 'dtm.subjects.pastPapers.desc', count: 0 },
   ]
 
