@@ -13,7 +13,7 @@ function Shell({ title, children }: { title: string; children: React.ReactNode }
   return (
     <>
       <Cosmos />
-      <div className="min-h-screen flex flex-col items-center px-4 py-10">
+      <div className="h-screen overflow-y-auto flex flex-col items-center px-4 py-10">
         <div className="w-full max-w-3xl glass-panel p-7">
           <Link to="/" className="text-xs text-cosmic-mint hover:underline">← {BRAND_NAME}</Link>
           <h1 className="mt-3 text-3xl font-extrabold text-white">{title}</h1>

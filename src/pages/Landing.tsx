@@ -18,8 +18,8 @@ export function Landing() {
     <>
       <Cosmos />
       <div className="absolute top-4 right-4 z-20"><LanguageSwitcher /></div>
-      <div className="min-h-screen flex flex-col items-center px-6 py-12">
-        <div className="flex-1 flex items-center justify-center w-full min-h-[calc(100vh-180px)]">
+      <div className="h-screen overflow-y-auto flex flex-col items-center px-6 py-12">
+        <div className="flex flex-col items-center justify-center w-full min-h-[calc(100vh-100px)]">
         <div className="text-center max-w-2xl">
           <div className="mx-auto mb-8 w-32 h-32 bg-no-repeat"
                style={{
