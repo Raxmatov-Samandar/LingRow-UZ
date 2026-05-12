@@ -180,6 +180,7 @@ export function DtmPastPapers() {
       titleKey="dtm.past.title"
       subtitleKey="dtm.past.subtitle"
       emoji="🗂️"
+      image="/icons/dtm/archive.jpg"
       accent="rgba(148,163,184,0.10)"
       ctaTo="/dtm/past-papers"
       ctaKey="dtm.past.startDrill"
