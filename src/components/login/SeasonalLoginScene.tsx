@@ -1,12 +1,14 @@
 // =============================================================================
-// SeasonalLoginScene — full-screen animated background for the Login page.
-// Renders trees, ground, sun, clouds, falling particles (leaves/snow/petals/
-// fireflies) and a glassmorphism card slot. Switches palette based on the
-// `season` prop. Auto-detects season from the current month, with a manual
-// switcher in the top-left corner so users can preview any look.
+// SeasonalLoginScene — animated background for the Login page.
+// Renders cartoon-illustration trees (see SceneArt), distant mountains,
+// drifting clouds, animated road stripes, falling particles (leaves / snow /
+// petals / fireflies) and a glassmorphism card slot.
+// Switches palette based on the `season` prop. Auto-detects season from the
+// current month, with a manual switcher in the top-left corner.
 // =============================================================================
 import { useEffect, useState, type ReactNode } from 'react'
 import './seasons.css'
+import { SeasonTree, SeasonBush, SeasonSun, DistantMountains, GrassTufts } from './SceneArt'
 
 export type Season = 'autumn' | 'winter' | 'spring' | 'summer'
 
@@ -19,9 +21,7 @@ export function detectSeason(d: Date = new Date()): Season {
 }
 
 interface Props {
-  /** Children rendered inside the glass card (typically the login form). */
   children: ReactNode
-  /** Optional override; defaults to auto-detect from system date. */
   initialSeason?: Season
 }
 
@@ -36,7 +36,7 @@ const SEASON_EMOJI: Record<Season, string> = {
 export function SeasonalLoginScene({ children, initialSeason }: Props) {
   const [season, setSeason] = useState<Season>(initialSeason ?? detectSeason())
 
-  // subtle parallax — sun + edge trees track the mouse
+  // Mouse parallax — subtle drift on sun and edge trees.
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
       const cx = window.innerWidth / 2
@@ -56,38 +56,53 @@ export function SeasonalLoginScene({ children, initialSeason }: Props) {
     <div className="fixed inset-0">
       <div className="season-scene" data-season={season}>
         {/* sun */}
-        <div className="s-sun" style={{ transform: 'translate(var(--parallax-sun-x,0), var(--parallax-sun-y,0))' }} />
+        <div className="s-sun-wrap"
+             style={{ transform: 'translate(var(--parallax-sun-x,0), var(--parallax-sun-y,0))' }}>
+          <SeasonSun season={season} />
+        </div>
 
-        {/* clouds */}
+        {/* drifting clouds */}
         <div className="s-cloud s-cloud-1"><div /><div /><div /></div>
         <div className="s-cloud s-cloud-2"><div /><div /></div>
 
-        {/* trees */}
-        <div className="s-tree s-tree-left"  style={{ transform: 'translateX(var(--parallax-x,0))' }}>
-          <div className="s-canopy" /><div className="s-trunk" />
-        </div>
-        <div className="s-tree s-tree-right" style={{ transform: 'translateX(var(--parallax-x-neg,0))' }}>
-          <div className="s-canopy" /><div className="s-trunk" />
-        </div>
+        {/* distant mountain silhouettes for depth */}
+        <DistantMountains season={season} />
+
+        {/* mid background trees — small, slightly behind */}
         <div className="s-tree s-tree-mid-left">
-          <div className="s-canopy" /><div className="s-trunk" />
+          <SeasonTree season={season} size="mid" />
         </div>
         <div className="s-tree s-tree-mid-right">
-          <div className="s-canopy" /><div className="s-trunk" />
+          <SeasonTree season={season} size="mid" />
         </div>
 
         {/* ground + road */}
         <div className="s-ground" />
         <div className="s-road" />
 
+        {/* grass tufts on top of ground edge */}
+        <GrassTufts season={season} />
+
+        {/* foreground trees — big, framing the card */}
+        <div className="s-tree s-tree-left"  style={{ transform: 'translateX(var(--parallax-x,0))' }}>
+          <SeasonTree season={season} size="big" />
+        </div>
+        <div className="s-tree s-tree-right" style={{ transform: 'translateX(var(--parallax-x-neg,0))' }}>
+          <SeasonTree season={season} size="big" />
+        </div>
+
         {/* bushes */}
-        <div className="s-bush s-bush-left" />
-        <div className="s-bush s-bush-right" />
+        <div className="s-bush s-bush-left">
+          <SeasonBush season={season} />
+        </div>
+        <div className="s-bush s-bush-right">
+          <SeasonBush season={season} />
+        </div>
 
         {/* falling particles */}
         <Particles season={season} />
 
-        {/* season switcher */}
+        {/* season switcher (top-left) */}
         <div className="season-switcher">
           {SEASON_ORDER.map(s => (
             <button key={s}
@@ -100,7 +115,7 @@ export function SeasonalLoginScene({ children, initialSeason }: Props) {
           ))}
         </div>
 
-        {/* glass card */}
+        {/* glass card slot */}
         <div className="season-card-wrapper">
           <div className="season-card">
             <div className="season-card-shine" />
@@ -112,7 +127,7 @@ export function SeasonalLoginScene({ children, initialSeason }: Props) {
   )
 }
 
-// ───────────────────── Particles ─────────────────────
+// ──────────────────────── particles ────────────────────────
 
 function Particles({ season }: { season: Season }) {
   const items = Array.from({ length: 16 }, (_, i) => i)

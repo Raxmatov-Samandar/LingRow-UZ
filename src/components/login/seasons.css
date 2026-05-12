@@ -183,86 +183,60 @@
 }
 @keyframes roadMove { to { background-position: -80px 0; } }
 
-/* ── trees ────────────────────────────────────────────────── */
+/* ── trees (SVG art wrappers) ────────────────────────────── */
 
-.s-tree { position: absolute; bottom: 15%; z-index: 3; }
-.s-trunk { margin: 0 auto; background: var(--trunk); border-radius: 6px 6px 0 0; }
-.s-canopy { position: relative; border-radius: 50% 50% 40% 40%; }
-.s-canopy::before, .s-canopy::after { content: ''; position: absolute; border-radius: 50%; background: inherit; }
-
-.s-tree-left { left: -30px; bottom: 16%; }
-.s-tree-left .s-trunk { width: 38px; height: 140px; }
-.s-tree-left .s-canopy {
-  width: 160px; height: 200px;
-  background: radial-gradient(circle at 40% 40%, var(--canopy-1), var(--canopy-3) 70%);
-  margin-left: -61px;
-  margin-top: -80px;
-  box-shadow: inset -20px -20px 40px rgba(0,0,0,0.25);
-}
-.s-tree-left .s-canopy::before {
-  width: 110px; height: 130px; background: var(--canopy-2);
-  top: -30px; left: 10px; opacity: 0.8;
-}
-.s-tree-left .s-canopy::after {
-  width: 90px; height: 110px; background: var(--canopy-4);
-  top: -10px; right: -10px; opacity: 0.7;
-}
-
-.s-tree-right { right: -20px; bottom: 16%; }
-.s-tree-right .s-trunk { width: 35px; height: 150px; }
-.s-tree-right .s-canopy {
-  width: 155px; height: 195px;
-  background: radial-gradient(circle at 60% 35%, var(--canopy-4), var(--canopy-1) 65%);
-  margin-left: -60px;
-  margin-top: -75px;
-  box-shadow: inset 15px -20px 40px rgba(0,0,0,0.2);
-}
-.s-tree-right .s-canopy::before {
-  width: 105px; height: 125px; background: var(--canopy-3);
-  top: -25px; right: 10px; opacity: 0.75;
-}
-.s-tree-right .s-canopy::after {
-  width: 85px; height: 105px; background: var(--canopy-2);
-  top: -5px; left: -5px; opacity: 0.65;
-}
-
-.s-tree-mid-left { left: 110px; bottom: 16%; }
-.s-tree-mid-left .s-trunk { width: 20px; height: 90px; background: var(--trunk-light); }
-.s-tree-mid-left .s-canopy {
-  width: 90px; height: 110px;
-  background: radial-gradient(circle at 45% 40%, var(--canopy-2), var(--canopy-3) 70%);
-  margin-left: -35px;
-  margin-top: -45px;
-}
-
-.s-tree-mid-right { right: 100px; bottom: 16%; }
-.s-tree-mid-right .s-trunk { width: 18px; height: 80px; background: var(--trunk-light); }
-.s-tree-mid-right .s-canopy {
-  width: 80px; height: 95px;
-  background: radial-gradient(circle at 55% 35%, var(--canopy-1), var(--canopy-4) 70%);
-  margin-left: -31px;
-  margin-top: -40px;
-}
-
-/* ── bushes ──────────────────────────────────────────────── */
-.s-bush { position: absolute; bottom: 15%; z-index: 4; border-radius: 50% 50% 40% 40%; }
-.s-bush-left  { left: 80px; width: 80px; height: 40px; background: radial-gradient(circle, var(--bush-1), var(--bush-2)); }
-.s-bush-right { right: 60px; width: 70px; height: 35px; background: radial-gradient(circle, var(--bush-3), var(--bush-4)); }
-
-/* ── sun ─────────────────────────────────────────────────── */
-.s-sun {
+.s-tree {
   position: absolute;
-  top: 60px; right: 100px;
-  width: 70px; height: 70px;
-  background: var(--sun-grad);
-  border-radius: 50%;
-  box-shadow: 0 0 40px 20px var(--sun-glow);
+  bottom: 14%;
+  z-index: 3;
+  pointer-events: none;
+  transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+  will-change: transform;
+}
+
+.s-tree-left   { left: -30px;  width: 280px; height: 360px; bottom: 14%; }
+.s-tree-right  { right: -30px; width: 280px; height: 360px; bottom: 14%; }
+
+.s-tree-mid-left  { left: 14%; width: 170px; height: 230px; bottom: 18%; opacity: 0.92; }
+.s-tree-mid-right { right: 14%; width: 170px; height: 230px; bottom: 18%; opacity: 0.92; }
+
+.s-tree svg { display: block; width: 100%; height: 100%; }
+
+/* tiny idle sway on background trees */
+@keyframes treeSway {
+  0%, 100% { transform: rotate(-0.6deg); }
+  50%      { transform: rotate(0.6deg);  }
+}
+.s-tree-mid-left  { animation: treeSway 6s ease-in-out infinite; transform-origin: 50% 100%; }
+.s-tree-mid-right { animation: treeSway 7s ease-in-out -2s infinite; transform-origin: 50% 100%; }
+
+/* ── bushes (SVG art wrappers) ──────────────────────────── */
+.s-bush {
+  position: absolute;
+  bottom: 15%;
+  z-index: 4;
+  pointer-events: none;
+}
+.s-bush-left  { left: 6%;  width: 150px; height: 70px; }
+.s-bush-right { right: 5%; width: 140px; height: 64px; }
+.s-bush svg { display: block; width: 100%; height: 100%; }
+
+/* ── sun (SVG art wrapper) ──────────────────────────────── */
+.s-sun-wrap {
+  position: absolute;
+  top: 4%;
+  right: 8%;
+  width: 130px;
+  height: 130px;
   z-index: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 0 30px var(--sun-glow));
   animation: sunPulse 4s ease-in-out infinite;
 }
+.s-sun-wrap svg { display: block; width: 100%; height: 100%; }
 @keyframes sunPulse {
-  0%,100% { transform: scale(1); }
-  50%     { transform: scale(1.06); }
+  0%,100% { transform: translate(var(--parallax-sun-x,0), var(--parallax-sun-y,0)) scale(1); }
+  50%     { transform: translate(var(--parallax-sun-x,0), var(--parallax-sun-y,0)) scale(1.05); }
 }
 
 /* ── clouds ──────────────────────────────────────────────── */
