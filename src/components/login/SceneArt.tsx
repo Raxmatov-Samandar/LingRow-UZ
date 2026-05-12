@@ -162,3 +162,74 @@ export function BirdV() {
     </svg>
   )
 }
+
+// ───────────────────────── Foreground grass tufts ─────────────────────────
+// Detail at the very bottom of the visible land, before the water line. The
+// reference uses orange/lit grass blades catching the sunset — we use the
+// same warm tree palette so it reads as the same source of light.
+
+export function ForegroundGrass() {
+  // 26 tufts spread across with slight randomness
+  const tufts = Array.from({ length: 26 }, (_, i) => ({
+    x: (i / 25) * 100 + (i % 2 ? 1.5 : -1.5),
+    h: 18 + (i * 7) % 10,
+    skew: ((i * 13) % 7) - 3,
+  }))
+  return (
+    <svg viewBox="0 0 1200 60" preserveAspectRatio="none" aria-hidden>
+      <defs>
+        <linearGradient id="grassBlade" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%"  stopColor="var(--tree-warm)" />
+          <stop offset="100%" stopColor="var(--tree-shadow)" />
+        </linearGradient>
+      </defs>
+      {tufts.map((t, i) => {
+        const cx = t.x * 12
+        const baseY = 60
+        const tipY = baseY - t.h
+        return (
+          <g key={i} transform={`skewX(${t.skew})`}>
+            {/* central blade */}
+            <path d={`M${cx} ${baseY} Q${cx + 1} ${tipY + 4} ${cx + 2} ${tipY}`}
+                  stroke="url(#grassBlade)" strokeWidth="2" strokeLinecap="round" fill="none" />
+            {/* left blade */}
+            <path d={`M${cx - 4} ${baseY} Q${cx - 6} ${tipY + 6} ${cx - 8} ${tipY + 3}`}
+                  stroke="url(#grassBlade)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+            {/* right blade */}
+            <path d={`M${cx + 4} ${baseY} Q${cx + 7} ${tipY + 6} ${cx + 9} ${tipY + 3}`}
+                  stroke="url(#grassBlade)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+            {/* center bright dot — like a flower bud */}
+            {i % 4 === 0 && (
+              <circle cx={cx} cy={tipY - 2} r="2" fill="var(--tree-bright)" opacity="0.9" />
+            )}
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
+// ───────────────────────── Center glowing road/path ─────────────────────────
+// A subtle reflective ribbon between the trees, glowing with sunset color.
+// Adds depth and a focal line that draws the eye toward the card.
+
+export function CenterPath() {
+  return (
+    <svg viewBox="0 0 800 220" preserveAspectRatio="xMidYEnd meet" aria-hidden>
+      <defs>
+        <linearGradient id="pathGlow" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%"  stopColor="var(--tree-bright)" stopOpacity="0" />
+          <stop offset="50%" stopColor="var(--tree-warm)"   stopOpacity="0.6" />
+          <stop offset="100%" stopColor="var(--tree-deep)"  stopOpacity="0.9" />
+        </linearGradient>
+        <linearGradient id="pathShine" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%"  stopColor="#ffffff" stopOpacity="0" />
+          <stop offset="100%" stopColor="#ffe0a8" stopOpacity="0.45" />
+        </linearGradient>
+      </defs>
+      {/* path shape — narrow at top (horizon), wide at bottom (camera) */}
+      <path d="M370 0 L430 0 L600 220 L200 220 Z" fill="url(#pathGlow)" />
+      <path d="M380 0 L420 0 L520 220 L280 220 Z" fill="url(#pathShine)" />
+    </svg>
+  )
+}

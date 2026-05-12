@@ -261,6 +261,33 @@
 }
 .s-bushes-line svg { display: block; width: 100%; height: 100%; }
 
+/* center glowing path leading from the horizon to the camera */
+.s-center-path {
+  position: absolute;
+  left: 30%;
+  right: 30%;
+  bottom: 28%;
+  height: 22vh;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0.7;
+  mix-blend-mode: screen;
+  filter: blur(1px);
+}
+.s-center-path svg { display: block; width: 100%; height: 100%; }
+
+/* foreground grass tufts — warm-lit blades sitting on the bush line */
+.s-foreground-grass {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: 27.5%;
+  height: 36px;
+  z-index: 6;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.4));
+}
+.s-foreground-grass svg { display: block; width: 100%; height: 100%; }
+
 /* ── mist wisps near tree base ────────────────────────────── */
 .s-mist {
   position: absolute;
@@ -514,6 +541,69 @@
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.45), 0 2px 6px rgba(0,0,0,0.25);
 }
 
+/* ── falling particles (leaves / snow / petals / fireflies) ── */
+.s-particles {
+  position: absolute;
+  inset: 0 0 28% 0;        /* don't fall into the water */
+  pointer-events: none;
+  z-index: 7;
+  overflow: hidden;
+}
+.s-particle {
+  position: absolute;
+  top: -5%;
+  width: 16px;
+  height: 16px;
+  opacity: 0;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.25));
+  animation: pFall linear infinite;
+  will-change: transform, opacity;
+}
+.s-particle svg { display: block; width: 100%; height: 100%; }
+
+/* Standard fall — leaves / petals: drift sideways + spin */
+@keyframes pFall {
+  0%   { opacity: 0; transform: translate(0, -20px) rotate(0deg) scale(1); }
+  8%   { opacity: 1; }
+  50%  { transform: translate(36px, 50vh) rotate(360deg) scale(0.95); }
+  85%  { opacity: 0.7; }
+  100% { opacity: 0; transform: translate(-24px, 90vh) rotate(720deg) scale(0.55); }
+}
+
+/* Snow: straighter, gentler */
+[data-season="winter"] .s-particle { animation-name: pSnow; }
+@keyframes pSnow {
+  0%   { opacity: 0; transform: translate(0, -20px) rotate(0deg); }
+  10%  { opacity: 0.95; }
+  100% { opacity: 0.7; transform: translate(18px, 90vh) rotate(180deg); }
+}
+
+/* Summer fireflies: tiny float, glow handled per-element */
+[data-season="summer"] .s-particle { animation-name: pFloat; }
+@keyframes pFloat {
+  0%   { opacity: 0; transform: translate(0, 90vh); }
+  10%  { opacity: 1; }
+  50%  { transform: translate(40px, 50vh); }
+  90%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(-20px, 10vh); }
+}
+
+/* 14 staggered slots — based on the pattern you sent, with sensible variety */
+.s-particle:nth-child(1)  { left: 5%;  width: 14px; animation-duration: 9s;   animation-delay: 0.5s; }
+.s-particle:nth-child(2)  { left: 15%; width: 18px; animation-duration: 11s;  animation-delay: 2s;   }
+.s-particle:nth-child(3)  { left: 25%; width: 12px; animation-duration: 8s;   animation-delay: 3.5s; }
+.s-particle:nth-child(4)  { left: 35%; width: 16px; animation-duration: 10s;  animation-delay: 1s;   }
+.s-particle:nth-child(5)  { left: 45%; width: 14px; animation-duration: 9.5s; animation-delay: 2.5s; }
+.s-particle:nth-child(6)  { left: 55%; width: 20px; animation-duration: 12s;  animation-delay: 1.5s; }
+.s-particle:nth-child(7)  { left: 65%; width: 11px; animation-duration: 7.5s; animation-delay: 1.0s; }
+.s-particle:nth-child(8)  { left: 75%; width: 16px; animation-duration: 10.5s;animation-delay: 4s;   }
+.s-particle:nth-child(9)  { left: 85%; width: 13px; animation-duration: 9s;   animation-delay: 2.8s; }
+.s-particle:nth-child(10) { left: 92%; width: 15px; animation-duration: 11s;  animation-delay: 0.8s; }
+.s-particle:nth-child(11) { left: 10%; width: 12px; animation-duration: 13s;  animation-delay: 5s;   }
+.s-particle:nth-child(12) { left: 40%; width: 18px; animation-duration: 8.5s; animation-delay: 3s;   }
+.s-particle:nth-child(13) { left: 60%; width: 14px; animation-duration: 12s;  animation-delay: 6s;   }
+.s-particle:nth-child(14) { left: 80%; width: 17px; animation-duration: 10s;  animation-delay: 2.2s; }
+
 /* ── reduce motion ────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .s-star,
@@ -521,7 +611,8 @@
   .s-bird,
   .s-mist-wisp,
   .s-ripple,
-  .s-sun-wrap {
+  .s-sun-wrap,
+  .s-particle {
     animation: none !important;
   }
 }

@@ -20,6 +20,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import './seasons.css'
 import {
   MountainLayers, PineForest, BushSilhouetteLine, SunDisc, BirdV,
+  ForegroundGrass, CenterPath,
 } from './SceneArt'
 
 export type Season = 'autumn' | 'winter' | 'spring' | 'summer'
@@ -134,10 +135,23 @@ export function SeasonalLoginScene({ children, initialSeason }: Props) {
           <PineForest />
         </div>
 
+        {/* center glowing path leading to the horizon (between the trees) */}
+        <div className="s-center-path">
+          <CenterPath />
+        </div>
+
         {/* bush silhouette line */}
         <div className="s-bushes-line">
           <BushSilhouetteLine />
         </div>
+
+        {/* foreground grass tufts — sits on top of the bush line */}
+        <div className="s-foreground-grass">
+          <ForegroundGrass />
+        </div>
+
+        {/* falling particles — leaves / snow / petals / fireflies */}
+        <Particles season={season} />
 
         {/* mist wisps */}
         <div className="s-mist">
@@ -186,6 +200,108 @@ export function SeasonalLoginScene({ children, initialSeason }: Props) {
         </div>
       </div>
     </div>
+  )
+}
+
+// ──────────────────────── Particles (season-aware) ────────────────────────
+
+function Particles({ season }: { season: Season }) {
+  // 14 slots; each child :nth-child styles its own left/delay/duration
+  const items = Array.from({ length: 14 }, (_, i) => i)
+  return (
+    <div className="s-particles" aria-hidden>
+      {items.map(i => (
+        <div key={`${season}-${i}`} className="s-particle">
+          {renderParticle(season, i)}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function renderParticle(season: Season, i: number): ReactNode {
+  if (season === 'winter') return <Snowflake variant={i % 3} />
+  if (season === 'spring') return <Petal     color={SPRING_COLORS[i % SPRING_COLORS.length]} variant={i % 2} />
+  if (season === 'summer') return <Firefly   />
+  return <Leaf color={AUTUMN_COLORS[i % AUTUMN_COLORS.length]} variant={i % 3} />
+}
+
+const AUTUMN_COLORS = ['#e05c2a', '#d4892a', '#c44d1a', '#f0a030', '#b83818', '#e87830']
+const SPRING_COLORS = ['#f8c5d8', '#f5a8c0', '#fcd5e3', '#ffb8d0', '#ffcfdf', '#f896b8']
+
+function Leaf({ color, variant }: { color: string; variant: number }) {
+  if (variant === 0) return (
+    <svg viewBox="0 0 20 20">
+      <path d="M10 1 Q18 6 16 14 Q10 20 4 14 Q2 6 10 1Z" fill={color} opacity="0.95" />
+      <line x1="10" y1="1" x2="10" y2="19" stroke={color} strokeWidth="0.8" opacity="0.5" />
+    </svg>
+  )
+  if (variant === 1) return (
+    <svg viewBox="0 0 20 20">
+      <ellipse cx="10" cy="10" rx="7" ry="9" fill={color} opacity="0.9" transform="rotate(-20 10 10)" />
+    </svg>
+  )
+  return (
+    <svg viewBox="0 0 20 20">
+      <path d="M10 0 L12 6 L18 4 L14 10 L20 12 L13 12 L12 18 L10 14 L8 18 L7 12 L0 12 L6 10 L2 4 L8 6Z" fill={color} opacity="0.9" />
+    </svg>
+  )
+}
+
+function Snowflake({ variant }: { variant: number }) {
+  const stroke = '#ffffff'
+  if (variant === 0) return (
+    <svg viewBox="0 0 20 20">
+      <g stroke={stroke} strokeWidth="1.4" strokeLinecap="round" opacity="0.95">
+        <line x1="10" y1="2" x2="10" y2="18" />
+        <line x1="2"  y1="10" x2="18" y2="10" />
+        <line x1="4"  y1="4"  x2="16" y2="16" />
+        <line x1="16" y1="4"  x2="4"  y2="16" />
+      </g>
+    </svg>
+  )
+  if (variant === 1) return (
+    <svg viewBox="0 0 20 20">
+      <circle cx="10" cy="10" r="3" fill={stroke} opacity="0.9" />
+      <circle cx="10" cy="10" r="6" stroke={stroke} strokeWidth="0.7" fill="none" opacity="0.7" />
+    </svg>
+  )
+  return (
+    <svg viewBox="0 0 20 20">
+      <g fill={stroke} opacity="0.95">
+        <circle cx="10" cy="10" r="2" />
+        <circle cx="10" cy="3"  r="1.4" />
+        <circle cx="10" cy="17" r="1.4" />
+        <circle cx="3"  cy="10" r="1.4" />
+        <circle cx="17" cy="10" r="1.4" />
+      </g>
+    </svg>
+  )
+}
+
+function Petal({ color, variant }: { color: string; variant: number }) {
+  if (variant === 0) return (
+    <svg viewBox="0 0 20 20">
+      <path d="M10 2 Q16 6 14 12 Q10 18 6 12 Q4 6 10 2Z" fill={color} opacity="0.92" />
+    </svg>
+  )
+  return (
+    <svg viewBox="0 0 20 20">
+      <ellipse cx="10" cy="10" rx="4" ry="7" fill={color} opacity="0.9" transform="rotate(35 10 10)" />
+    </svg>
+  )
+}
+
+function Firefly() {
+  return (
+    <svg viewBox="0 0 20 20">
+      <circle cx="10" cy="10" r="2.5" fill="#fff5a8" opacity="0.9">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="1.6s" repeatCount="indefinite" />
+      </circle>
+      <circle cx="10" cy="10" r="6" fill="#fff5a8" opacity="0.3">
+        <animate attributeName="opacity" values="0.05;0.45;0.05" dur="1.6s" repeatCount="indefinite" />
+      </circle>
+    </svg>
   )
 }
 
