@@ -1,0 +1,476 @@
+/* =============================================================================
+   Seasonal login scene — shared CSS.
+   Each season block (data-season="autumn|winter|spring|summer") overrides the
+   color custom-props; structure stays identical so we can crossfade between
+   seasons without re-rendering the whole tree.
+   ============================================================================= */
+
+.season-scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.season-scene::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--sky-gradient);
+  z-index: 0;
+  transition: background 0.8s ease;
+}
+
+.season-scene::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 70% 30%, var(--sky-glow) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── palettes ─────────────────────────────────────────────── */
+
+[data-season="autumn"] {
+  --sky-gradient: linear-gradient(180deg, #e8855a 0%, #f5c97a 55%, #d4752a 80%, #c96c2a 100%);
+  --sky-glow:     rgba(255,200,100,0.35);
+  --ground-grad:  linear-gradient(180deg, #c96c2a 0%, #a04a18 60%, #7a3310 100%);
+  --road-grad:    linear-gradient(180deg, #8a4818 0%, #5a2a08 100%);
+  --road-stripe:  rgba(255,200,100,0.5);
+  --trunk:        #5a1e05;
+  --trunk-light:  #6b2d0e;
+  --canopy-1:     #e05c2a;
+  --canopy-2:     #d4892a;
+  --canopy-3:     #c44d1a;
+  --canopy-4:     #f0a030;
+  --bush-1:       #c44d1a;
+  --bush-2:       #8b2a08;
+  --bush-3:       #d4892a;
+  --bush-4:       #9a3a10;
+  --sun-grad:     radial-gradient(circle, #ffe090, #ffb030 60%, transparent 100%);
+  --sun-glow:     rgba(255,180,50,0.35);
+  --card-bg:      rgba(255,255,255,0.22);
+  --card-border:  rgba(255,255,255,0.45);
+  --card-shadow:  0 8px 32px rgba(120,40,0,0.18), 0 2px 8px rgba(255,200,100,0.12), inset 0 1px 0 rgba(255,255,255,0.6);
+  --title-color:  #3a1208;
+  --input-bg:     rgba(255,255,255,0.45);
+  --input-border: rgba(255,255,255,0.55);
+  --input-focus:  rgba(180,80,30,0.45);
+  --input-text:   #3a1208;
+  --btn-grad:     linear-gradient(135deg, #7a2510 0%, #9a3010 100%);
+  --btn-text:     #ffe8d0;
+}
+
+[data-season="winter"] {
+  --sky-gradient: linear-gradient(180deg, #b8d4f0 0%, #d9e8f5 55%, #e8f0f8 80%, #cdd9e6 100%);
+  --sky-glow:     rgba(255,255,255,0.45);
+  --ground-grad:  linear-gradient(180deg, #f5f7fa 0%, #d3dde6 60%, #a8b6c4 100%);
+  --road-grad:    linear-gradient(180deg, #5e7387 0%, #354559 100%);
+  --road-stripe:  rgba(220,230,245,0.7);
+  --trunk:        #3a2818;
+  --trunk-light:  #4d3924;
+  --canopy-1:     #ffffff;
+  --canopy-2:     #e8eef5;
+  --canopy-3:     #dde7f0;
+  --canopy-4:     #c4d3e3;
+  --bush-1:       #e8eef5;
+  --bush-2:       #b5c5d6;
+  --bush-3:       #d8e2ec;
+  --bush-4:       #aec0d2;
+  --sun-grad:     radial-gradient(circle, #fff9d8, #ffe6a8 60%, transparent 100%);
+  --sun-glow:     rgba(255,220,140,0.30);
+  --card-bg:      rgba(255,255,255,0.32);
+  --card-border:  rgba(255,255,255,0.55);
+  --card-shadow:  0 8px 32px rgba(60,80,110,0.22), 0 2px 8px rgba(180,200,220,0.18), inset 0 1px 0 rgba(255,255,255,0.7);
+  --title-color:  #1a2740;
+  --input-bg:     rgba(255,255,255,0.55);
+  --input-border: rgba(255,255,255,0.65);
+  --input-focus:  rgba(90,130,180,0.45);
+  --input-text:   #1a2740;
+  --btn-grad:     linear-gradient(135deg, #2a5a9a 0%, #4a7ab8 100%);
+  --btn-text:     #ffffff;
+}
+
+[data-season="spring"] {
+  --sky-gradient: linear-gradient(180deg, #b8e0f5 0%, #f5d4e6 45%, #ffe8d8 75%, #c8e0a8 100%);
+  --sky-glow:     rgba(255,220,235,0.40);
+  --ground-grad:  linear-gradient(180deg, #8fc46a 0%, #5e9c45 60%, #3e7a30 100%);
+  --road-grad:    linear-gradient(180deg, #b8956a 0%, #7a5a38 100%);
+  --road-stripe:  rgba(255,250,200,0.6);
+  --trunk:        #6b4225;
+  --trunk-light:  #7e5230;
+  --canopy-1:     #f8c5d8;
+  --canopy-2:     #f5a8c0;
+  --canopy-3:     #fcd5e3;
+  --canopy-4:     #f8d8a8;
+  --bush-1:       #6dac4d;
+  --bush-2:       #4a8a30;
+  --bush-3:       #7fbf5e;
+  --bush-4:       #589648;
+  --sun-grad:     radial-gradient(circle, #fff5b8, #ffd870 60%, transparent 100%);
+  --sun-glow:     rgba(255,220,120,0.32);
+  --card-bg:      rgba(255,255,255,0.28);
+  --card-border:  rgba(255,255,255,0.55);
+  --card-shadow:  0 8px 32px rgba(150,90,130,0.18), 0 2px 8px rgba(255,200,220,0.15), inset 0 1px 0 rgba(255,255,255,0.65);
+  --title-color:  #4a1838;
+  --input-bg:     rgba(255,255,255,0.50);
+  --input-border: rgba(255,255,255,0.62);
+  --input-focus:  rgba(220,90,140,0.45);
+  --input-text:   #4a1838;
+  --btn-grad:     linear-gradient(135deg, #d65898 0%, #e878a8 100%);
+  --btn-text:     #ffffff;
+}
+
+[data-season="summer"] {
+  --sky-gradient: linear-gradient(180deg, #4a9ce8 0%, #7cc4f0 45%, #b5dff5 75%, #c8e8a8 100%);
+  --sky-glow:     rgba(255,240,180,0.45);
+  --ground-grad:  linear-gradient(180deg, #6dac3a 0%, #4a8a25 60%, #2e6a18 100%);
+  --road-grad:    linear-gradient(180deg, #c8a878 0%, #8a6a3a 100%);
+  --road-stripe:  rgba(255,250,200,0.6);
+  --trunk:        #5e3818;
+  --trunk-light:  #704830;
+  --canopy-1:     #4a9c2a;
+  --canopy-2:     #6dba48;
+  --canopy-3:     #3a7e18;
+  --canopy-4:     #84d058;
+  --bush-1:       #5ea838;
+  --bush-2:       #3a7818;
+  --bush-3:       #72c048;
+  --bush-4:       #498a25;
+  --sun-grad:     radial-gradient(circle, #fffbcc, #ffd848 60%, transparent 100%);
+  --sun-glow:     rgba(255,210,80,0.45);
+  --card-bg:      rgba(255,255,255,0.26);
+  --card-border:  rgba(255,255,255,0.55);
+  --card-shadow:  0 8px 32px rgba(40,90,40,0.18), 0 2px 8px rgba(200,230,160,0.15), inset 0 1px 0 rgba(255,255,255,0.65);
+  --title-color:  #1a3a18;
+  --input-bg:     rgba(255,255,255,0.50);
+  --input-border: rgba(255,255,255,0.62);
+  --input-focus:  rgba(80,160,60,0.45);
+  --input-text:   #1a3a18;
+  --btn-grad:     linear-gradient(135deg, #2a8a3a 0%, #48ba58 100%);
+  --btn-text:     #ffffff;
+}
+
+/* ── ground / road ────────────────────────────────────────── */
+
+.s-ground {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 28%;
+  background: var(--ground-grad);
+  border-radius: 80% 80% 0 0 / 30px 30px 0 0;
+  z-index: 1;
+  transition: background 0.8s ease;
+}
+
+.s-road {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 18%;
+  background: var(--road-grad);
+  z-index: 2;
+  transition: background 0.8s ease;
+}
+.s-road::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 0; right: 0;
+  height: 3px;
+  background: repeating-linear-gradient(90deg, var(--road-stripe) 0, var(--road-stripe) 40px, transparent 40px, transparent 80px);
+  transform: translateY(-50%);
+  animation: roadMove 1.2s linear infinite;
+}
+@keyframes roadMove { to { background-position: -80px 0; } }
+
+/* ── trees ────────────────────────────────────────────────── */
+
+.s-tree { position: absolute; bottom: 15%; z-index: 3; }
+.s-trunk { margin: 0 auto; background: var(--trunk); border-radius: 6px 6px 0 0; }
+.s-canopy { position: relative; border-radius: 50% 50% 40% 40%; }
+.s-canopy::before, .s-canopy::after { content: ''; position: absolute; border-radius: 50%; background: inherit; }
+
+.s-tree-left { left: -30px; bottom: 16%; }
+.s-tree-left .s-trunk { width: 38px; height: 140px; }
+.s-tree-left .s-canopy {
+  width: 160px; height: 200px;
+  background: radial-gradient(circle at 40% 40%, var(--canopy-1), var(--canopy-3) 70%);
+  margin-left: -61px;
+  margin-top: -80px;
+  box-shadow: inset -20px -20px 40px rgba(0,0,0,0.25);
+}
+.s-tree-left .s-canopy::before {
+  width: 110px; height: 130px; background: var(--canopy-2);
+  top: -30px; left: 10px; opacity: 0.8;
+}
+.s-tree-left .s-canopy::after {
+  width: 90px; height: 110px; background: var(--canopy-4);
+  top: -10px; right: -10px; opacity: 0.7;
+}
+
+.s-tree-right { right: -20px; bottom: 16%; }
+.s-tree-right .s-trunk { width: 35px; height: 150px; }
+.s-tree-right .s-canopy {
+  width: 155px; height: 195px;
+  background: radial-gradient(circle at 60% 35%, var(--canopy-4), var(--canopy-1) 65%);
+  margin-left: -60px;
+  margin-top: -75px;
+  box-shadow: inset 15px -20px 40px rgba(0,0,0,0.2);
+}
+.s-tree-right .s-canopy::before {
+  width: 105px; height: 125px; background: var(--canopy-3);
+  top: -25px; right: 10px; opacity: 0.75;
+}
+.s-tree-right .s-canopy::after {
+  width: 85px; height: 105px; background: var(--canopy-2);
+  top: -5px; left: -5px; opacity: 0.65;
+}
+
+.s-tree-mid-left { left: 110px; bottom: 16%; }
+.s-tree-mid-left .s-trunk { width: 20px; height: 90px; background: var(--trunk-light); }
+.s-tree-mid-left .s-canopy {
+  width: 90px; height: 110px;
+  background: radial-gradient(circle at 45% 40%, var(--canopy-2), var(--canopy-3) 70%);
+  margin-left: -35px;
+  margin-top: -45px;
+}
+
+.s-tree-mid-right { right: 100px; bottom: 16%; }
+.s-tree-mid-right .s-trunk { width: 18px; height: 80px; background: var(--trunk-light); }
+.s-tree-mid-right .s-canopy {
+  width: 80px; height: 95px;
+  background: radial-gradient(circle at 55% 35%, var(--canopy-1), var(--canopy-4) 70%);
+  margin-left: -31px;
+  margin-top: -40px;
+}
+
+/* ── bushes ──────────────────────────────────────────────── */
+.s-bush { position: absolute; bottom: 15%; z-index: 4; border-radius: 50% 50% 40% 40%; }
+.s-bush-left  { left: 80px; width: 80px; height: 40px; background: radial-gradient(circle, var(--bush-1), var(--bush-2)); }
+.s-bush-right { right: 60px; width: 70px; height: 35px; background: radial-gradient(circle, var(--bush-3), var(--bush-4)); }
+
+/* ── sun ─────────────────────────────────────────────────── */
+.s-sun {
+  position: absolute;
+  top: 60px; right: 100px;
+  width: 70px; height: 70px;
+  background: var(--sun-grad);
+  border-radius: 50%;
+  box-shadow: 0 0 40px 20px var(--sun-glow);
+  z-index: 1;
+  animation: sunPulse 4s ease-in-out infinite;
+}
+@keyframes sunPulse {
+  0%,100% { transform: scale(1); }
+  50%     { transform: scale(1.06); }
+}
+
+/* ── clouds ──────────────────────────────────────────────── */
+.s-cloud { position: absolute; z-index: 1; opacity: 0.55; animation: cloudDrift linear infinite; }
+.s-cloud div { background: rgba(255,255,255,0.7); border-radius: 50px; position: absolute; }
+.s-cloud-1 { top: 60px; animation-duration: 38s; }
+.s-cloud-1 div:nth-child(1) { width:120px;height:35px;top:15px;left:0; }
+.s-cloud-1 div:nth-child(2) { width:80px;height:50px;top:0;left:20px; }
+.s-cloud-1 div:nth-child(3) { width:60px;height:40px;top:5px;left:60px; }
+.s-cloud-2 { top: 100px; animation-duration: 48s; animation-delay: 6s; }
+.s-cloud-2 div:nth-child(1) { width:90px;height:28px;top:10px;left:0; }
+.s-cloud-2 div:nth-child(2) { width:60px;height:38px;top:0;left:15px; }
+@keyframes cloudDrift { from { left: -300px; } to { left: 110vw; } }
+
+/* ── falling particles (leaves / snow / petals / fireflies) ── */
+.s-particles { position: absolute; inset: 0; z-index: 6; pointer-events: none; overflow: hidden; }
+.s-particle {
+  position: absolute;
+  top: -60px;
+  width: 18px;
+  height: 18px;
+  opacity: 0;
+  animation: pFall linear infinite;
+}
+.s-particle svg { width: 100%; height: 100%; }
+
+@keyframes pFall {
+  0%   { opacity: 0; transform: translateY(0) translateX(0) rotate(0deg) scale(1); }
+  5%   { opacity: 1; }
+  50%  { transform: translateY(50vh) translateX(40px) rotate(360deg) scale(0.95); }
+  80%  { opacity: 0.85; }
+  100% { opacity: 0; transform: translateY(110vh) translateX(-30px) rotate(720deg) scale(0.5); }
+}
+
+/* Particle positions/timings — 16 slots */
+.s-particle:nth-child(1)  { left:5%;   animation-duration:6s;  animation-delay:0s;    width:14px; }
+.s-particle:nth-child(2)  { left:12%;  animation-duration:8s;  animation-delay:1.2s;  width:20px; }
+.s-particle:nth-child(3)  { left:22%;  animation-duration:5.5s;animation-delay:0.4s;  width:12px; }
+.s-particle:nth-child(4)  { left:33%;  animation-duration:7s;  animation-delay:2s;    width:16px; }
+.s-particle:nth-child(5)  { left:44%;  animation-duration:6.5s;animation-delay:0.8s;  width:22px; }
+.s-particle:nth-child(6)  { left:55%;  animation-duration:7.5s;animation-delay:1.5s;  width:14px; }
+.s-particle:nth-child(7)  { left:65%;  animation-duration:5s;  animation-delay:3s;    width:18px; }
+.s-particle:nth-child(8)  { left:75%;  animation-duration:8.5s;animation-delay:0.2s;  width:11px; }
+.s-particle:nth-child(9)  { left:85%;  animation-duration:6.2s;animation-delay:1.8s;  width:20px; }
+.s-particle:nth-child(10) { left:92%;  animation-duration:7.2s;animation-delay:2.5s;  width:15px; }
+.s-particle:nth-child(11) { left:8%;   animation-duration:9s;  animation-delay:4s;    width:13px; }
+.s-particle:nth-child(12) { left:28%;  animation-duration:5.8s;animation-delay:2.8s;  width:19px; }
+.s-particle:nth-child(13) { left:48%;  animation-duration:6.8s;animation-delay:0.6s;  width:16px; }
+.s-particle:nth-child(14) { left:68%;  animation-duration:7.8s;animation-delay:3.5s;  width:21px; }
+.s-particle:nth-child(15) { left:18%;  animation-duration:5.2s;animation-delay:1s;    width:12px; }
+.s-particle:nth-child(16) { left:78%;  animation-duration:8.2s;animation-delay:2.2s;  width:17px; }
+
+/* Snowflakes drift gentler */
+[data-season="winter"] .s-particle {
+  animation-name: pSnow;
+}
+@keyframes pSnow {
+  0%   { opacity: 0; transform: translateY(0) translateX(0) rotate(0deg); }
+  10%  { opacity: 1; }
+  100% { opacity: 0.7; transform: translateY(110vh) translateX(20px) rotate(360deg); }
+}
+
+/* ── glass card ──────────────────────────────────────────── */
+.season-card-wrapper {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  animation: cardIn 0.9s cubic-bezier(.22,.68,0,1.2) both;
+}
+@keyframes cardIn {
+  from { opacity:0; transform: translate(-50%,-44%) scale(0.94); }
+  to   { opacity:1; transform: translate(-50%,-50%) scale(1); }
+}
+
+.season-card {
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  background: var(--card-bg);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1.5px solid var(--card-border);
+  border-radius: 24px;
+  padding: 36px 32px 28px;
+  box-shadow: var(--card-shadow);
+  position: relative;
+  transition: background 0.8s ease, border-color 0.8s ease, box-shadow 0.8s ease;
+}
+
+.season-card-shine {
+  position: absolute;
+  top: -1px; left: 0; right: 0;
+  height: 60%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, transparent 100%);
+  border-radius: 24px 24px 0 0;
+  pointer-events: none;
+}
+
+.season-card h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--title-color);
+  text-align: center;
+  margin-bottom: 22px;
+  letter-spacing: 0.01em;
+  transition: color 0.6s ease;
+}
+
+.season-input {
+  width: 100%;
+  background: var(--input-bg) !important;
+  border: 1.5px solid var(--input-border) !important;
+  border-radius: 12px;
+  padding: 13px 18px;
+  font-size: 14px;
+  color: var(--input-text) !important;
+  outline: none;
+  transition: all 0.25s ease, color 0.6s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.season-input::placeholder { color: color-mix(in srgb, var(--input-text) 50%, transparent); }
+.season-input:focus {
+  background: color-mix(in srgb, var(--input-bg) 80%, white) !important;
+  border-color: var(--input-focus) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--input-focus) 30%, transparent), 0 2px 8px rgba(0,0,0,0.07);
+  transform: translateY(-1px);
+}
+
+.season-btn {
+  width: 100%;
+  margin-top: 8px;
+  padding: 14px;
+  background: var(--btn-grad);
+  color: var(--btn-text);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.6s ease;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.2);
+  position: relative;
+  overflow: hidden;
+}
+.season-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.28); }
+.season-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.season-card .role-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.season-role-chip {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--input-bg) 60%, transparent);
+  border: 1.5px solid var(--input-border);
+  color: var(--input-text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.season-role-chip.active {
+  background: var(--btn-grad);
+  color: var(--btn-text);
+  border-color: transparent;
+}
+
+/* ── season switcher (top-right) ─────────────────────── */
+.season-switcher {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 20;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 999px;
+}
+.season-switcher button {
+  width: 36px; height: 36px;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 18px;
+  display: grid;
+  place-items: center;
+  transition: all 0.25s ease;
+  color: var(--title-color);
+}
+.season-switcher button:hover { background: rgba(255,255,255,0.25); }
+.season-switcher button.active {
+  background: rgba(255,255,255,0.45);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  .s-particle, .s-cloud, .s-sun, .s-road::before { animation: none !important; }
+}
