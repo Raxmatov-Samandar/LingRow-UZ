@@ -1,8 +1,9 @@
 /* =============================================================================
-   Seasonal login scene — shared CSS.
-   Each season block (data-season="autumn|winter|spring|summer") overrides the
-   color custom-props; structure stays identical so we can crossfade between
-   seasons without re-rendering the whole tree.
+   Seasonal twilight scene — shared CSS.
+   Twilight composition: deep gradient sky → distant mountain layers → backlit
+   pine forest → mist → reflective water. Each season swaps the palette of
+   CSS custom-properties; the structure is identical so crossfades feel smooth.
+   Inspired by the reference "Autumn Dusk Sign Up" mockup.
    ============================================================================= */
 
 .season-scene {
@@ -10,293 +11,353 @@
   inset: 0;
   overflow: hidden;
   z-index: 0;
-}
-
-.season-scene::before {
-  content: '';
-  position: absolute;
-  inset: 0;
   background: var(--sky-gradient);
-  z-index: 0;
   transition: background 0.8s ease;
 }
 
+/* horizon glow */
+.season-scene::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  bottom: 28%;
+  height: 38%;
+  background: radial-gradient(ellipse at 50% 100%, var(--horizon-glow) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* subtle vignette */
 .season-scene::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 70% 30%, var(--sky-glow) 0%, transparent 60%);
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.25) 100%);
   pointer-events: none;
-  z-index: 0;
+  z-index: 11;
 }
 
 /* ── palettes ─────────────────────────────────────────────── */
 
 [data-season="autumn"] {
-  --sky-gradient: linear-gradient(180deg, #e8855a 0%, #f5c97a 55%, #d4752a 80%, #c96c2a 100%);
-  --sky-glow:     rgba(255,200,100,0.35);
-  --ground-grad:  linear-gradient(180deg, #c96c2a 0%, #a04a18 60%, #7a3310 100%);
-  --road-grad:    linear-gradient(180deg, #8a4818 0%, #5a2a08 100%);
-  --road-stripe:  rgba(255,200,100,0.5);
-  --trunk:        #5a1e05;
-  --trunk-light:  #6b2d0e;
-  --canopy-1:     #e05c2a;
-  --canopy-2:     #d4892a;
-  --canopy-3:     #c44d1a;
-  --canopy-4:     #f0a030;
-  --bush-1:       #c44d1a;
-  --bush-2:       #8b2a08;
-  --bush-3:       #d4892a;
-  --bush-4:       #9a3a10;
-  --sun-grad:     radial-gradient(circle, #ffe090, #ffb030 60%, transparent 100%);
-  --sun-glow:     rgba(255,180,50,0.35);
-  --card-bg:      rgba(255,255,255,0.22);
-  --card-border:  rgba(255,255,255,0.45);
-  --card-shadow:  0 8px 32px rgba(120,40,0,0.18), 0 2px 8px rgba(255,200,100,0.12), inset 0 1px 0 rgba(255,255,255,0.6);
-  --title-color:  #3a1208;
-  --input-bg:     rgba(255,255,255,0.45);
-  --input-border: rgba(255,255,255,0.55);
-  --input-focus:  rgba(180,80,30,0.45);
-  --input-text:   #3a1208;
-  --btn-grad:     linear-gradient(135deg, #7a2510 0%, #9a3010 100%);
-  --btn-text:     #ffe8d0;
+  --sky-gradient: linear-gradient(180deg, #1a1f3a 0%, #2d2950 25%, #5a3a5e 55%, #b56a48 80%, #d88f5a 95%);
+  --horizon-glow: rgba(255, 170, 90, 0.55);
+  --tree-bright: #ffb45a;
+  --tree-warm:   #e0651e;
+  --tree-deep:   #7a3818;
+  --tree-shadow: #2a1828;
+  --bush-color:  #1f1d3a;
+  --bush-edge:   #1a1830;
+  --mountain-far:  #4a4868;
+  --mountain-mid:  #353048;
+  --mountain-near: #221e36;
+  --mist-color:    rgba(220, 200, 230, 0.45);
+  --water-base:    #2a3050;
+  --water-shine:   rgba(255, 170, 90, 0.18);
+  --star-color:    rgba(255, 250, 220, 0.9);
+  --card-bg:      rgba(255,255,255,0.10);
+  --card-border:  rgba(255,255,255,0.22);
+  --card-shadow:  0 12px 40px rgba(10,10,30,0.35), inset 0 1px 0 rgba(255,255,255,0.18);
+  --title-color:  #ffffff;
+  --input-bg:     rgba(255,255,255,0.08);
+  --input-border: rgba(255,255,255,0.22);
+  --input-focus:  #ffb070;
+  --input-text:   #ffffff;
+  --btn-grad:     linear-gradient(135deg, #6a7adb 0%, #8a92e8 100%);
+  --btn-text:     #ffffff;
+  --subtle-text:  rgba(255,255,255,0.65);
 }
 
 [data-season="winter"] {
-  --sky-gradient: linear-gradient(180deg, #b8d4f0 0%, #d9e8f5 55%, #e8f0f8 80%, #cdd9e6 100%);
-  --sky-glow:     rgba(255,255,255,0.45);
-  --ground-grad:  linear-gradient(180deg, #f5f7fa 0%, #d3dde6 60%, #a8b6c4 100%);
-  --road-grad:    linear-gradient(180deg, #5e7387 0%, #354559 100%);
-  --road-stripe:  rgba(220,230,245,0.7);
-  --trunk:        #3a2818;
-  --trunk-light:  #4d3924;
-  --canopy-1:     #ffffff;
-  --canopy-2:     #e8eef5;
-  --canopy-3:     #dde7f0;
-  --canopy-4:     #c4d3e3;
-  --bush-1:       #e8eef5;
-  --bush-2:       #b5c5d6;
-  --bush-3:       #d8e2ec;
-  --bush-4:       #aec0d2;
-  --sun-grad:     radial-gradient(circle, #fff9d8, #ffe6a8 60%, transparent 100%);
-  --sun-glow:     rgba(255,220,140,0.30);
-  --card-bg:      rgba(255,255,255,0.32);
-  --card-border:  rgba(255,255,255,0.55);
-  --card-shadow:  0 8px 32px rgba(60,80,110,0.22), 0 2px 8px rgba(180,200,220,0.18), inset 0 1px 0 rgba(255,255,255,0.7);
-  --title-color:  #1a2740;
-  --input-bg:     rgba(255,255,255,0.55);
-  --input-border: rgba(255,255,255,0.65);
-  --input-focus:  rgba(90,130,180,0.45);
-  --input-text:   #1a2740;
-  --btn-grad:     linear-gradient(135deg, #2a5a9a 0%, #4a7ab8 100%);
+  --sky-gradient: linear-gradient(180deg, #0d1428 0%, #1a2548 30%, #2d3a6a 60%, #5a6a90 85%, #7e8eac 100%);
+  --horizon-glow: rgba(180, 200, 235, 0.42);
+  --tree-bright: #d8e4f0;
+  --tree-warm:   #8aa8c4;
+  --tree-deep:   #3a4868;
+  --tree-shadow: #16203c;
+  --bush-color:  #1a2240;
+  --bush-edge:   #0f1830;
+  --mountain-far:  #3a4870;
+  --mountain-mid:  #28324f;
+  --mountain-near: #161f38;
+  --mist-color:    rgba(240, 245, 255, 0.55);
+  --water-base:    #1a2548;
+  --water-shine:   rgba(200, 220, 240, 0.20);
+  --star-color:    rgba(255, 255, 255, 0.95);
+  --card-bg:      rgba(255,255,255,0.10);
+  --card-border:  rgba(255,255,255,0.25);
+  --card-shadow:  0 12px 40px rgba(5,10,30,0.45), inset 0 1px 0 rgba(255,255,255,0.20);
+  --title-color:  #ffffff;
+  --input-bg:     rgba(255,255,255,0.08);
+  --input-border: rgba(255,255,255,0.25);
+  --input-focus:  #98c4ff;
+  --input-text:   #ffffff;
+  --btn-grad:     linear-gradient(135deg, #6a8edb 0%, #95b8ea 100%);
   --btn-text:     #ffffff;
+  --subtle-text:  rgba(255,255,255,0.65);
 }
 
 [data-season="spring"] {
-  --sky-gradient: linear-gradient(180deg, #b8e0f5 0%, #f5d4e6 45%, #ffe8d8 75%, #c8e0a8 100%);
-  --sky-glow:     rgba(255,220,235,0.40);
-  --ground-grad:  linear-gradient(180deg, #8fc46a 0%, #5e9c45 60%, #3e7a30 100%);
-  --road-grad:    linear-gradient(180deg, #b8956a 0%, #7a5a38 100%);
-  --road-stripe:  rgba(255,250,200,0.6);
-  --trunk:        #6b4225;
-  --trunk-light:  #7e5230;
-  --canopy-1:     #f8c5d8;
-  --canopy-2:     #f5a8c0;
-  --canopy-3:     #fcd5e3;
-  --canopy-4:     #f8d8a8;
-  --bush-1:       #6dac4d;
-  --bush-2:       #4a8a30;
-  --bush-3:       #7fbf5e;
-  --bush-4:       #589648;
-  --sun-grad:     radial-gradient(circle, #fff5b8, #ffd870 60%, transparent 100%);
-  --sun-glow:     rgba(255,220,120,0.32);
-  --card-bg:      rgba(255,255,255,0.28);
-  --card-border:  rgba(255,255,255,0.55);
-  --card-shadow:  0 8px 32px rgba(150,90,130,0.18), 0 2px 8px rgba(255,200,220,0.15), inset 0 1px 0 rgba(255,255,255,0.65);
-  --title-color:  #4a1838;
-  --input-bg:     rgba(255,255,255,0.50);
-  --input-border: rgba(255,255,255,0.62);
-  --input-focus:  rgba(220,90,140,0.45);
-  --input-text:   #4a1838;
-  --btn-grad:     linear-gradient(135deg, #d65898 0%, #e878a8 100%);
+  --sky-gradient: linear-gradient(180deg, #2a2046 0%, #5a3a6a 30%, #a25c80 55%, #e0a098 78%, #f5cab0 95%);
+  --horizon-glow: rgba(255, 200, 180, 0.55);
+  --tree-bright: #ffd0d8;
+  --tree-warm:   #f5a8c0;
+  --tree-deep:   #8a3a58;
+  --tree-shadow: #2a1830;
+  --bush-color:  #1f1830;
+  --bush-edge:   #18122a;
+  --mountain-far:  #5a486a;
+  --mountain-mid:  #3e3050;
+  --mountain-near: #261e38;
+  --mist-color:    rgba(255, 220, 230, 0.50);
+  --water-base:    #2e2848;
+  --water-shine:   rgba(255, 200, 200, 0.18);
+  --star-color:    rgba(255, 245, 230, 0.85);
+  --card-bg:      rgba(255,255,255,0.12);
+  --card-border:  rgba(255,255,255,0.25);
+  --card-shadow:  0 12px 40px rgba(40,15,40,0.30), inset 0 1px 0 rgba(255,255,255,0.20);
+  --title-color:  #ffffff;
+  --input-bg:     rgba(255,255,255,0.10);
+  --input-border: rgba(255,255,255,0.25);
+  --input-focus:  #ffb0c8;
+  --input-text:   #ffffff;
+  --btn-grad:     linear-gradient(135deg, #e878a8 0%, #f598c0 100%);
   --btn-text:     #ffffff;
+  --subtle-text:  rgba(255,255,255,0.70);
 }
 
 [data-season="summer"] {
-  --sky-gradient: linear-gradient(180deg, #4a9ce8 0%, #7cc4f0 45%, #b5dff5 75%, #c8e8a8 100%);
-  --sky-glow:     rgba(255,240,180,0.45);
-  --ground-grad:  linear-gradient(180deg, #6dac3a 0%, #4a8a25 60%, #2e6a18 100%);
-  --road-grad:    linear-gradient(180deg, #c8a878 0%, #8a6a3a 100%);
-  --road-stripe:  rgba(255,250,200,0.6);
-  --trunk:        #5e3818;
-  --trunk-light:  #704830;
-  --canopy-1:     #4a9c2a;
-  --canopy-2:     #6dba48;
-  --canopy-3:     #3a7e18;
-  --canopy-4:     #84d058;
-  --bush-1:       #5ea838;
-  --bush-2:       #3a7818;
-  --bush-3:       #72c048;
-  --bush-4:       #498a25;
-  --sun-grad:     radial-gradient(circle, #fffbcc, #ffd848 60%, transparent 100%);
-  --sun-glow:     rgba(255,210,80,0.45);
-  --card-bg:      rgba(255,255,255,0.26);
-  --card-border:  rgba(255,255,255,0.55);
-  --card-shadow:  0 8px 32px rgba(40,90,40,0.18), 0 2px 8px rgba(200,230,160,0.15), inset 0 1px 0 rgba(255,255,255,0.65);
-  --title-color:  #1a3a18;
-  --input-bg:     rgba(255,255,255,0.50);
-  --input-border: rgba(255,255,255,0.62);
-  --input-focus:  rgba(80,160,60,0.45);
-  --input-text:   #1a3a18;
-  --btn-grad:     linear-gradient(135deg, #2a8a3a 0%, #48ba58 100%);
+  --sky-gradient: linear-gradient(180deg, #1a2848 0%, #38486e 25%, #d87862 60%, #ffa878 82%, #ffc890 95%);
+  --horizon-glow: rgba(255, 200, 130, 0.60);
+  --tree-bright: #a8d878;
+  --tree-warm:   #5ea838;
+  --tree-deep:   #2a5a18;
+  --tree-shadow: #122a08;
+  --bush-color:  #1a3018;
+  --bush-edge:   #0e2010;
+  --mountain-far:  #5a5070;
+  --mountain-mid:  #383a55;
+  --mountain-near: #1e2438;
+  --mist-color:    rgba(255, 230, 200, 0.45);
+  --water-base:    #28324a;
+  --water-shine:   rgba(255, 190, 130, 0.22);
+  --star-color:    rgba(255, 250, 220, 0.85);
+  --card-bg:      rgba(255,255,255,0.12);
+  --card-border:  rgba(255,255,255,0.25);
+  --card-shadow:  0 12px 40px rgba(20,20,40,0.32), inset 0 1px 0 rgba(255,255,255,0.20);
+  --title-color:  #ffffff;
+  --input-bg:     rgba(255,255,255,0.10);
+  --input-border: rgba(255,255,255,0.25);
+  --input-focus:  #ffc878;
+  --input-text:   #ffffff;
+  --btn-grad:     linear-gradient(135deg, #4ab088 0%, #6ac8a0 100%);
   --btn-text:     #ffffff;
+  --subtle-text:  rgba(255,255,255,0.70);
 }
 
-/* ── ground / road ────────────────────────────────────────── */
-
-.s-ground {
+/* ── stars (CSS twinkle) ──────────────────────────────────── */
+.s-stars {
   position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 28%;
-  background: var(--ground-grad);
-  border-radius: 80% 80% 0 0 / 30px 30px 0 0;
-  z-index: 1;
-  transition: background 0.8s ease;
-}
-
-.s-road {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 18%;
-  background: var(--road-grad);
-  z-index: 2;
-  transition: background 0.8s ease;
-}
-.s-road::before {
-  content: '';
-  position: absolute;
-  top: 50%; left: 0; right: 0;
-  height: 3px;
-  background: repeating-linear-gradient(90deg, var(--road-stripe) 0, var(--road-stripe) 40px, transparent 40px, transparent 80px);
-  transform: translateY(-50%);
-  animation: roadMove 1.2s linear infinite;
-}
-@keyframes roadMove { to { background-position: -80px 0; } }
-
-/* ── trees (SVG art wrappers) ────────────────────────────── */
-
-.s-tree {
-  position: absolute;
-  bottom: 14%;
-  z-index: 3;
+  inset: 0 0 50% 0;
   pointer-events: none;
-  transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1);
-  will-change: transform;
+  z-index: 1;
 }
-
-.s-tree-left   { left: -30px;  width: 280px; height: 360px; bottom: 14%; }
-.s-tree-right  { right: -30px; width: 280px; height: 360px; bottom: 14%; }
-
-.s-tree-mid-left  { left: 14%; width: 170px; height: 230px; bottom: 18%; opacity: 0.92; }
-.s-tree-mid-right { right: 14%; width: 170px; height: 230px; bottom: 18%; opacity: 0.92; }
-
-.s-tree svg { display: block; width: 100%; height: 100%; }
-
-/* tiny idle sway on background trees */
-@keyframes treeSway {
-  0%, 100% { transform: rotate(-0.6deg); }
-  50%      { transform: rotate(0.6deg);  }
-}
-.s-tree-mid-left  { animation: treeSway 6s ease-in-out infinite; transform-origin: 50% 100%; }
-.s-tree-mid-right { animation: treeSway 7s ease-in-out -2s infinite; transform-origin: 50% 100%; }
-
-/* ── bushes (SVG art wrappers) ──────────────────────────── */
-.s-bush {
+.s-star {
   position: absolute;
-  bottom: 15%;
+  width: 2px; height: 2px;
+  background: var(--star-color);
+  border-radius: 50%;
+  box-shadow: 0 0 4px var(--star-color);
+  animation: twinkle 3.5s ease-in-out infinite;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.85); }
+  50%      { opacity: 1;    transform: scale(1.15); }
+}
+
+/* ── mountains (SVG art wrapper) ──────────────────────────── */
+.s-mountains {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: 28%;
+  width: 100%;
+  height: 38vh;
+  z-index: 2;
+  pointer-events: none;
+}
+.s-mountains svg { display: block; width: 100%; height: 100%; }
+
+/* ── distant clouds / wisps ───────────────────────────────── */
+.s-clouds-wrap {
+  position: absolute;
+  left: 0; right: 0;
+  top: 12%;
+  height: 30%;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0.85;
+}
+.s-cloud-streak {
+  position: absolute;
+  width: 200px; height: 14px;
+  background: linear-gradient(90deg, transparent, var(--mist-color), transparent);
+  border-radius: 50%;
+  filter: blur(2px);
+  animation: cloudDrift linear infinite;
+}
+.s-cloud-streak:nth-child(1) { top: 12%; width: 180px; animation-duration: 80s; }
+.s-cloud-streak:nth-child(2) { top: 28%; width: 240px; animation-duration: 110s; animation-delay: -30s; }
+.s-cloud-streak:nth-child(3) { top: 48%; width: 160px; animation-duration: 95s;  animation-delay: -55s; }
+.s-cloud-streak:nth-child(4) { top: 65%; width: 280px; animation-duration: 130s; animation-delay: -10s; }
+@keyframes cloudDrift {
+  from { left: -300px; }
+  to   { left: 110vw; }
+}
+
+/* ── birds (SVG flying across) ────────────────────────────── */
+.s-birds {
+  position: absolute;
+  left: 0; right: 0;
+  top: 22%;
+  height: 16%;
+  pointer-events: none;
+  z-index: 3;
+}
+.s-bird {
+  position: absolute;
+  width: 24px; height: 14px;
+  animation: birdFly linear infinite;
+}
+.s-bird:nth-child(1) { top: 20%; animation-duration: 70s; animation-delay: -10s; transform: scale(0.9); }
+.s-bird:nth-child(2) { top: 45%; animation-duration: 90s; animation-delay: -40s; transform: scale(0.7); }
+.s-bird:nth-child(3) { top: 65%; animation-duration: 110s; animation-delay: -25s; transform: scale(0.55); }
+@keyframes birdFly {
+  from { left: -40px; }
+  to   { left: 105vw; }
+}
+
+/* ── forest (SVG) ─────────────────────────────────────────── */
+.s-forest {
+  position: absolute;
+  bottom: 28%;
+  width: 48%;
+  height: 50%;
   z-index: 4;
   pointer-events: none;
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.35));
 }
-.s-bush-left  { left: 6%;  width: 150px; height: 70px; }
-.s-bush-right { right: 5%; width: 140px; height: 64px; }
-.s-bush svg { display: block; width: 100%; height: 100%; }
+.s-forest-left  { left: -2%; }
+.s-forest-right { right: -2%; transform: scaleX(-1); }
+.s-forest svg { display: block; width: 100%; height: 100%; }
 
-/* ── sun (SVG art wrapper) ──────────────────────────────── */
+/* ── bushes / silhouettes at front ────────────────────────── */
+.s-bushes-line {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: 26%;
+  height: 60px;
+  z-index: 5;
+  pointer-events: none;
+}
+.s-bushes-line svg { display: block; width: 100%; height: 100%; }
+
+/* ── mist wisps near tree base ────────────────────────────── */
+.s-mist {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: 27%;
+  height: 80px;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0.75;
+}
+.s-mist-wisp {
+  position: absolute;
+  bottom: 0;
+  height: 60px;
+  background: radial-gradient(ellipse at center, var(--mist-color) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(8px);
+  animation: mistDrift linear infinite;
+}
+.s-mist-wisp:nth-child(1) { left: 8%;  width: 200px; animation-duration: 45s; }
+.s-mist-wisp:nth-child(2) { left: 30%; width: 260px; animation-duration: 60s; animation-delay: -20s; }
+.s-mist-wisp:nth-child(3) { left: 55%; width: 220px; animation-duration: 55s; animation-delay: -35s; }
+.s-mist-wisp:nth-child(4) { left: 78%; width: 200px; animation-duration: 50s; animation-delay: -10s; }
+@keyframes mistDrift {
+  0%   { transform: translateX(-30px); opacity: 0; }
+  20%  { opacity: 0.7; }
+  80%  { opacity: 0.7; }
+  100% { transform: translateX(30px); opacity: 0; }
+}
+
+/* ── water (reflective base) ──────────────────────────────── */
+.s-water {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: 0;
+  height: 28%;
+  z-index: 6;
+  background: linear-gradient(180deg, var(--water-base) 0%, color-mix(in srgb, var(--water-base) 70%, black) 100%);
+  overflow: hidden;
+}
+.s-water::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--water-shine) 0%, transparent 40%);
+  pointer-events: none;
+}
+.s-ripple {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+  animation: rippleMove 6s ease-in-out infinite;
+}
+.s-ripple:nth-child(1) { top: 18%; animation-delay: 0s;   }
+.s-ripple:nth-child(2) { top: 38%; animation-delay: 1.3s; }
+.s-ripple:nth-child(3) { top: 58%; animation-delay: 2.6s; }
+.s-ripple:nth-child(4) { top: 75%; animation-delay: 3.9s; }
+@keyframes rippleMove {
+  0%, 100% { transform: translateX(-30px); opacity: 0; }
+  50%      { transform: translateX(30px);  opacity: 1; }
+}
+
+/* the reflection layer — mirrored, faded SVG of the forest sits at top of water */
+.s-water-reflection {
+  position: absolute;
+  left: 0; right: 0;
+  top: 0;
+  height: 90%;
+  opacity: 0.40;
+  filter: blur(1.5px) saturate(0.7);
+  transform: scaleY(-1);
+  pointer-events: none;
+  mask-image: linear-gradient(180deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+}
+.s-water-reflection svg { display: block; width: 100%; height: 100%; }
+
+/* ── sun glow behind mountains ────────────────────────────── */
 .s-sun-wrap {
   position: absolute;
-  top: 4%;
-  right: 8%;
-  width: 130px;
-  height: 130px;
+  bottom: 30%;
+  left: 50%;
+  transform: translate(calc(-50% + var(--parallax-sun-x, 0px)), var(--parallax-sun-y, 0px));
+  width: 220px;
+  height: 220px;
   z-index: 1;
   pointer-events: none;
-  filter: drop-shadow(0 0 30px var(--sun-glow));
-  animation: sunPulse 4s ease-in-out infinite;
+  filter: blur(2px);
+  opacity: 0.85;
+  animation: sunPulse 6s ease-in-out infinite;
 }
 .s-sun-wrap svg { display: block; width: 100%; height: 100%; }
 @keyframes sunPulse {
-  0%,100% { transform: translate(var(--parallax-sun-x,0), var(--parallax-sun-y,0)) scale(1); }
-  50%     { transform: translate(var(--parallax-sun-x,0), var(--parallax-sun-y,0)) scale(1.05); }
-}
-
-/* ── clouds ──────────────────────────────────────────────── */
-.s-cloud { position: absolute; z-index: 1; opacity: 0.55; animation: cloudDrift linear infinite; }
-.s-cloud div { background: rgba(255,255,255,0.7); border-radius: 50px; position: absolute; }
-.s-cloud-1 { top: 60px; animation-duration: 38s; }
-.s-cloud-1 div:nth-child(1) { width:120px;height:35px;top:15px;left:0; }
-.s-cloud-1 div:nth-child(2) { width:80px;height:50px;top:0;left:20px; }
-.s-cloud-1 div:nth-child(3) { width:60px;height:40px;top:5px;left:60px; }
-.s-cloud-2 { top: 100px; animation-duration: 48s; animation-delay: 6s; }
-.s-cloud-2 div:nth-child(1) { width:90px;height:28px;top:10px;left:0; }
-.s-cloud-2 div:nth-child(2) { width:60px;height:38px;top:0;left:15px; }
-@keyframes cloudDrift { from { left: -300px; } to { left: 110vw; } }
-
-/* ── falling particles (leaves / snow / petals / fireflies) ── */
-.s-particles { position: absolute; inset: 0; z-index: 6; pointer-events: none; overflow: hidden; }
-.s-particle {
-  position: absolute;
-  top: -60px;
-  width: 18px;
-  height: 18px;
-  opacity: 0;
-  animation: pFall linear infinite;
-}
-.s-particle svg { width: 100%; height: 100%; }
-
-@keyframes pFall {
-  0%   { opacity: 0; transform: translateY(0) translateX(0) rotate(0deg) scale(1); }
-  5%   { opacity: 1; }
-  50%  { transform: translateY(50vh) translateX(40px) rotate(360deg) scale(0.95); }
-  80%  { opacity: 0.85; }
-  100% { opacity: 0; transform: translateY(110vh) translateX(-30px) rotate(720deg) scale(0.5); }
-}
-
-/* Particle positions/timings — 16 slots */
-.s-particle:nth-child(1)  { left:5%;   animation-duration:6s;  animation-delay:0s;    width:14px; }
-.s-particle:nth-child(2)  { left:12%;  animation-duration:8s;  animation-delay:1.2s;  width:20px; }
-.s-particle:nth-child(3)  { left:22%;  animation-duration:5.5s;animation-delay:0.4s;  width:12px; }
-.s-particle:nth-child(4)  { left:33%;  animation-duration:7s;  animation-delay:2s;    width:16px; }
-.s-particle:nth-child(5)  { left:44%;  animation-duration:6.5s;animation-delay:0.8s;  width:22px; }
-.s-particle:nth-child(6)  { left:55%;  animation-duration:7.5s;animation-delay:1.5s;  width:14px; }
-.s-particle:nth-child(7)  { left:65%;  animation-duration:5s;  animation-delay:3s;    width:18px; }
-.s-particle:nth-child(8)  { left:75%;  animation-duration:8.5s;animation-delay:0.2s;  width:11px; }
-.s-particle:nth-child(9)  { left:85%;  animation-duration:6.2s;animation-delay:1.8s;  width:20px; }
-.s-particle:nth-child(10) { left:92%;  animation-duration:7.2s;animation-delay:2.5s;  width:15px; }
-.s-particle:nth-child(11) { left:8%;   animation-duration:9s;  animation-delay:4s;    width:13px; }
-.s-particle:nth-child(12) { left:28%;  animation-duration:5.8s;animation-delay:2.8s;  width:19px; }
-.s-particle:nth-child(13) { left:48%;  animation-duration:6.8s;animation-delay:0.6s;  width:16px; }
-.s-particle:nth-child(14) { left:68%;  animation-duration:7.8s;animation-delay:3.5s;  width:21px; }
-.s-particle:nth-child(15) { left:18%;  animation-duration:5.2s;animation-delay:1s;    width:12px; }
-.s-particle:nth-child(16) { left:78%;  animation-duration:8.2s;animation-delay:2.2s;  width:17px; }
-
-/* Snowflakes drift gentler */
-[data-season="winter"] .s-particle {
-  animation-name: pSnow;
-}
-@keyframes pSnow {
-  0%   { opacity: 0; transform: translateY(0) translateX(0) rotate(0deg); }
-  10%  { opacity: 1; }
-  100% { opacity: 0.7; transform: translateY(110vh) translateX(20px) rotate(360deg); }
+  0%,100% { opacity: 0.78; }
+  50%     { opacity: 0.95; }
 }
 
 /* ── glass card ──────────────────────────────────────────── */
@@ -313,14 +374,14 @@
 }
 
 .season-card {
-  width: 360px;
+  width: 380px;
   max-width: calc(100vw - 32px);
   background: var(--card-bg);
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  border: 1.5px solid var(--card-border);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border: 1px solid var(--card-border);
   border-radius: 24px;
-  padding: 36px 32px 28px;
+  padding: 36px 32px 30px;
   box-shadow: var(--card-shadow);
   position: relative;
   transition: background 0.8s ease, border-color 0.8s ease, box-shadow 0.8s ease;
@@ -330,39 +391,71 @@
   position: absolute;
   top: -1px; left: 0; right: 0;
   height: 60%;
-  background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, transparent 100%);
+  background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%);
   border-radius: 24px 24px 0 0;
   pointer-events: none;
 }
 
 .season-card h2 {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 26px;
+  font-size: 30px;
   font-weight: 600;
   color: var(--title-color);
   text-align: center;
-  margin-bottom: 22px;
+  margin-bottom: 18px;
   letter-spacing: 0.01em;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.3);
   transition: color 0.6s ease;
+}
+
+.season-card .role-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.season-role-chip {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--input-text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.16s ease-out, background 0.2s ease, border-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  backdrop-filter: blur(6px);
+}
+.season-role-chip:hover { background: color-mix(in srgb, var(--input-bg) 70%, white); }
+.season-role-chip:active { transform: scale(0.97); }
+.season-role-chip.active {
+  background: var(--btn-grad);
+  color: var(--btn-text);
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
 }
 
 .season-input {
   width: 100%;
   background: var(--input-bg) !important;
-  border: 1.5px solid var(--input-border) !important;
+  border: 1px solid var(--input-border) !important;
   border-radius: 12px;
   padding: 13px 18px;
   font-size: 14px;
   color: var(--input-text) !important;
   outline: none;
-  transition: all 0.25s ease, color 0.6s ease;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.16s ease-out;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  backdrop-filter: blur(6px);
 }
-.season-input::placeholder { color: color-mix(in srgb, var(--input-text) 50%, transparent); }
+.season-input::placeholder { color: color-mix(in srgb, var(--input-text) 55%, transparent); }
 .season-input:focus {
-  background: color-mix(in srgb, var(--input-bg) 80%, white) !important;
+  background: color-mix(in srgb, var(--input-bg) 50%, transparent) !important;
   border-color: var(--input-focus) !important;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--input-focus) 30%, transparent), 0 2px 8px rgba(0,0,0,0.07);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--input-focus) 25%, transparent);
   transform: translateY(-1px);
 }
 
@@ -373,57 +466,34 @@
   background: var(--btn-grad);
   color: var(--btn-text);
   font-size: 15px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
+  font-weight: 600;
+  letter-spacing: 0.03em;
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.6s ease;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.2);
+  transition: transform 0.16s ease-out, box-shadow 0.2s ease, background 0.6s ease;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.25);
   position: relative;
   overflow: hidden;
 }
-.season-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.28); }
-.season-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.season-btn:hover:not(:disabled) {
+  box-shadow: 0 8px 26px rgba(0,0,0,0.36), inset 0 1px 0 rgba(255,255,255,0.30);
+}
+.season-btn:active:not(:disabled) { transform: scale(0.97); }
+.season-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
-.season-card .role-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-.season-role-chip {
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--input-bg) 60%, transparent);
-  border: 1.5px solid var(--input-border);
-  color: var(--input-text);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.season-role-chip.active {
-  background: var(--btn-grad);
-  color: var(--btn-text);
-  border-color: transparent;
-}
-
-/* ── season switcher (top-right) ─────────────────────── */
+/* ── season switcher (top-left) ─────────────────────── */
 .season-switcher {
   position: absolute;
   top: 16px;
   left: 16px;
   z-index: 20;
   display: flex;
-  gap: 6px;
-  padding: 6px;
-  background: rgba(255,255,255,0.18);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.3);
+  gap: 4px;
+  padding: 5px;
+  background: rgba(255,255,255,0.10);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,0.20);
   border-radius: 999px;
 }
 .season-switcher button {
@@ -432,19 +502,26 @@
   background: transparent;
   border-radius: 999px;
   cursor: pointer;
-  font-size: 18px;
+  font-size: 16px;
   display: grid;
   place-items: center;
-  transition: all 0.25s ease;
-  color: var(--title-color);
+  transition: background 0.2s ease, transform 0.16s ease-out;
 }
-.season-switcher button:hover { background: rgba(255,255,255,0.25); }
+.season-switcher button:hover  { background: rgba(255,255,255,0.18); }
+.season-switcher button:active { transform: scale(0.95); }
 .season-switcher button.active {
-  background: rgba(255,255,255,0.45);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 2px 6px rgba(0,0,0,0.15);
+  background: rgba(255,255,255,0.30);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.45), 0 2px 6px rgba(0,0,0,0.25);
 }
 
-/* reduce motion */
+/* ── reduce motion ────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .s-particle, .s-cloud, .s-sun, .s-road::before { animation: none !important; }
+  .s-star,
+  .s-cloud-streak,
+  .s-bird,
+  .s-mist-wisp,
+  .s-ripple,
+  .s-sun-wrap {
+    animation: none !important;
+  }
 }
