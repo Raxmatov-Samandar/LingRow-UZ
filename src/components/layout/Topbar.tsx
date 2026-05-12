@@ -29,7 +29,7 @@ export function Topbar({
   const { t } = useTranslation();
 
   return (
-    <header className="flex items-center justify-between gap-4 pt-1 relative z-30">
+    <header className="flex items-center justify-between gap-2 lg:gap-4 lg:pl-0 pl-12 pt-1 relative z-30">
       {variant === 'search' ? (
         <div className="glass-soft flex-1 max-w-[520px] flex items-center gap-2.5 px-4 py-3 rounded-full text-slate-300">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">

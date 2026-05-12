@@ -19,7 +19,7 @@ export function Profile() {
       <AppShell>
         <Topbar variant="search" />
 
-        <section className="flex-1 min-h-0 overflow-auto grid grid-cols-[260px_1fr] gap-5">
+        <section className="flex-1 min-h-0 overflow-auto grid lg:grid-cols-[260px_1fr] grid-cols-1 gap-5">
           <aside className="glass-panel p-6 text-center">
             <div className="w-24 h-24 rounded-full mx-auto bg-gradient-to-br from-blue-400 to-violet-400 grid place-items-center text-3xl font-bold text-white border-2 border-white/30">
               {user?.name?.[0]?.toUpperCase() ?? 'U'}

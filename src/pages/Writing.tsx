@@ -113,7 +113,7 @@ export function Writing() {
           </div>
         </div>
 
-        <section className="grid grid-cols-[1fr_420px] gap-5 flex-1 min-h-0 overflow-hidden">
+        <section className="grid lg:grid-cols-[1fr_420px] grid-cols-1 gap-3 lg:gap-5 flex-1 min-h-0 lg:overflow-hidden overflow-y-auto">
           {/* Paper editor */}
           <article className="rounded-3xl p-7 min-h-[460px] flex flex-col gap-4 relative overflow-auto"
                    style={{ background: 'linear-gradient(180deg,#f5efe1 0%,#ede5d2 100%)', color: '#1a1f3a',

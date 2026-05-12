@@ -121,7 +121,7 @@ export function ArticleEditor() {
         <Topbar variant="banner" bannerTitle={editing ? 'Edit article' : 'New article'}
                 bannerSubtitle="Upload your own daily reading material — saved locally on this device." />
 
-        <section className="grid grid-cols-[1fr_360px] gap-5 flex-1 min-h-0 overflow-hidden">
+        <section className="grid lg:grid-cols-[1fr_360px] grid-cols-1 gap-3 lg:gap-5 flex-1 min-h-0 lg:overflow-hidden overflow-y-auto">
           <article className="paper-panel overflow-auto">
             <div className="flex items-center justify-between mb-4">
               <button onClick={() => navigate('/library')} className="text-xs text-slate-500 hover:text-slate-800">

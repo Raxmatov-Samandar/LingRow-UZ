@@ -112,7 +112,7 @@ export function Listening() {
         </div>
 
         {/* Audio + Questions — PAPER STYLE */}
-        <section className="grid grid-cols-[1.05fr_1fr] gap-5 flex-1 min-h-0 overflow-hidden">
+        <section className="grid lg:grid-cols-[1.05fr_1fr] grid-cols-1 gap-3 lg:gap-5 flex-1 min-h-0 lg:overflow-hidden overflow-y-auto">
           <div className="paper-panel flex flex-col gap-5 overflow-auto">
             <header>
               <p className="text-[10px] tracking-[0.25em] text-slate-500 mb-1">{part.title}</p>

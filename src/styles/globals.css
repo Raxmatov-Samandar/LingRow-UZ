@@ -34,14 +34,31 @@
   *, *::before, *::after { box-sizing: border-box; }
 
   html, body, #root {
-    height: 100%;
+    /* Use small viewport unit on iOS Safari to avoid the bottom bar push */
+    height: 100dvh;
     overflow: hidden;
+    /* fallback for browsers without dvh */
+    min-height: -webkit-fill-available;
   }
+  html { height: -webkit-fill-available; }
 
   body {
     @apply font-sans text-foreground antialiased;
     background: #02030c;
     letter-spacing: -0.01em;
+    /* respect iPhone notch / home indicator */
+    padding-top: env(safe-area-inset-top, 0);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    padding-left: env(safe-area-inset-left, 0);
+    padding-right: env(safe-area-inset-right, 0);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    overscroll-behavior: none;
+  }
+
+  /* Disable hover effects on touch devices to prevent stuck states */
+  @media (hover: none) {
+    *:hover { transition: none !important; }
   }
 }
 

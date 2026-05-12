@@ -122,7 +122,7 @@ export function Vocabulary() {
         </div>
 
         {/* Two-column: results + entry */}
-        <section className="grid grid-cols-[300px_1fr] gap-5 flex-1 min-h-0 overflow-hidden">
+        <section className="grid lg:grid-cols-[300px_1fr] grid-cols-1 gap-3 lg:gap-5 flex-1 min-h-0 lg:overflow-hidden overflow-y-auto">
           {/* Results list */}
           <aside className="glass-panel p-3 overflow-auto">
             {/* Word of the day */}

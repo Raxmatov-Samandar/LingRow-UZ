@@ -64,7 +64,7 @@ export function Speaking() {
           </span>
         </div>
 
-        <section className="grid grid-cols-[1fr_360px] gap-5 flex-1 min-h-0 overflow-hidden">
+        <section className="grid lg:grid-cols-[1fr_360px] grid-cols-1 gap-3 lg:gap-5 flex-1 min-h-0 lg:overflow-hidden overflow-y-auto">
           <div className="glass-panel p-6 overflow-auto">
             {part === 1 && <Part1 onPractice={submitPart} loading={loading} feedback={feedback[1]} />}
             {part === 2 && <Part2 onPractice={submitPart} loading={loading} feedback={feedback[2]} />}

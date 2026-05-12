@@ -72,7 +72,7 @@ export function ArticleDetail() {
       <AppShell>
         <Topbar variant="banner" bannerTitle="Daily Read" bannerSubtitle="Tap any word to save its meaning." />
 
-        <section className="grid grid-cols-[1fr_320px] gap-5 flex-1 min-h-0 overflow-hidden">
+        <section className="grid lg:grid-cols-[1fr_320px] grid-cols-1 gap-5 flex-1 min-h-0 lg:overflow-hidden overflow-y-auto">
           {/* Article (paper) */}
           <article className="paper-panel overflow-auto">
             <div className="flex items-center justify-between mb-4 sticky top-0 -mx-6 -mt-6 px-6 py-3 z-10

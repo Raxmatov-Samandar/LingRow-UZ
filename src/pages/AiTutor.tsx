@@ -101,7 +101,7 @@ export function AiTutor() {
       <AppShell>
         <Topbar variant="banner" bannerTitle="Professor Linguo" bannerSubtitle="Your AI IELTS coach — Band 9.0, all 4 sections" />
 
-        <section className="flex-1 grid grid-cols-[280px_1fr] gap-5 min-h-0 overflow-hidden">
+        <section className="flex-1 grid lg:grid-cols-[280px_1fr] grid-cols-1 gap-3 lg:gap-5 min-h-0 lg:overflow-hidden overflow-y-auto">
           {/* Left rail — sections + quick prompts */}
           <aside className="glass-panel p-4 flex flex-col gap-3 overflow-auto">
             <p className="text-[11px] tracking-[0.2em] text-slate-400 px-1">SECTION</p>

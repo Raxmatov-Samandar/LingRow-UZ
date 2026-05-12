@@ -24,7 +24,7 @@ export function Dashboard() {
       <AppShell>
         <Topbar variant="search" />
 
-        <section className="grid grid-cols-[1fr_320px] gap-5 flex-1 min-h-0 overflow-hidden">
+        <section className="grid lg:grid-cols-[1fr_320px] grid-cols-1 gap-5 flex-1 min-h-0 lg:overflow-hidden overflow-y-auto">
           <div className="flex flex-col gap-5 min-w-0">
             <div className="px-1">
               <h2 className="text-4xl font-extrabold tracking-tight bg-gradient-to-b from-white to-blue-200 bg-clip-text text-transparent">

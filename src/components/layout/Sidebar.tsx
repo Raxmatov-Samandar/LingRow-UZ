@@ -65,11 +65,14 @@ export function Sidebar() {
   const user      = useAuth(s => s.user);
   const collapsed = useUi(s => s.sidebarCollapsed);
   const toggle    = useUi(s => s.toggleSidebar);
+  const setMobileNav = useUi(s => s.setMobileNav);
   const items     = user?.role === 'parent' ? PARENT_NAV
                   : user?.role === 'dtm'    ? DTM_NAV
                   : STUDENT_NAV;
   const { t }     = useTranslation();
   const isDev     = isDevUser(user);
+  // Auto-close the mobile drawer on any nav click
+  const closeDrawer = () => setMobileNav(false);
 
   return (
     <aside className="relative flex flex-col p-3 pb-5 overflow-hidden rounded-3xl sidebar-glass"
@@ -133,6 +136,7 @@ export function Sidebar() {
               key={it.to}
               to={it.to}
               title={collapsed ? label : undefined}
+              onClick={closeDrawer}
               className={({ isActive }) =>
                 cn('nav-item', isActive && 'active', collapsed && 'justify-center px-2')
               }

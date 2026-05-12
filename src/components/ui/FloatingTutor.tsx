@@ -44,7 +44,7 @@ export function FloatingTutor() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed bottom-24 right-6 z-40 w-72 glass-panel p-4"
+            className="fixed bottom-24 right-3 lg:right-6 z-40 w-[min(280px,calc(100vw-24px))] glass-panel p-4"
           >
             <div className="flex items-center gap-2.5 mb-3">
               <div className="w-9 h-9 rounded-xl grid place-items-center text-base

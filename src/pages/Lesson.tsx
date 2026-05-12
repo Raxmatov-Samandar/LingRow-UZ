@@ -118,7 +118,7 @@ export function Lesson() {
       <AppShell>
         <Topbar variant="search" />
 
-        <section className="grid grid-cols-[1fr_320px] gap-5 flex-1 min-h-0 overflow-auto">
+        <section className="grid lg:grid-cols-[1fr_320px] grid-cols-1 gap-5 flex-1 min-h-0 overflow-auto">
           {/* Video block */}
           <div className="glass-panel flex flex-col gap-4 p-5">
             {activeLesson?.mediaUrl ? (

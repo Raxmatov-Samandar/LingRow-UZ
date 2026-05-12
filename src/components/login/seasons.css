@@ -402,7 +402,7 @@
 
 .season-card {
   width: 380px;
-  max-width: calc(100vw - 32px);
+  max-width: calc(100vw - 24px);
   background: var(--card-bg);
   backdrop-filter: blur(24px) saturate(1.4);
   -webkit-backdrop-filter: blur(24px) saturate(1.4);
@@ -603,6 +603,23 @@
 .s-particle:nth-child(12) { left: 40%; width: 18px; animation-duration: 8.5s; animation-delay: 3s;   }
 .s-particle:nth-child(13) { left: 60%; width: 14px; animation-duration: 12s;  animation-delay: 6s;   }
 .s-particle:nth-child(14) { left: 80%; width: 17px; animation-duration: 10s;  animation-delay: 2.2s; }
+
+/* ── mobile tweaks ────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .s-forest        { width: 56%; height: 42%; }
+  .s-mountains     { height: 32vh; }
+  .s-sun-wrap      { width: 160px; height: 160px; bottom: 32%; }
+  .s-water         { height: 24%; }
+  .s-bushes-line   { bottom: 22%; }
+  .s-mist          { bottom: 23%; }
+  .s-particles     { inset: 0 0 24% 0; }
+  .s-center-path   { left: 22%; right: 22%; bottom: 24%; height: 18vh; }
+  .s-foreground-grass { bottom: 23.5%; }
+  .season-scene::before { bottom: 24%; height: 32%; }
+  .season-card     { padding: 24px 20px 22px; }
+  .season-card h2  { font-size: 24px; margin-bottom: 14px; }
+  .season-switcher button { width: 32px; height: 32px; font-size: 14px; }
+}
 
 /* ── reduce motion ────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
