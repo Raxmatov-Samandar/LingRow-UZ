@@ -46,12 +46,7 @@ export function Dashboard() {
             </div>
           </div>
 
-          <aside className="flex flex-col gap-4 min-h-0 overflow-y-auto pr-1 pb-2">
-            <NextLessonCard />
-            <ProgressMiniChart />
-            <UpcomingLessonPreview />
-            <MotivationalQuote />
-          </aside>
+          <RightSidebar />
         </section>
       </AppShell>
     </>
@@ -127,8 +122,12 @@ function DailyArticleStrip() {
   );
 }
 
-function NextLessonCard() {
-  const { t } = useTranslation();
+// ──────────────────── Right sidebar (single tall crystal card) ────────────────────
+// All four panels live inside one crystal card and are separated by thin
+// gradient dividers. Feels like one unified object instead of a stack of
+// cards, which is what the design called for.
+
+function RightSidebar() {
   function onMove(e: React.MouseEvent<HTMLElement>) {
     const el = e.currentTarget;
     const r = el.getBoundingClientRect();
@@ -137,13 +136,37 @@ function NextLessonCard() {
     el.style.setProperty('--mx', (x * 100 + 50).toFixed(0) + '%');
     el.style.setProperty('--my', (y * 100 + 50).toFixed(0) + '%');
   }
-
   return (
-    <div onMouseMove={onMove}
-           className="crystal-card relative p-6 flex flex-col items-center text-center">
+    <aside onMouseMove={onMove}
+           className="crystal-card crystal-tall relative flex flex-col overflow-y-auto min-h-0">
       <span className="refract" />
       <span className="shine" />
+      <div className="relative z-10 flex flex-col">
+        <NextLessonSection />
+        <Divider />
+        <ProgressMiniChart />
+        <Divider />
+        <UpcomingLessonPreview />
+        <Divider />
+        <MotivationalQuote />
+      </div>
+    </aside>
+  );
+}
 
+function Divider() {
+  return (
+    <div className="px-6">
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+    </div>
+  );
+}
+
+function NextLessonSection() {
+  const { t } = useTranslation();
+
+  return (
+    <div className="p-6 flex flex-col items-center text-center">
       <div className="w-full text-left mb-4 relative z-10">
         <p className="text-sm text-slate-300/80">{t('dashboard.nextLessonNum')}</p>
         <h3 className="text-3xl font-extrabold text-white leading-none tracking-tight">{t('dashboard.nextLessonTitle')}</h3>
@@ -210,15 +233,15 @@ function ProgressMiniChart() {
   const todayIdx = data.length - 1;
 
   return (
-    <div className="glass-panel p-5">
-      <div className="flex items-baseline justify-between mb-3">
+    <div className="px-6 py-5">
+      <div className="flex items-baseline justify-between mb-3 relative z-10">
         <h4 className="text-sm font-bold text-white">{t('dashboard.progress7d')}</h4>
         <span className="text-[11px] text-slate-400">
           {total} {t('dashboard.progress7dLessons')}
         </span>
       </div>
 
-      <div className="flex items-end gap-1.5 h-20">
+      <div className="flex items-end gap-1.5 h-20 relative z-10">
         {data.map((d, i) => {
           const heightPct = (d.count / max) * 100;
           const isToday = i === todayIdx;
@@ -262,7 +285,7 @@ function UpcomingLessonPreview() {
     { num: 4, titleKey: 'dashboard.upcoming.food',     emoji: '🍎', mins: 7  },
   ];
   return (
-    <div className="glass-panel p-5">
+    <div className="px-6 py-5 relative z-10">
       <div className="flex items-baseline justify-between mb-3">
         <h4 className="text-sm font-bold text-white">{t('dashboard.upNext')}</h4>
         <span className="text-[10px] uppercase tracking-wider text-cosmic-mint font-bold">{t('dashboard.upcomingBadge')}</span>
@@ -317,12 +340,12 @@ function MotivationalQuote() {
   const q = QUOTES[dayOfYear % QUOTES.length];
 
   return (
-    <div className="glass-panel p-5 relative overflow-hidden">
+    <div className="px-6 py-5 relative overflow-hidden">
       <span aria-hidden
-            className="absolute -top-3 -left-1 text-7xl font-serif text-cosmic-mint/15 leading-none select-none pointer-events-none">
+            className="absolute top-2 left-3 text-6xl font-serif text-cosmic-mint/12 leading-none select-none pointer-events-none">
         “
       </span>
-      <div className="relative z-10">
+      <div className="relative z-10 pl-2">
         <p className="text-[13px] text-slate-100 leading-relaxed font-medium italic">
           {t(q.textKey)}
         </p>
