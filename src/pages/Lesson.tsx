@@ -9,6 +9,7 @@ import { useActivity } from '@/store/activity';
 import { useUi } from '@/store/ui';
 import { useDevContent, type DevLesson } from '@/store/devContent';
 import { MediaPlayer } from '@/components/ui/MediaPlayer';
+import { LessonQuiz } from '@/components/lesson/LessonQuiz';
 
 interface VocabRow {
   word:   string;
@@ -86,6 +87,7 @@ const VOCAB_ROWS: VocabRow[] = [
 export function Lesson() {
   const { id } = useParams<{ id: string }>();
   const [activeIdx, setActiveIdx] = useState(0);
+  const [quizOpen, setQuizOpen] = useState(false);
   const log = useActivity(s => s.log);
   const setSidebar = useUi(s => s.setSidebar);
 
@@ -164,10 +166,33 @@ export function Lesson() {
                   </li>
                 ))}
               </ul>
+
+              {/* Launch quiz */}
+              <button
+                onClick={() => setQuizOpen(true)}
+                className="mt-4 w-full py-3 rounded-xl font-bold text-slate-900 text-sm tracking-wide transition-transform active:scale-[0.97]"
+                style={{
+                  background: 'linear-gradient(135deg, #7ef7d3 0%, #4fd6a6 100%)',
+                  boxShadow: '0 10px 24px rgba(126,247,211,0.35), inset 0 1px 0 rgba(255,255,255,0.45)',
+                }}
+              >
+                🎮 Play Quiz
+              </button>
+              <p className="mt-2 text-[10.5px] text-slate-400 text-center">
+                Earn XP · Beat your high score
+              </p>
             </div>
           </aside>
         </section>
       </AppShell>
+
+      <LessonQuiz
+        open={quizOpen}
+        onClose={() => setQuizOpen(false)}
+        vocab={VOCAB_ROWS}
+        count={8}
+        title="Greetings · Vocabulary Quiz"
+      />
     </>
   );
 }
