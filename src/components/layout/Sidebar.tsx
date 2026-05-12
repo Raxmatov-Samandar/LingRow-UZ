@@ -72,12 +72,26 @@ export function Sidebar() {
   const isDev     = isDevUser(user);
 
   return (
-    <aside className="glass-panel relative flex flex-col p-3 pb-5 overflow-hidden"
+    <aside className="relative flex flex-col p-3 pb-5 overflow-hidden rounded-3xl sidebar-glass"
            style={{
-             background: 'linear-gradient(180deg, rgba(80,110,200,0.06) 0%, rgba(40,60,140,0.03) 100%)',
-             backdropFilter: 'blur(36px) saturate(160%)',
-             WebkitBackdropFilter: 'blur(36px) saturate(160%)',
+             // Very thin glass: cosmos starfield must bleed through.
+             background: 'linear-gradient(180deg, rgba(120,160,255,0.06) 0%, rgba(60,80,160,0.03) 50%, rgba(30,40,90,0.02) 100%)',
+             backdropFilter: 'blur(14px) saturate(140%)',
+             WebkitBackdropFilter: 'blur(14px) saturate(140%)',
+             border: '1px solid rgba(180,210,255,0.18)',
+             boxShadow:
+               'inset 0 1px 0 rgba(255,255,255,0.18), 0 12px 40px rgba(0,0,0,0.25)',
            }}>
+      {/* inner highlight ring — adds depth without blocking the stars */}
+      <span aria-hidden className="pointer-events-none absolute inset-0 rounded-3xl"
+            style={{
+              boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.05), inset 0 80px 80px -60px rgba(150,180,255,0.10)',
+            }} />
+      {/* subtle radial glow at top-left so the logo area pops */}
+      <span aria-hidden className="pointer-events-none absolute -top-10 -left-10 w-56 h-56 rounded-full"
+            style={{
+              background: 'radial-gradient(circle, rgba(126,247,211,0.10) 0%, transparent 70%)',
+            }} />
       {/* Collapse toggle */}
       <button
         onClick={toggle}
