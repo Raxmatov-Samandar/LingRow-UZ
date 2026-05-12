@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Cosmos } from '@/components/layout/Cosmos';
 import { AppShell } from '@/components/layout/AppShell';
@@ -7,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { learning } from '@/lib/api';
 import type { Lesson } from '@/types';
 import { useProgress } from '@/store/progress';
+import { useActivity } from '@/store/activity';
 import { getTodaysArticle } from '@/data/articles/daily-articles';
 import { useUserArticles } from '@/store/userArticles';
 
@@ -44,7 +46,12 @@ export function Dashboard() {
             </div>
           </div>
 
-          <NextLessonCard />
+          <aside className="flex flex-col gap-4 min-h-0 overflow-y-auto pr-1 pb-2">
+            <NextLessonCard />
+            <ProgressMiniChart />
+            <UpcomingLessonPreview />
+            <MotivationalQuote />
+          </aside>
         </section>
       </AppShell>
     </>
@@ -132,8 +139,8 @@ function NextLessonCard() {
   }
 
   return (
-    <aside onMouseMove={onMove}
-           className="crystal-card crystal-tall relative p-7 flex flex-col items-center text-center">
+    <div onMouseMove={onMove}
+           className="crystal-card relative p-6 flex flex-col items-center text-center">
       <span className="refract" />
       <span className="shine" />
 
@@ -166,6 +173,163 @@ function NextLessonCard() {
       </Link>
 
       <p className="text-sm text-slate-300/80 mt-1">1 / 30</p>
-    </aside>
+    </div>
+  );
+}
+
+// ────────────────────── Progress mini chart ──────────────────────
+// Compact 7-day bar chart of lessons completed. Reads activity events.
+
+function ProgressMiniChart() {
+  const { t } = useTranslation();
+  const events = useActivity(s => s.events);
+
+  const data = useMemo(() => {
+    const days: { label: string; count: number; date: Date }[] = [];
+    const now = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      d.setHours(0, 0, 0, 0);
+      const next = new Date(d);
+      next.setDate(d.getDate() + 1);
+      const count = events.filter(e =>
+        e.kind === 'lesson_completed' && e.ts >= d.getTime() && e.ts < next.getTime()
+      ).length;
+      days.push({
+        label: d.toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 2),
+        count,
+        date: d,
+      });
+    }
+    return days;
+  }, [events]);
+
+  const max = Math.max(1, ...data.map(d => d.count));
+  const total = data.reduce((s, d) => s + d.count, 0);
+  const todayIdx = data.length - 1;
+
+  return (
+    <div className="glass-panel p-5">
+      <div className="flex items-baseline justify-between mb-3">
+        <h4 className="text-sm font-bold text-white">{t('dashboard.progress7d')}</h4>
+        <span className="text-[11px] text-slate-400">
+          {total} {t('dashboard.progress7dLessons')}
+        </span>
+      </div>
+
+      <div className="flex items-end gap-1.5 h-20">
+        {data.map((d, i) => {
+          const heightPct = (d.count / max) * 100;
+          const isToday = i === todayIdx;
+          const filled = d.count > 0;
+          return (
+            <div key={i} className="flex-1 flex flex-col items-center gap-1">
+              <div className="w-full flex-1 flex items-end">
+                <div
+                  className="w-full rounded-md transition-all duration-500 ease-out"
+                  style={{
+                    height: filled ? `${Math.max(heightPct, 12)}%` : '4%',
+                    background: isToday
+                      ? 'linear-gradient(180deg, #7ef7d3 0%, #4fd6a6 100%)'
+                      : filled
+                        ? 'linear-gradient(180deg, rgba(126,247,211,0.55) 0%, rgba(79,214,166,0.4) 100%)'
+                        : 'rgba(255,255,255,0.07)',
+                    boxShadow: isToday ? '0 4px 14px rgba(80,220,170,0.35)' : undefined,
+                  }}
+                  title={`${d.count} lessons`}
+                />
+              </div>
+              <span className={`text-[9px] font-mono uppercase tracking-wide ${isToday ? 'text-cosmic-mint font-bold' : 'text-slate-500'}`}>
+                {d.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────── Upcoming lesson preview ──────────────────────
+
+function UpcomingLessonPreview() {
+  const { t } = useTranslation();
+  // Static for now — would read from a real lessons table later.
+  const upcoming = [
+    { num: 2, titleKey: 'dashboard.upcoming.numbers',  emoji: '🔢', mins: 8  },
+    { num: 3, titleKey: 'dashboard.upcoming.family',   emoji: '👨‍👩‍👧', mins: 10 },
+    { num: 4, titleKey: 'dashboard.upcoming.food',     emoji: '🍎', mins: 7  },
+  ];
+  return (
+    <div className="glass-panel p-5">
+      <div className="flex items-baseline justify-between mb-3">
+        <h4 className="text-sm font-bold text-white">{t('dashboard.upNext')}</h4>
+        <span className="text-[10px] uppercase tracking-wider text-cosmic-mint font-bold">{t('dashboard.upcomingBadge')}</span>
+      </div>
+      <div className="flex flex-col gap-2">
+        {upcoming.map((u, i) => (
+          <Link key={u.num} to="/lesson"
+                className="group flex items-center gap-3 rounded-xl p-2.5 border border-white/8 bg-white/[0.03] hover:bg-white/[0.07] hover:border-cosmic-mint/30 transition">
+            <div className="w-9 h-9 rounded-lg grid place-items-center bg-white/[0.08] text-lg shrink-0">
+              {u.emoji}
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-[11px] text-slate-400 leading-none">
+                {t('dashboard.lessonShort')} {u.num}
+              </p>
+              <p className="text-sm font-bold text-white truncate">
+                {t(u.titleKey)}
+              </p>
+            </div>
+            <span className="text-[10px] text-slate-500 shrink-0">{u.mins} {t('dashboard.minShort')}</span>
+            <span className="text-cosmic-mint opacity-0 group-hover:opacity-100 transition shrink-0">
+              {i === 0 ? '▶' : '→'}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────── Motivational quote ──────────────────────
+// Rotates daily — same quote stays for 24h so it doesn't feel random.
+
+const QUOTES: { textKey: string; authorKey: string }[] = [
+  { textKey: 'dashboard.quotes.q1.text', authorKey: 'dashboard.quotes.q1.author' },
+  { textKey: 'dashboard.quotes.q2.text', authorKey: 'dashboard.quotes.q2.author' },
+  { textKey: 'dashboard.quotes.q3.text', authorKey: 'dashboard.quotes.q3.author' },
+  { textKey: 'dashboard.quotes.q4.text', authorKey: 'dashboard.quotes.q4.author' },
+  { textKey: 'dashboard.quotes.q5.text', authorKey: 'dashboard.quotes.q5.author' },
+  { textKey: 'dashboard.quotes.q6.text', authorKey: 'dashboard.quotes.q6.author' },
+  { textKey: 'dashboard.quotes.q7.text', authorKey: 'dashboard.quotes.q7.author' },
+];
+
+function MotivationalQuote() {
+  const { t } = useTranslation();
+  const dayOfYear = useMemo(() => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 0);
+    const diff = now.getTime() - start.getTime();
+    return Math.floor(diff / 86_400_000);
+  }, []);
+  const q = QUOTES[dayOfYear % QUOTES.length];
+
+  return (
+    <div className="glass-panel p-5 relative overflow-hidden">
+      <span aria-hidden
+            className="absolute -top-3 -left-1 text-7xl font-serif text-cosmic-mint/15 leading-none select-none pointer-events-none">
+        “
+      </span>
+      <div className="relative z-10">
+        <p className="text-[13px] text-slate-100 leading-relaxed font-medium italic">
+          {t(q.textKey)}
+        </p>
+        <p className="mt-2 text-[11px] text-cosmic-mint font-semibold">
+          — {t(q.authorKey)}
+        </p>
+      </div>
+    </div>
   );
 }

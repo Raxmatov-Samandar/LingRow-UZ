@@ -169,6 +169,28 @@ export const uz: Translation = {
     intermediate: "O'rta",
     advanced: 'Yuqori',
     mastery: 'Mukammal',
+
+    // right sidebar panels
+    progress7d: "So'nggi 7 kun",
+    progress7dLessons: 'dars',
+    upNext: 'Keyingisi',
+    upcomingBadge: 'Tez orada',
+    lessonShort: 'Dars',
+    minShort: 'daq',
+    upcoming: {
+      numbers: 'Sonlar',
+      family:  'Oila',
+      food:    'Taom va ichimliklar',
+    },
+    quotes: {
+      q1: { text: "Doimiylik iste'doddan ustun keladi.",                                              author: 'Xalq maqoli' },
+      q2: { text: "Mukammal bo'lish shart emas — qat'iyatli bo'lish kerak.",                          author: 'Anonim' },
+      q3: { text: "Boshqa til — bu hayotga boshqa qarash.",                                           author: 'Federico Fellini' },
+      q4: { text: "Kichik kunlik qadamlar katta yillik natijalarni keltiradi.",                       author: 'Anonim' },
+      q5: { text: "Har bir mutaxassis bir paytlar yangi boshlovchi bo'lgan.",                         author: 'Helen Hayes' },
+      q6: { text: "Boshqa tilni o'rganish — boshqa odam bo'lish demakdir.",                           author: 'Haruki Murakami' },
+      q7: { text: "Soatga qaramang — u qilayotgan ishni qiling. Davom eting.",                        author: 'Sam Levenson' },
+    },
   },
 
   profile: {

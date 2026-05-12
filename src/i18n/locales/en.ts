@@ -175,6 +175,28 @@ export const en = {
     intermediate: 'Intermediate',
     advanced: 'Advanced',
     mastery: 'Mastery',
+
+    // right sidebar panels
+    progress7d: 'Last 7 days',
+    progress7dLessons: 'lessons',
+    upNext: 'Up next',
+    upcomingBadge: 'Soon',
+    lessonShort: 'Lesson',
+    minShort: 'min',
+    upcoming: {
+      numbers: 'Numbers',
+      family:  'Family',
+      food:    'Food & Drinks',
+    },
+    quotes: {
+      q1: { text: 'Consistency beats talent.',                                                  author: 'Old proverb' },
+      q2: { text: 'You don\'t need to be perfect — you just need to be persistent.',            author: 'Anonymous' },
+      q3: { text: 'A different language is a different vision of life.',                        author: 'Federico Fellini' },
+      q4: { text: 'Small daily steps lead to big yearly results.',                              author: 'Anonymous' },
+      q5: { text: 'The expert in anything was once a beginner.',                                author: 'Helen Hayes' },
+      q6: { text: 'Learning another language is becoming another person.',                      author: 'Haruki Murakami' },
+      q7: { text: 'Don\'t watch the clock — do what it does. Keep going.',                      author: 'Sam Levenson' },
+    },
   },
 
   // ──────────────── Profile ────────────────
