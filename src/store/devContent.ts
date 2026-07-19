@@ -68,6 +68,25 @@ export interface DevBook {
   uploadedAt:  string
 }
 
+export type DtmSubject = 'math' | 'english' | 'native'
+
+export interface DtmDocument {
+  id:          string
+  subject:     DtmSubject
+  title:       string
+  /** Original PDF as data URL — same trade-off as DevBook: cheap, persistable. */
+  pdfDataUrl:  string
+  pdfFilename: string
+  pdfSize:     number
+  numPages:    number
+  /** Plain extracted text. No structured parser exists for DTM content yet
+   *  (math notation and Uzbek native-language text don't fit the Cambridge
+   *  heuristic) — this is raw material for the dev to reference, not an
+   *  auto-graded test. */
+  rawText:     string
+  uploadedAt:  string
+}
+
 export interface DevLesson {
   id:          string
   title:       string
@@ -86,6 +105,7 @@ interface State {
   audio:   DevAudio[]
   books:   DevBook[]
   lessons: DevLesson[]
+  dtm:     DtmDocument[]
 
   addAudio:    (a: Omit<DevAudio, 'id' | 'uploadedAt'>) => DevAudio
   removeAudio: (id: string) => void
@@ -98,6 +118,9 @@ interface State {
   updateLesson: (id: string, patch: Partial<DevLesson>) => void
   removeLesson: (id: string) => void
 
+  addDtmDocument:    (d: Omit<DtmDocument, 'id' | 'uploadedAt'>) => DtmDocument
+  removeDtmDocument: (id: string) => void
+
   clearAll: () => void
 }
 
@@ -107,6 +130,7 @@ export const useDevContent = create<State>()(
       audio: [],
       books: [],
       lessons: [],
+      dtm: [],
 
       addAudio: (a) => {
         const item: DevAudio = {
@@ -147,7 +171,18 @@ export const useDevContent = create<State>()(
         set({ lessons: get().lessons.map(l => (l.id === id ? { ...l, ...patch } : l)) }),
       removeLesson: (id) => set({ lessons: get().lessons.filter(l => l.id !== id) }),
 
-      clearAll: () => set({ audio: [], books: [], lessons: [] }),
+      addDtmDocument: (d) => {
+        const item: DtmDocument = {
+          ...d,
+          id: crypto.randomUUID(),
+          uploadedAt: new Date().toISOString(),
+        }
+        set({ dtm: [item, ...get().dtm] })
+        return item
+      },
+      removeDtmDocument: (id) => set({ dtm: get().dtm.filter(d => d.id !== id) }),
+
+      clearAll: () => set({ audio: [], books: [], lessons: [], dtm: [] }),
     }),
     { name: 'lr-dev-content' }
   )

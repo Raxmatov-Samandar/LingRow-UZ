@@ -13,14 +13,14 @@ import { Cosmos } from '@/components/layout/Cosmos'
 import { AppShell } from '@/components/layout/AppShell'
 import { Topbar } from '@/components/layout/Topbar'
 import { useAuth } from '@/store/auth'
-import { useDevContent, type LessonKind, type LessonLevel, type BookKind, type DevBook } from '@/store/devContent'
+import { useDevContent, type LessonKind, type LessonLevel, type BookKind, type DevBook, type DtmSubject, type DtmDocument } from '@/store/devContent'
 import { useUserArticles } from '@/store/userArticles'
 import { isDevUser, DEV_EMAIL } from '@/lib/dev'
 import { cn } from '@/lib/cn'
 import { extractPdfText, parseCambridgeReading } from '@/lib/pdfParser'
 import { MediaPlayer } from '@/components/ui/MediaPlayer'
 
-type Tab = 'audio' | 'articles' | 'books' | 'lessons' | 'stats'
+type Tab = 'audio' | 'articles' | 'books' | 'dtm' | 'lessons' | 'stats'
 
 export function DevPanel() {
   const { t } = useTranslation()
@@ -45,6 +45,7 @@ export function DevPanel() {
             ['audio',    '🎧', t('dev.tabs.audio')],
             ['articles', '📰', t('dev.tabs.articles')],
             ['books',    '📚', t('dev.tabs.books')],
+            ['dtm',      '🎓', t('dev.tabs.dtm')],
             ['lessons',  '🎬', t('dev.tabs.lessons')],
             ['stats',    '📊', t('dev.tabs.stats')],
           ] as const).map(([id, emoji, label]) => (
@@ -65,6 +66,7 @@ export function DevPanel() {
           {tab === 'audio'    && <AudioTab />}
           {tab === 'articles' && <ArticlesTab />}
           {tab === 'books'    && <BooksTab />}
+          {tab === 'dtm'      && <DtmTab />}
           {tab === 'lessons'  && <LessonsTab />}
           {tab === 'stats'    && <StatsTab />}
         </section>
@@ -473,6 +475,147 @@ function Stat({ n, l }: { n: number; l: string }) {
   )
 }
 
+// ───────────────────────── DTM ─────────────────────────
+
+const DTM_SUBJECTS: DtmSubject[] = ['math', 'english', 'native']
+
+function DtmTab() {
+  const { t } = useTranslation()
+  const docs = useDevContent(s => s.dtm)
+  const addDtmDocument = useDevContent(s => s.addDtmDocument)
+  const removeDtmDocument = useDevContent(s => s.removeDtmDocument)
+
+  const [picked, setPicked] = useState<File | null>(null)
+  const [subject, setSubject] = useState<DtmSubject>('math')
+  const [title, setTitle] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const ok = !!picked && title.trim().length >= 2 && !busy
+
+  async function upload() {
+    if (!picked || !ok) return
+    setBusy(true)
+    setError(null)
+    try {
+      const dataUrl = await fileToDataUrl(picked)
+      const extraction = await extractPdfText(picked)
+      addDtmDocument({
+        subject,
+        title: title.trim(),
+        pdfDataUrl: dataUrl,
+        pdfFilename: picked.name,
+        pdfSize: picked.size,
+        numPages: extraction.numPages,
+        rawText: extraction.fullText,
+      })
+      setPicked(null)
+      setTitle('')
+      if (fileRef.current) fileRef.current.value = ''
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="grid grid-cols-[1fr_1.2fr] gap-5 p-1">
+      {/* Upload card */}
+      <div className="glass-panel p-5 flex flex-col gap-3 h-fit">
+        <header>
+          <h3 className="text-lg font-bold text-white">{t('dev.dtm.title')}</h3>
+          <p className="text-xs text-slate-400 mt-1 leading-relaxed">{t('dev.dtm.sub')}</p>
+        </header>
+
+        <Field label={t('dev.lessons.lessonTitle')}>
+          <input className="input-glass" value={title}
+                 onChange={e => setTitle(e.target.value)}
+                 placeholder="DTM 2024 — Algebra past paper" />
+        </Field>
+
+        <Field label={t('dev.dtm.subject')}>
+          <select className="input-glass" value={subject} onChange={e => setSubject(e.target.value as DtmSubject)}>
+            {DTM_SUBJECTS.map(s => (
+              <option key={s} value={s} className="bg-slate-900 text-white">{t(`dev.dtm.subjects.${s}`)}</option>
+            ))}
+          </select>
+        </Field>
+
+        <button type="button" onClick={() => fileRef.current?.click()}
+                className="rounded-2xl border-2 border-dashed border-white/15 hover:border-cosmic-mint/50 hover:bg-white/[0.03] transition px-4 py-6 text-center mt-1">
+          <p className="text-2xl mb-1">🎓</p>
+          {picked
+            ? <p className="text-sm text-cosmic-mint font-semibold truncate">{picked.name}</p>
+            : <p className="text-xs text-slate-400">{t('dev.dtm.drop')}</p>}
+          {picked && <p className="text-[10px] text-slate-500 mt-1">{formatBytes(picked.size)}</p>}
+        </button>
+        <input ref={fileRef} type="file" accept="application/pdf,.pdf"
+               className="hidden"
+               onChange={e => setPicked(e.target.files?.[0] ?? null)} />
+
+        <button onClick={upload} disabled={!ok}
+                className="btn-mint disabled:opacity-40 disabled:cursor-not-allowed">
+          {busy ? t('dev.dtm.uploading') : t('dev.dtm.uploadBtn')}
+        </button>
+
+        {error && (
+          <p className="text-xs text-rose-300 bg-rose-500/10 border border-rose-500/30 rounded-lg p-2">
+            {error}
+          </p>
+        )}
+      </div>
+
+      {/* Existing documents, grouped by subject */}
+      <div className="glass-panel p-5">
+        <h4 className="text-sm font-bold text-white mb-3">
+          {t('dev.dtm.uploaded')} ({docs.length})
+        </h4>
+        {docs.length === 0
+          ? <p className="text-xs text-slate-400 italic">{t('dev.dtm.noneYet')}</p>
+          : (
+            <div className="flex flex-col gap-3 max-h-[600px] overflow-auto pr-1">
+              {DTM_SUBJECTS.map(s => {
+                const subjectDocs = docs.filter(d => d.subject === s)
+                if (subjectDocs.length === 0) return null
+                return (
+                  <div key={s}>
+                    <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1.5">{t(`dev.dtm.subjects.${s}`)}</p>
+                    <div className="flex flex-col gap-2">
+                      {subjectDocs.map(d => (
+                        <DtmDocCard key={d.id} doc={d} onRemove={() => removeDtmDocument(d.id)} />
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+      </div>
+    </div>
+  )
+}
+
+function DtmDocCard({ doc, onRemove }: { doc: DtmDocument; onRemove: () => void }) {
+  const { t } = useTranslation()
+  return (
+    <div className="rounded-xl p-3 bg-white/[0.03] border border-white/8">
+      <p className="text-sm font-bold text-white truncate">{doc.title}</p>
+      <p className="text-[10px] text-slate-500 mt-1 truncate">{doc.pdfFilename} · {formatBytes(doc.pdfSize)} · {doc.numPages} {t('dev.books.pages')}</p>
+      <div className="mt-2 flex items-center justify-between text-[11px]">
+        <a href={doc.pdfDataUrl} target="_blank" rel="noopener noreferrer"
+           className="px-2.5 py-1 rounded-md border border-white/15 text-slate-200 hover:bg-white/[0.05]">
+          PDF ↗
+        </a>
+        <button onClick={onRemove} className="text-rose-300 hover:text-rose-400 px-2 py-1">
+          {t('dev.books.remove')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ───────────────────────── Lessons ─────────────────────────
 
 const LEVELS: LessonLevel[] = ['beginner', 'intermediate', 'advanced', 'mastery']
@@ -607,18 +750,20 @@ function StatsTab() {
   const { t } = useTranslation()
   const audio = useDevContent(s => s.audio)
   const books = useDevContent(s => s.books)
+  const dtm = useDevContent(s => s.dtm)
   const lessons = useDevContent(s => s.lessons)
   const articles = useUserArticles(s => s.list)
 
   const totalSize = useMemo(
-    () => audio.reduce((sum, a) => sum + a.sizeBytes, 0),
-    [audio]
+    () => audio.reduce((sum, a) => sum + a.sizeBytes, 0) + dtm.reduce((sum, d) => sum + d.pdfSize, 0),
+    [audio, dtm]
   )
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-5 gap-5 p-1">
+    <div className="grid grid-cols-2 lg:grid-cols-6 gap-5 p-1">
       <StatCard label={t('dev.stats.audio')}    value={audio.length}    emoji="🎧" />
       <StatCard label={t('dev.tabs.books')}     value={books.length}    emoji="📚" />
+      <StatCard label={t('dev.tabs.dtm')}       value={dtm.length}      emoji="🎓" />
       <StatCard label={t('dev.stats.articles')} value={articles.length} emoji="📰" />
       <StatCard label={t('dev.stats.lessons')}  value={lessons.length}  emoji="🎬" />
       <StatCard label={t('dev.stats.sizeUsed')} value={formatBytes(totalSize)} emoji="💾" />

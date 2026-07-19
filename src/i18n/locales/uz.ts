@@ -516,8 +516,20 @@ export const uz: Translation = {
       audio: 'Audio',
       articles: 'Maqolalar',
       books: 'Kitoblar (PDF)',
+      dtm: 'DTM',
       lessons: 'Darslar',
       stats: 'Statistika',
+    },
+    dtm: {
+      title: 'DTM fan hujjatlari',
+      sub: "Matematika, Ingliz tili yoki Ona tili uchun namunaviy test/manba PDF fayllarini yuklang. Bular ma'lumot manbasi sifatida saqlanadi — Cambridge kitoblaridan farqli o'laroq, DTM kontenti uchun hali avtomatik savol ajratuvchi yo'q.",
+      subject: 'Fan',
+      subjects: { math: 'Matematika', english: 'Ingliz tili', native: 'Ona tili' },
+      uploadBtn: 'PDF yuklash',
+      uploading: 'Yuklanmoqda…',
+      drop: "PDF faylni shu yerga tashlang yoki tanlash uchun bosing",
+      uploaded: 'Yuklangan hujjatlar',
+      noneYet: 'Hali DTM hujjati yuklanmagan.',
     },
     books: {
       title: 'Cambridge / kitob PDFlari',
@@ -654,6 +666,8 @@ export const uz: Translation = {
     },
     shell: {
       topics: 'Mavzular',
+      materials: 'Yuklangan materiallar',
+      materialsNone: "Hali materiallar yuklanmagan — dev hisobi Dev Panel → DTM orqali PDF qo'sha oladi.",
       comingSoon: 'Drillar Dev Panel orqali kontent yuklangandan keyin faollashadi.',
     },
     math: {

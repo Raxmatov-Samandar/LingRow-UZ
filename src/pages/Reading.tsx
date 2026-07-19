@@ -1,7 +1,9 @@
 // =============================================================================
-// Reading test page — driven by real Cambridge IELTS 18 GT Test 1 content.
-// Layout follows the official format: passage on the left, questions on the
-// right, section + part navigation, 60-min countdown, end-of-test scoring.
+// Reading test page — driven by real Cambridge IELTS 18 GT Test 1 content by
+// default, or a Cambridge-style PDF the dev has uploaded + parsed in
+// /dev (Books tab). Layout follows the official format: passage on the left,
+// questions on the right, section + part navigation, 60-min countdown,
+// end-of-test scoring.
 // =============================================================================
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Cosmos } from '@/components/layout/Cosmos';
@@ -9,22 +11,88 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Topbar } from '@/components/layout/Topbar';
 import { useActivity } from '@/store/activity';
 import { useWordNotes } from '@/store/wordNotes';
+import { useDevContent, type DevBook } from '@/store/devContent';
 import { AnnotatedText } from '@/components/ui/AnnotatedText';
-import { TEST, type ReadingPart, type ReadingQuestion } from '@/data/reading/cambridge18-test1';
+import {
+  TEST, type ReadingTest, type ReadingSection, type ReadingPart,
+  type ReadingQuestion, type QuestionKind,
+} from '@/data/reading/cambridge18-test1';
+
+const VALID_KINDS = new Set<QuestionKind>([
+  'tfng', 'paragraph_match', 'note_completion', 'table_completion', 'heading_match', 'summary_completion', 'mcq',
+]);
+
+/**
+ * Turns a dev-uploaded, heuristically-parsed Cambridge PDF into the same
+ * shape Reading.tsx already renders. The parser is a best-effort text
+ * extraction (see src/lib/pdfParser.ts) — it does NOT extract an answer key
+ * (Cambridge books print those in a separate appendix this parser doesn't
+ * read), so `answers` on parsed questions is almost always empty. Those
+ * questions are rendered but excluded from auto-grading below instead of
+ * being silently — and incorrectly — marked wrong.
+ */
+function devBookToReadingTest(book: DevBook): ReadingTest {
+  const sections: ReadingSection[] = book.parts.map((p, i) => ({
+    num: (Math.min(i + 1, 3) as 1 | 2 | 3),
+    title: `Section ${i + 1}`,
+    parts: [{
+      partNum: p.partNum,
+      title: p.title,
+      intro: p.intro,
+      passage: p.passage || '(No passage text was extracted from this page range.)',
+      questions: p.questions.map((q): ReadingQuestion => ({
+        num: q.num,
+        kind: VALID_KINDS.has(q.kind as QuestionKind) ? (q.kind as QuestionKind) : 'mcq',
+        prompt: q.prompt,
+        options: q.options,
+        answers: q.answers ?? [],
+      })),
+    }],
+  }));
+
+  return {
+    id: book.id,
+    source: book.source || book.title,
+    module: book.module === 'AC' ? 'AC' : 'GT',
+    durationMin: 60,
+    sections: sections.length > 0 ? sections : [{ num: 1, title: 'Section 1', parts: [{ partNum: 1, title: book.title, passage: '(Nothing was parsed from this PDF.)', questions: [] }] }],
+  };
+}
 
 export function Reading() {
   const log = useActivity(s => s.log);
+  const devBooks = useDevContent(s => s.books).filter(b => b.kind === 'cambridge_ielts' && b.parts.length > 0);
+
+  const availableTests = useMemo<ReadingTest[]>(
+    () => [TEST, ...devBooks.map(devBookToReadingTest)],
+    [devBooks]
+  );
+
+  const [testId, setTestId] = useState(TEST.id);
+  const activeTest = availableTests.find(t => t.id === testId) ?? TEST;
 
   const [sectionIdx, setSectionIdx] = useState(0);
   const [partIdx,    setPartIdx]    = useState(0);
   const [answers,    setAnswers]    = useState<Record<number, string>>({});
   const [submitted,  setSubmitted]  = useState(false);
-  const [timeLeft,   setTimeLeft]   = useState(TEST.durationMin * 60);
+  const [timeLeft,   setTimeLeft]   = useState(activeTest.durationMin * 60);
   const [running,    setRunning]    = useState(false);                      // manual start
   const passageRef = useRef<HTMLDivElement>(null);
 
-  const section = TEST.sections[sectionIdx];
-  const part    = section.parts[partIdx];
+  function selectTest(id: string) {
+    setTestId(id);
+    setSectionIdx(0);
+    setPartIdx(0);
+    setAnswers({});
+    setSubmitted(false);
+    setRunning(false);
+    const t = availableTests.find(x => x.id === id);
+    setTimeLeft((t?.durationMin ?? 60) * 60);
+  }
+
+  const section = activeTest.sections[Math.min(sectionIdx, activeTest.sections.length - 1)];
+  const part    = section.parts[Math.min(partIdx, section.parts.length - 1)];
+  const hasQuestions = part.questions.length > 0;
 
   // ── Countdown — only when running ───────────────────────────────────────
   useEffect(() => {
@@ -41,35 +109,40 @@ export function Reading() {
 
   function resetTimer() {
     setRunning(false);
-    setTimeLeft(TEST.durationMin * 60);
+    setTimeLeft(activeTest.durationMin * 60);
   }
 
   // log opening on mount
-  useEffect(() => { log('reading_completed', { passage: 'Cambridge 18 GT Test 1' }); }, []); // eslint-disable-line
+  useEffect(() => { log('reading_completed', { passage: activeTest.source }); }, [activeTest.id]); // eslint-disable-line
 
   // Reset scroll on section change
   useEffect(() => { passageRef.current?.scrollTo({ top: 0 }); }, [sectionIdx, partIdx]);
 
   // ── Score ──────────────────────────────────────────────────────────────
+  // Questions with no extracted answer key (heuristic PDF parse) are shown
+  // but excluded from grading — they'd otherwise always score as "wrong".
   const allQuestions = useMemo(
-    () => TEST.sections.flatMap(s => s.parts.flatMap(p => p.questions)),
-    []
+    () => activeTest.sections.flatMap(s => s.parts.flatMap(p => p.questions)),
+    [activeTest]
   );
-  function isCorrect(q: ReadingQuestion, given: string) {
+  const gradableQuestions = useMemo(() => allQuestions.filter(q => q.answers.length > 0), [allQuestions]);
+
+  function isCorrect(q: ReadingQuestion, given: string): boolean | null {
+    if (q.answers.length === 0) return null; // ungraded — no answer key available
     if (!given) return false;
     const norm = given.trim().toLowerCase();
     return q.answers.some(a => a.toLowerCase() === norm);
   }
   const correct = useMemo(
-    () => allQuestions.filter(q => isCorrect(q, answers[q.num] ?? '')).length,
-    [allQuestions, answers]
+    () => gradableQuestions.filter(q => isCorrect(q, answers[q.num] ?? '') === true).length,
+    [gradableQuestions, answers]
   );
-  const total = allQuestions.length;
+  const total = gradableQuestions.length;
   const band  = bandFromScore(correct);
 
   function handleSubmit() {
     setSubmitted(true);
-    log('quiz_submitted', { lesson: 'cambridge-18-gt-test1', score: Math.round((correct / total) * 100), correct, total });
+    log('quiz_submitted', { lesson: activeTest.id, score: total > 0 ? Math.round((correct / total) * 100) : 0, correct, total });
   }
 
   // ── UI ─────────────────────────────────────────────────────────────────
@@ -77,13 +150,29 @@ export function Reading() {
     <>
       <Cosmos />
       <AppShell>
-        <Topbar variant="banner" bannerTitle={TEST.source} bannerSubtitle="60-minute General Training Reading practice" />
+        <Topbar variant="banner" bannerTitle={activeTest.source} bannerSubtitle={`${activeTest.durationMin}-minute ${activeTest.module === 'AC' ? 'Academic' : 'General Training'} Reading practice`} />
+
+        {/* Test selector — default Cambridge test + any dev-uploaded books */}
+        {availableTests.length > 1 && (
+          <div className="glass-panel px-4 py-2.5 flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] tracking-[0.2em] text-slate-400">TEST</span>
+            <select
+              value={testId}
+              onChange={e => selectTest(e.target.value)}
+              className="input-glass text-xs py-1.5 px-2.5 w-auto"
+            >
+              {availableTests.map(t => (
+                <option key={t.id} value={t.id}>{t.source}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Section / part navigator + timer */}
         <div className="glass-panel px-4 py-3 flex items-center gap-3 flex-wrap">
           <div className="flex gap-1.5">
-            {TEST.sections.map((s, i) => (
-              <button key={s.num}
+            {activeTest.sections.map((s, i) => (
+              <button key={i}
                       onClick={() => { setSectionIdx(i); setPartIdx(0); }}
                       className={`px-3 py-1.5 rounded-full text-xs font-bold transition
                                   ${i === sectionIdx
@@ -125,10 +214,10 @@ export function Reading() {
                             ? 'bg-rose-400/15 border border-rose-400/45 text-rose-300 hover:bg-rose-400/25'
                             : 'bg-cosmic-mint/15 border border-cosmic-mint/45 text-cosmic-mint hover:bg-cosmic-mint/25'}`}
               title={running ? 'Pause timer' : 'Start timer'}>
-              {running ? '❚❚ Pause' : timeLeft < TEST.durationMin * 60 ? '▶ Resume' : '▶ Start'}
+              {running ? '❚❚ Pause' : timeLeft < activeTest.durationMin * 60 ? '▶ Resume' : '▶ Start'}
             </button>
             <button onClick={resetTimer}
-                    disabled={timeLeft === TEST.durationMin * 60 || submitted}
+                    disabled={timeLeft === activeTest.durationMin * 60 || submitted}
                     title="Reset timer"
                     className="px-2.5 py-1 rounded-full text-[11px] border border-white/10 text-slate-400 hover:bg-white/[0.05] disabled:opacity-40">
               ↻
@@ -140,7 +229,7 @@ export function Reading() {
             <button onClick={handleSubmit}
                     disabled={submitted}
                     className="btn-primary text-xs px-4 py-1.5 disabled:opacity-50">
-              {submitted ? `Band ${band.toFixed(1)} · ${correct}/${total}` : 'Submit'}
+              {submitted ? (total > 0 ? `Band ${band.toFixed(1)} · ${correct}/${total}` : 'Submitted') : 'Submit'}
             </button>
           </div>
         </div>
@@ -170,18 +259,24 @@ export function Reading() {
           </article>
 
           <aside className="paper-panel overflow-auto flex flex-col gap-4">
-            <p className="text-[10px] tracking-[0.25em] text-slate-500">
-              QUESTIONS {part.questions[0].num}–{part.questions[part.questions.length - 1].num}
-            </p>
-            {part.questions.map(q => (
-              <QuestionItem key={q.num} q={q}
-                            value={answers[q.num] ?? ''}
-                            onChange={(v) => setAnswers({ ...answers, [q.num]: v })}
-                            submitted={submitted}
-                            correct={submitted && isCorrect(q, answers[q.num] ?? '')} />
-            ))}
+            {hasQuestions ? (
+              <>
+                <p className="text-[10px] tracking-[0.25em] text-slate-500">
+                  QUESTIONS {part.questions[0].num}–{part.questions[part.questions.length - 1].num}
+                </p>
+                {part.questions.map(q => (
+                  <QuestionItem key={q.num} q={q}
+                                value={answers[q.num] ?? ''}
+                                onChange={(v) => setAnswers({ ...answers, [q.num]: v })}
+                                submitted={submitted}
+                                gradeState={submitted ? isCorrect(q, answers[q.num] ?? '') : null} />
+                ))}
+              </>
+            ) : (
+              <p className="text-sm text-slate-600 italic">No questions were parsed for this part — check the raw text in the Dev Panel and re-upload if needed.</p>
+            )}
 
-            {submitted && <ScoreSummary correct={correct} total={total} band={band} part={part} answers={answers} />}
+            {submitted && <ScoreSummary correct={correct} total={total} band={band} />}
           </aside>
         </section>
       </AppShell>
@@ -192,16 +287,18 @@ export function Reading() {
 // ───────────────────────── Question rendering ─────────────────────────
 
 function QuestionItem({
-  q, value, onChange, submitted, correct,
+  q, value, onChange, submitted, gradeState,
 }: {
   q: ReadingQuestion;
   value: string;
   onChange: (v: string) => void;
   submitted: boolean;
-  correct: boolean;
+  /** true = correct, false = incorrect, null = no answer key to grade against */
+  gradeState: boolean | null;
 }) {
-  const wrong = submitted && value && !correct;
-  const right = submitted && correct;
+  const ungraded = submitted && gradeState === null;
+  const wrong = submitted && gradeState === false && value;
+  const right = submitted && gradeState === true;
 
   return (
     <div className={`rounded-xl p-3.5 border transition
@@ -252,7 +349,10 @@ function QuestionItem({
         />
       )}
 
-      {submitted && !correct && (
+      {ungraded && (
+        <p className="text-[11px] text-slate-500 mt-2 italic">Not auto-graded — no answer key was extracted for this question.</p>
+      )}
+      {wrong && (
         <p className="text-[11px] text-rose-700 mt-2">
           Correct: <b>{q.answers.join(' / ')}</b>
         </p>
@@ -309,18 +409,17 @@ function Choice({
   );
 }
 
-function ScoreSummary({
-  correct, total, band, part, answers,
-}: { correct: number; total: number; band: number; part: ReadingPart; answers: Record<number, string> }) {
-  const partRight = part.questions.filter(q =>
-    q.answers.some(a => a.toLowerCase() === (answers[q.num] ?? '').toLowerCase())).length;
+function ScoreSummary({ correct, total, band }: { correct: number; total: number; band: number }) {
   return (
     <div className="rounded-2xl p-4 border-2 border-emerald-500/50 bg-emerald-500/10 mt-2">
       <p className="text-sm font-bold text-emerald-700 mb-1">Test complete</p>
-      <p className="text-[13px] text-slate-800">
-        Overall: <b className="text-slate-900">{correct}/{total}</b> · estimated band <b className="text-slate-900">{band.toFixed(1)}</b>
-      </p>
-      <p className="text-[11px] text-slate-600 mt-1">This part: {partRight}/{part.questions.length}</p>
+      {total > 0 ? (
+        <p className="text-[13px] text-slate-800">
+          Overall: <b className="text-slate-900">{correct}/{total}</b> · estimated band <b className="text-slate-900">{band.toFixed(1)}</b>
+        </p>
+      ) : (
+        <p className="text-[13px] text-slate-800">No auto-gradable questions in this test — answer key wasn't available.</p>
+      )}
     </div>
   );
 }

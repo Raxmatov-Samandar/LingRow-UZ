@@ -536,8 +536,20 @@ export const en = {
       audio: 'Audio',
       articles: 'Articles',
       books: 'Books (PDF)',
+      dtm: 'DTM',
       lessons: 'Lessons',
       stats: 'Stats',
+    },
+    dtm: {
+      title: 'DTM subject documents',
+      sub: 'Upload past-paper / reference PDFs for Math, English or Native language. These are stored as reference material — there is no automatic question parser for DTM content yet, unlike Cambridge books.',
+      subject: 'Subject',
+      subjects: { math: 'Mathematics', english: 'English', native: 'Native language' },
+      uploadBtn: 'Upload PDF',
+      uploading: 'Uploading…',
+      drop: 'Drop a PDF here or click to browse',
+      uploaded: 'Uploaded documents',
+      noneYet: 'No DTM documents uploaded yet.',
     },
     books: {
       title: 'Cambridge / book PDFs',
@@ -674,6 +686,8 @@ export const en = {
     },
     shell: {
       topics: 'Topics',
+      materials: 'Uploaded materials',
+      materialsNone: 'No materials uploaded yet — the dev account can add PDFs from Dev Panel → DTM.',
       comingSoon: 'Drills will activate after content is uploaded via Dev Panel.',
     },
     math: {

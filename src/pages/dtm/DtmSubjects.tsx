@@ -11,10 +11,11 @@ import { useTranslation } from 'react-i18next'
 import { Cosmos } from '@/components/layout/Cosmos'
 import { AppShell } from '@/components/layout/AppShell'
 import { Topbar } from '@/components/layout/Topbar'
+import { useDevContent, type DtmSubject } from '@/store/devContent'
 
 interface Topic { titleKey: string; descKey: string; count: number }
 
-function Shell({ titleKey, subtitleKey, accent, emoji, image, topics, ctaTo, ctaKey }: {
+function Shell({ titleKey, subtitleKey, accent, emoji, image, topics, ctaTo, ctaKey, subject }: {
   titleKey:    string
   subtitleKey: string
   accent:      string
@@ -23,8 +24,11 @@ function Shell({ titleKey, subtitleKey, accent, emoji, image, topics, ctaTo, cta
   topics:      Topic[]
   ctaTo:       string
   ctaKey:      string
+  /** When set, shows real dev-uploaded PDFs for this subject below the topic grid. */
+  subject?:    DtmSubject
 }) {
   const { t } = useTranslation()
+  const docs = useDevContent(s => s.dtm).filter(d => subject && d.subject === subject)
   return (
     <>
       <Cosmos />
@@ -71,6 +75,29 @@ function Shell({ titleKey, subtitleKey, accent, emoji, image, topics, ctaTo, cta
             </div>
           </div>
 
+          {/* Real dev-uploaded materials for this subject */}
+          {subject && (
+            <div>
+              <h3 className="text-base font-bold text-white mb-3">{t('dtm.shell.materials')} ({docs.length})</h3>
+              {docs.length === 0 ? (
+                <p className="text-[11px] text-slate-500 italic">{t('dtm.shell.materialsNone')}</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {docs.map(d => (
+                    <a key={d.id} href={d.pdfDataUrl} target="_blank" rel="noopener noreferrer"
+                       className="glass-panel p-4 hover:bg-white/[0.05] transition flex items-center gap-3">
+                      <span className="text-2xl">📄</span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-white truncate">{d.title}</p>
+                        <p className="text-[11px] text-slate-400">{d.numPages} pages</p>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <p className="text-[11px] text-slate-500 italic text-center mt-2">
             {t('dtm.shell.comingSoon')}
           </p>
@@ -91,6 +118,7 @@ export function DtmMath() {
       accent="rgba(90,169,255,0.10)"
       ctaTo="/dtm/math"
       ctaKey="dtm.math.startDrill"
+      subject="math"
       topics={[
         { titleKey: 'dtm.math.t.algebra',   descKey: 'dtm.math.t.algebraDesc',   count: 0 },
         { titleKey: 'dtm.math.t.functions', descKey: 'dtm.math.t.functionsDesc', count: 0 },
@@ -117,6 +145,7 @@ export function DtmEnglish() {
       accent="rgba(126,247,211,0.10)"
       ctaTo="/dtm/english"
       ctaKey="dtm.english.startDrill"
+      subject="english"
       topics={[
         { titleKey: 'dtm.english.t.grammar',     descKey: 'dtm.english.t.grammarDesc',     count: 0 },
         { titleKey: 'dtm.english.t.vocabulary',  descKey: 'dtm.english.t.vocabularyDesc',  count: 0 },
@@ -140,6 +169,7 @@ export function DtmNative() {
       accent="rgba(167,139,250,0.10)"
       ctaTo="/dtm/native"
       ctaKey="dtm.native.startDrill"
+      subject="native"
       topics={[
         { titleKey: 'dtm.native.t.fonetika',   descKey: 'dtm.native.t.fonetikaDesc',   count: 0 },
         { titleKey: 'dtm.native.t.leksika',    descKey: 'dtm.native.t.leksikaDesc',    count: 0 },
