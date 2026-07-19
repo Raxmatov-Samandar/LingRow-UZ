@@ -21,6 +21,53 @@ interface PartFeedback {
   tip: string; transcript?: string;
 }
 
+// ───────────────────────── Real microphone recording ─────────────────────────
+// Records real audio via MediaRecorder — previously this page sent an empty
+// Blob([], {type:'audio/webm'}) to grade-speaking on every submission, so no
+// actual voice was ever captured or graded, mock mode or not.
+function useAudioRecorder() {
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef   = useRef<Blob[]>([]);
+  const streamRef   = useRef<MediaStream | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function start(): Promise<boolean> {
+    setError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      chunksRef.current = [];
+      const recorder = new MediaRecorder(stream);
+      recorder.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+      recorder.start();
+      recorderRef.current = recorder;
+      return true;
+    } catch {
+      setError('Microphone access denied — allow it in your browser to record.');
+      return false;
+    }
+  }
+
+  function stop(): Promise<Blob | null> {
+    return new Promise(resolve => {
+      const recorder = recorderRef.current;
+      if (!recorder || recorder.state === 'inactive') { resolve(null); return; }
+      recorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        streamRef.current?.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+        resolve(blob);
+      };
+      recorder.stop();
+    });
+  }
+
+  // Release the mic if the component unmounts mid-recording (e.g. switching parts).
+  useEffect(() => () => { streamRef.current?.getTracks().forEach(t => t.stop()); }, []);
+
+  return { start, stop, error };
+}
+
 export function Speaking() {
   const log = useActivity(s => s.log);
 
@@ -28,10 +75,9 @@ export function Speaking() {
   const [feedback, setFeedback] = useState<Record<Part, PartFeedback | null>>({ 1: null, 2: null, 3: null });
   const [loading,  setLoading]  = useState(false);
 
-  async function submitPart(target: string) {
+  async function submitPart(target: string, audio: Blob) {
     setLoading(true);
-    const fake = new Blob([], { type: 'audio/webm' });
-    const r = await learning.gradeSpeaking(fake, target);
+    const r = await learning.gradeSpeaking(audio, target);
     const band = +((r.accuracy + r.fluency + r.pronunciation) / 300 * 9).toFixed(1);
     log('speaking_practiced', { part, band, ...r });
     setFeedback(prev => ({ ...prev, [part]: r }));
@@ -80,7 +126,7 @@ export function Speaking() {
             {feedback[part] ? <FeedbackCard fb={feedback[part]!} /> : <Placeholder />}
 
             <div className="glass-soft rounded-2xl p-3 text-[11px] text-slate-400 mt-auto">
-              💡 In the real exam, the examiner records your answers. Here, "Hold to Speak" simulates a 30-second take. The AI grades your delivery + word choice. With Anthropic API keys set up, you'll get live, personalised feedback.
+              💡 Your microphone records real audio here — grant permission when prompted. The AI grades your delivery + word choice. With Anthropic + Whisper API keys set up, you'll get live, personalised feedback.
             </div>
           </aside>
         </section>
@@ -91,7 +137,7 @@ export function Speaking() {
 
 // ───────────────────────── Part 1 ─────────────────────────
 
-function Part1({ onPractice, loading, feedback }: { onPractice(target: string): void; loading: boolean; feedback: PartFeedback | null }) {
+function Part1({ onPractice, loading, feedback }: { onPractice(target: string, audio: Blob): void; loading: boolean; feedback: PartFeedback | null }) {
   const [topicIdx, setTopicIdx] = useState(0);
   const [qIdx, setQIdx] = useState(0);
   const topic = SPEAKING_TEST.part1[topicIdx];
@@ -118,7 +164,7 @@ function Part1({ onPractice, loading, feedback }: { onPractice(target: string): 
         <div className="flex gap-2 mt-6">
           <button onClick={() => setQIdx(i => Math.max(0, i - 1))} disabled={qIdx === 0}
                   className="btn-ghost disabled:opacity-40">← Prev</button>
-          <HoldToSpeak onPractice={() => onPractice(question)} loading={loading} feedback={feedback} />
+          <HoldToSpeak onPractice={audio => onPractice(question, audio)} loading={loading} feedback={feedback} />
           <button onClick={() => setQIdx(i => Math.min(topic.questions.length - 1, i + 1))}
                   disabled={qIdx === topic.questions.length - 1}
                   className="btn-ghost disabled:opacity-40">Next →</button>
@@ -130,10 +176,11 @@ function Part1({ onPractice, loading, feedback }: { onPractice(target: string): 
 
 // ───────────────────────── Part 2 ─────────────────────────
 
-function Part2({ onPractice, loading, feedback }: { onPractice(target: string): void; loading: boolean; feedback: PartFeedback | null }) {
+function Part2({ onPractice, loading, feedback }: { onPractice(target: string, audio: Blob): void; loading: boolean; feedback: PartFeedback | null }) {
   const p2 = SPEAKING_TEST.part2;
   const [phase, setPhase] = useState<'idle' | 'prep' | 'speak' | 'done'>('idle');
   const [seconds, setSeconds] = useState(p2.prepSec);
+  const { start: startRecording, stop: stopRecording, error: micError } = useAudioRecorder();
 
   useEffect(() => {
     if (phase === 'idle' || phase === 'done') return;
@@ -142,7 +189,7 @@ function Part2({ onPractice, loading, feedback }: { onPractice(target: string): 
         if (s <= 1) {
           if (phase === 'prep') { setPhase('speak'); return p2.speakSec; }
           setPhase('done');
-          onPractice(p2.cueCard);
+          finish();
           return 0;
         }
         return s - 1;
@@ -150,6 +197,15 @@ function Part2({ onPractice, loading, feedback }: { onPractice(target: string): 
     }, 1000);
     return () => clearInterval(id);
   }, [phase]); // eslint-disable-line
+
+  useEffect(() => {
+    if (phase === 'speak') startRecording();
+  }, [phase]); // eslint-disable-line
+
+  async function finish() {
+    const audio = await stopRecording();
+    if (audio) onPractice(p2.cueCard, audio);
+  }
 
   function start() { setPhase('prep'); setSeconds(p2.prepSec); }
 
@@ -170,6 +226,7 @@ function Part2({ onPractice, loading, feedback }: { onPractice(target: string): 
           <>
             <p className="text-slate-300 mb-4">You'll have <b>1 minute</b> to prepare, then <b>1–2 minutes</b> to speak.</p>
             <button className="btn-mint" onClick={start}>Start Part 2</button>
+            {micError && <p className="mt-3 text-xs text-rose-300">{micError}</p>}
           </>
         )}
         {phase === 'prep' && (
@@ -184,7 +241,7 @@ function Part2({ onPractice, loading, feedback }: { onPractice(target: string): 
             <p className="text-[10px] tracking-[0.25em] text-cosmic-mint mb-1">SPEAK NOW</p>
             <p className="text-6xl font-extrabold text-cosmic-mint tabular-nums">{seconds}</p>
             <p className="text-sm text-slate-400 mt-2">Talk continuously, cover every bullet.</p>
-            <button className="btn-ghost mt-4" onClick={() => { setPhase('done'); onPractice(p2.cueCard); }}>Finish early</button>
+            <button className="btn-ghost mt-4" onClick={() => { setPhase('done'); finish(); }}>Finish early</button>
           </>
         )}
         {phase === 'done' && (
@@ -202,7 +259,7 @@ function Part2({ onPractice, loading, feedback }: { onPractice(target: string): 
 
 // ───────────────────────── Part 3 ─────────────────────────
 
-function Part3({ onPractice, loading, feedback }: { onPractice(target: string): void; loading: boolean; feedback: PartFeedback | null }) {
+function Part3({ onPractice, loading, feedback }: { onPractice(target: string, audio: Blob): void; loading: boolean; feedback: PartFeedback | null }) {
   const [qIdx, setQIdx] = useState(0);
   const p3 = SPEAKING_TEST.part3;
   const q = p3.questions[qIdx];
@@ -216,7 +273,7 @@ function Part3({ onPractice, loading, feedback }: { onPractice(target: string): 
         <div className="flex gap-2 mt-6 flex-wrap justify-center">
           <button onClick={() => setQIdx(i => Math.max(0, i - 1))} disabled={qIdx === 0}
                   className="btn-ghost disabled:opacity-40">← Prev</button>
-          <HoldToSpeak onPractice={() => onPractice(q)} loading={loading} feedback={feedback} />
+          <HoldToSpeak onPractice={audio => onPractice(q, audio)} loading={loading} feedback={feedback} />
           <button onClick={() => setQIdx(i => Math.min(p3.questions.length - 1, i + 1))} disabled={qIdx === p3.questions.length - 1}
                   className="btn-ghost disabled:opacity-40">Next →</button>
         </div>
@@ -227,33 +284,41 @@ function Part3({ onPractice, loading, feedback }: { onPractice(target: string): 
 
 // ───────────────────────── Hold-to-speak orb ─────────────────────────
 
-function HoldToSpeak({ onPractice, loading }: { onPractice(): void; loading: boolean; feedback: PartFeedback | null }) {
+function HoldToSpeak({ onPractice, loading }: { onPractice(audio: Blob): void; loading: boolean; feedback: PartFeedback | null }) {
   const [holding, setHolding] = useState(false);
   const timerRef = useRef<number | null>(null);
-  function start() {
+  const { start: startRecording, stop: stopRecording, error: micError } = useAudioRecorder();
+
+  async function begin() {
+    const ok = await startRecording();
+    if (!ok) return;
     setHolding(true);
-    timerRef.current = window.setTimeout(() => { stop(); }, 30_000);
+    timerRef.current = window.setTimeout(() => { finish(); }, 30_000);
   }
-  function stop() {
+  async function finish() {
     if (timerRef.current) clearTimeout(timerRef.current);
     setHolding(false);
-    onPractice();
+    const audio = await stopRecording();
+    if (audio) onPractice(audio);
   }
   return (
-    <button
-      onMouseDown={start} onMouseUp={stop} onMouseLeave={() => holding && stop()}
-      onTouchStart={start} onTouchEnd={stop}
-      disabled={loading}
-      className={`relative inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full text-white font-bold border transition
-                  ${holding ? 'border-cosmic-mint bg-cosmic-mint/20 scale-105' : 'border-cosmic-mint/50'}
-                  shadow-[0_0_20px_rgba(126,247,211,0.3),inset_0_1px_0_rgba(255,255,255,0.18)]
-                  hover:shadow-[0_0_30px_rgba(126,247,211,0.5)]`}
-      style={{ background: 'linear-gradient(135deg, rgba(20,30,60,0.7), rgba(15,25,50,0.5))' }}>
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0"/><path d="M12 18v3"/>
-      </svg>
-      {loading ? 'Analysing…' : holding ? 'Recording…' : 'Hold to Speak'}
-    </button>
+    <div className="flex flex-col items-center gap-2">
+      <button
+        onMouseDown={begin} onMouseUp={finish} onMouseLeave={() => holding && finish()}
+        onTouchStart={begin} onTouchEnd={finish}
+        disabled={loading}
+        className={`relative inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full text-white font-bold border transition
+                    ${holding ? 'border-cosmic-mint bg-cosmic-mint/20 scale-105' : 'border-cosmic-mint/50'}
+                    shadow-[0_0_20px_rgba(126,247,211,0.3),inset_0_1px_0_rgba(255,255,255,0.18)]
+                    hover:shadow-[0_0_30px_rgba(126,247,211,0.5)]`}
+        style={{ background: 'linear-gradient(135deg, rgba(20,30,60,0.7), rgba(15,25,50,0.5))' }}>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0"/><path d="M12 18v3"/>
+        </svg>
+        {loading ? 'Analysing…' : holding ? 'Recording…' : 'Hold to Speak'}
+      </button>
+      {micError && <p className="text-xs text-rose-300">{micError}</p>}
+    </div>
   );
 }
 

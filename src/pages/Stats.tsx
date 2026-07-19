@@ -1,31 +1,62 @@
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Cosmos } from '@/components/layout/Cosmos';
 import { AppShell } from '@/components/layout/AppShell';
 import { Topbar } from '@/components/layout/Topbar';
 import { FloatingDecor } from '@/components/ui/FloatingDecor';
 import { useQuery } from '@tanstack/react-query';
-import { gamify } from '@/lib/api';
+import { gamify, learning } from '@/lib/api';
 import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, AreaChart, Area } from 'recharts';
+import { useActivity, computeWeeklyStats, type ActivityEvent, type ActivityKind } from '@/store/activity';
+import { useProgress } from '@/store/progress';
 
-const VOCAB_DATA = [
-  { day: 'Mon', v: 110 },
-  { day: 'Tue', v: 90  },
-  { day: 'Wed', v: 140 },
-  { day: 'Thu', v: 200 },
-  { day: 'Fri', v: 230 },
-  { day: 'Sat', v: 165 },
-];
-const DAILY_DATA = [
-  { day: 'Mon', v: 450 },
-  { day: 'Tue', v: 820 },
-  { day: 'Wed', v: 1200 },
-];
-const STREAK_DATA = Array.from({ length: 28 }, (_, i) => ({ d: i + 1, v: 6 + Math.round(Math.sin(i / 2) * 4 + Math.random() * 2) }));
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const ANY_ACTIVITY: ActivityKind[] = ['lesson_completed', 'quiz_submitted', 'writing_submitted', 'speaking_practiced', 'vocab_reviewed'];
+
+/** Real per-day counts for the given event kinds, oldest → newest, `days` long. */
+function dayBuckets(events: ActivityEvent[], kinds: ActivityKind[], days: number) {
+  const buckets = Array.from({ length: days }, (_, i) => {
+    const d = new Date(Date.now() - (days - 1 - i) * 86_400_000);
+    return { key: d.toISOString().slice(0, 10), day: DAY_LABELS[d.getDay()], v: 0 };
+  });
+  const byKey = new Map(buckets.map(b => [b.key, b]));
+  for (const e of events) {
+    if (!kinds.includes(e.kind)) continue;
+    const bucket = byKey.get(new Date(e.ts).toISOString().slice(0, 10));
+    if (bucket) bucket.v += 1;
+  }
+  return buckets;
+}
 
 export function Stats() {
   const { t } = useTranslation();
   const { data: badges }      = useQuery({ queryKey: ['badges'],      queryFn: gamify.getBadges });
   const { data: leaderboard } = useQuery({ queryKey: ['leaderboard'], queryFn: gamify.getLeaderboard });
+  const { data: levels }      = useQuery({ queryKey: ['levels'],      queryFn: learning.getLevels });
+
+  const events = useActivity(s => s.events);
+  const xp     = useProgress(s => s.xp);
+
+  const weekly = useMemo(() => computeWeeklyStats(events), [events]);
+  const activityByDay = useMemo(() => dayBuckets(events, ANY_ACTIVITY, 7), [events]);
+  const vocabByDay     = useMemo(() => dayBuckets(events, ['vocab_reviewed'], 6), [events]);
+  const streakActivity = useMemo(() => dayBuckets(events, ANY_ACTIVITY, 28).map((b, i) => ({ d: i + 1, v: b.v })), [events]);
+
+  const todayPercent = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const todayCount = events.filter(e => new Date(e.ts).toISOString().slice(0, 10) === today).length;
+    return Math.min(100, Math.round((todayCount / 5) * 100)); // 5 distinct activities = a full day
+  }, [events]);
+
+  const totalQuizCorrect = useMemo(() => {
+    const weekAgo = Date.now() - 7 * 86_400_000;
+    return events
+      .filter(e => e.kind === 'quiz_submitted' && e.ts >= weekAgo)
+      .reduce((sum, e) => sum + (typeof e.meta?.correct === 'number' ? (e.meta.correct as number) : 0), 0);
+  }, [events]);
+
+  const totalLessons = levels?.reduce((sum, l) => sum + l.totalLessons, 0) ?? 0;
+  const lessonsProgressPct = totalLessons > 0 ? Math.min(100, Math.round((weekly.lessonsDone / totalLessons) * 100)) : 0;
 
   return (
     <>
@@ -49,32 +80,32 @@ export function Stats() {
                   </defs>
                   <circle cx="60" cy="60" r="48" stroke="rgba(255,255,255,0.10)" strokeWidth="14" fill="none"/>
                   <circle cx="60" cy="60" r="48" stroke="url(#dg)" strokeWidth="14" fill="none" strokeLinecap="round"
-                          strokeDasharray="301" strokeDashoffset="45" transform="rotate(-90 60 60)"/>
+                          strokeDasharray="301" strokeDashoffset={301 - (301 * todayPercent) / 100} transform="rotate(-90 60 60)"/>
                 </svg>
                 <div className="absolute inset-0 grid place-items-center">
                   <div>
                     <div className="bg-white text-slate-900 text-[10px] font-bold px-2.5 py-0.5 rounded-full mx-auto inline-block mb-1">{t('common.today')}</div>
-                    <div className="text-3xl font-extrabold text-white leading-none">85%</div>
+                    <div className="text-3xl font-extrabold text-white leading-none">{todayPercent}%</div>
                     <div className="text-[11px] text-slate-400 mt-0.5">{t('stats.todayPercent')}</div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">965 XP</div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">{xp.toLocaleString()} XP</div>
                   </div>
                 </div>
               </div>
               <div className="grid grid-cols-3 border-t border-white/10 pt-3 text-center">
-                <div><b className="text-base text-white">803</b><br/><span className="text-[11px] text-slate-400">{t('stats.lessonsDone')}</span></div>
-                <div><b className="text-base text-white">35 {t('common.minutes').slice(0,3)}</b><br/><span className="text-[11px] text-slate-400">{t('stats.minutesSpoken')}</span></div>
-                <div><b className="text-base text-white">23</b><br/><span className="text-[11px] text-slate-400">{t('stats.quizCorrect')}</span></div>
+                <div><b className="text-base text-white">{weekly.lessonsDone}</b><br/><span className="text-[11px] text-slate-400">{t('stats.lessonsDone')}</span></div>
+                <div><b className="text-base text-white">{weekly.speakingsPractised}</b><br/><span className="text-[11px] text-slate-400">{t('stats.speakingSessions')}</span></div>
+                <div><b className="text-base text-white">{totalQuizCorrect}</b><br/><span className="text-[11px] text-slate-400">{t('stats.quizCorrect')}</span></div>
               </div>
             </div>
 
             {/* Daily bar */}
             <div className="glass-panel p-5">
-              <h4 className="text-base font-bold text-white mb-3">{t('stats.xpThisWeek')}</h4>
+              <h4 className="text-base font-bold text-white mb-3">{t('stats.activityThisWeek')}</h4>
               <div className="h-[200px]">
                 <ResponsiveContainer>
-                  <BarChart data={DAILY_DATA}>
+                  <BarChart data={activityByDay}>
                     <XAxis dataKey="day" stroke="rgba(255,255,255,0.5)" fontSize={11} />
-                    <YAxis stroke="rgba(255,255,255,0.5)" fontSize={11} />
+                    <YAxis stroke="rgba(255,255,255,0.5)" fontSize={11} allowDecimals={false} />
                     <Bar dataKey="v" fill="url(#dg2)" radius={[6, 6, 0, 0]} />
                     <defs>
                       <linearGradient id="dg2" x1="0" y1="0" x2="0" y2="1">
@@ -95,7 +126,7 @@ export function Stats() {
                   <p className="text-xs text-slate-400 mb-2">{t('stats.vocabAcquired')}</p>
                   <div className="h-[140px]">
                     <ResponsiveContainer>
-                      <BarChart data={VOCAB_DATA}>
+                      <BarChart data={vocabByDay}>
                         <XAxis dataKey="day" stroke="rgba(255,255,255,0.5)" fontSize={10} />
                         <Bar dataKey="v" fill="url(#dg2)" radius={[4,4,0,0]} />
                       </BarChart>
@@ -103,19 +134,19 @@ export function Stats() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400 mb-2">{t('stats.grammarCompleted')}</p>
+                  <p className="text-xs text-slate-400 mb-2">{t('stats.lessonsProgress')}</p>
                   <div className="h-2 rounded bg-white/10 mb-1">
                     <div className="h-full rounded shadow-[0_0_10px_#5aa9ff]"
-                         style={{ width: '50%', background: 'linear-gradient(90deg, #5aa9ff, #7ef7d3)' }}/>
+                         style={{ width: `${lessonsProgressPct}%`, background: 'linear-gradient(90deg, #5aa9ff, #7ef7d3)' }}/>
                   </div>
                   <div className="flex justify-between text-[9px] text-slate-500">
-                    <span>0</span><span>20</span><span>50</span><span>100</span>
+                    <span>0</span><span>{weekly.lessonsDone}/{totalLessons}</span><span>{lessonsProgressPct}%</span>
                   </div>
 
                   <p className="text-xs text-slate-400 mb-1 mt-3">{t('stats.studyStreak')}</p>
                   <div className="h-[70px]">
                     <ResponsiveContainer>
-                      <AreaChart data={STREAK_DATA}>
+                      <AreaChart data={streakActivity}>
                         <defs>
                           <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stopColor="rgba(126,247,211,0.5)"/>
