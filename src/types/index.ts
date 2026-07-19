@@ -87,6 +87,21 @@ export interface ParentalControls {
   notifyNewBadge: boolean;
 }
 
+// ---------------- Billing ----------------
+
+export interface Subscription {
+  plan: Plan;
+  currentPeriodEnd: string;   // ISO date
+  cancelAtPeriodEnd: boolean;
+}
+
+export interface Invoice {
+  id: string;
+  date: string;               // ISO
+  amountUzs: number;
+  status: string;             // 'paid' | 'pending' | 'cancelled' | 'failed' | 'refunded'
+}
+
 export interface DailyReport {
   id: string;
   childId: string;

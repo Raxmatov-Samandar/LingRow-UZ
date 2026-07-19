@@ -10,6 +10,8 @@ import type {
   ParentChild,
   DailyReport,
   ParentalControls,
+  Subscription,
+  Invoice,
 } from '@/types';
 
 export const LEVELS: Lesson[] = [
@@ -79,6 +81,18 @@ export const DAILY_REPORTS: DailyReport[] = [
   { id: 'r4', childId: 'c1', date: daysAgo(1), minutesSpent: 50, lessonsDone: 5, xpEarned: 220, streakMaintained: true },
   { id: 'r5', childId: 'c1', date: daysAgo(0), minutesSpent: 22, lessonsDone: 2, xpEarned: 90,  streakMaintained: true },
   { id: 'r6', childId: 'c2', date: daysAgo(1), minutesSpent: 65, lessonsDone: 6, xpEarned: 280, streakMaintained: true },
+];
+
+export const MOCK_SUBSCRIPTION: Subscription = {
+  plan: 'family',
+  currentPeriodEnd: new Date(Date.now() + 23 * 86_400_000).toISOString(),
+  cancelAtPeriodEnd: false,
+};
+
+export const MOCK_INVOICES: Invoice[] = [
+  { id: 'inv1', date: new Date(Date.now() - 7  * 86_400_000).toISOString(), amountUzs: 150_000, status: 'paid' },
+  { id: 'inv2', date: new Date(Date.now() - 37 * 86_400_000).toISOString(), amountUzs: 150_000, status: 'paid' },
+  { id: 'inv3', date: new Date(Date.now() - 67 * 86_400_000).toISOString(), amountUzs: 150_000, status: 'paid' },
 ];
 
 export const SUBTITLE_CARDS = [

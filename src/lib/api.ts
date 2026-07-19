@@ -7,10 +7,12 @@ import type {
   User, Lesson, VocabWord, QuizQuestion, Badge, LeaderboardEntry,
   ParentChild, ParentalControls, DailyReport, UserRole,
   DiagnosticQuestion, DnaScores, ErrorCategory, ErrorCatalogEntry,
+  Subscription, Invoice,
 } from '@/types';
 import {
   LEVELS, VOCAB, QUIZ, BADGES, LEADERBOARD,
   PARENT_CHILDREN, PARENTAL_CONTROLS, DAILY_REPORTS,
+  MOCK_SUBSCRIPTION, MOCK_INVOICES,
 } from '@/data/mock';
 import { ERROR_CATALOG, DIAGNOSTIC_QUESTIONS } from '@/data/errorDna';
 import { supabase, isSupabaseConfigured } from './supabase';
@@ -465,6 +467,32 @@ export const billing = {
     const serviceId  = import.meta.env.VITE_CLICK_SERVICE_ID  ?? '';
     const ret        = encodeURIComponent(window.location.origin + '/parent/billing?status=ok');
     return `https://my.click.uz/services/pay?service_id=${serviceId}&merchant_id=${merchantId}&amount=${opts.amountUzs}&transaction_param=${opts.orderId}&return_url=${ret}`;
+  },
+
+  async getCurrentSubscription(): Promise<Subscription | null> {
+    if (useMock) { await wait(); return MOCK_SUBSCRIPTION; }
+    const { data: { user } } = await supabase!.auth.getUser();
+    if (!user) return null;
+    const { data } = await supabase!.from('subscriptions').select('*')
+      .eq('user_id', user.id).order('current_period_end', { ascending: false }).limit(1).maybeSingle();
+    if (!data) return null;
+    return { plan: data.plan, currentPeriodEnd: data.current_period_end, cancelAtPeriodEnd: data.cancel_at_period_end };
+  },
+
+  async getInvoices(): Promise<Invoice[]> {
+    if (useMock) { await wait(); return MOCK_INVOICES; }
+    const { data: { user } } = await supabase!.auth.getUser();
+    if (!user) return [];
+    const { data } = await supabase!.from('payments').select('*')
+      .eq('user_id', user.id).order('created_at', { ascending: false }).limit(10);
+    return (data ?? []).map(p => ({ id: p.id, date: p.created_at, amountUzs: p.amount_uzs, status: p.status }));
+  },
+
+  async cancelSubscription(): Promise<{ ok: true }> {
+    if (useMock) { await wait(); MOCK_SUBSCRIPTION.cancelAtPeriodEnd = true; return { ok: true }; }
+    const { error } = await supabase!.rpc('cancel_own_subscription');
+    if (error) throw error;
+    return { ok: true };
   },
 };
 
