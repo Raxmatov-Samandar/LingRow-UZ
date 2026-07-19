@@ -66,12 +66,17 @@ export const PARENTAL_CONTROLS: Record<string, ParentalControls> = {
   c2: { childId: 'c2', dailyLimitMins: 60, allowedFrom: '14:00', allowedTo: '21:00', aiChatEnabled: true,  leaderboardVisible: true  },
 };
 
+// Relative to "today" so the parent dashboard demo shows real-looking recent
+// activity instead of a permanently stale, fixed calendar date.
+const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
+
 export const DAILY_REPORTS: DailyReport[] = [
-  { id: 'r1', childId: 'c1', date: '2026-05-01', minutesSpent: 38, lessonsDone: 3, xpEarned: 120, streakMaintained: true },
-  { id: 'r2', childId: 'c1', date: '2026-05-02', minutesSpent: 42, lessonsDone: 4, xpEarned: 180, streakMaintained: true },
-  { id: 'r3', childId: 'c1', date: '2026-05-03', minutesSpent: 0,  lessonsDone: 0, xpEarned: 0,   streakMaintained: false },
-  { id: 'r4', childId: 'c1', date: '2026-05-04', minutesSpent: 50, lessonsDone: 5, xpEarned: 220, streakMaintained: true },
-  { id: 'r5', childId: 'c2', date: '2026-05-04', minutesSpent: 65, lessonsDone: 6, xpEarned: 280, streakMaintained: true },
+  { id: 'r1', childId: 'c1', date: daysAgo(4), minutesSpent: 38, lessonsDone: 3, xpEarned: 120, streakMaintained: true },
+  { id: 'r2', childId: 'c1', date: daysAgo(3), minutesSpent: 42, lessonsDone: 4, xpEarned: 180, streakMaintained: true },
+  { id: 'r3', childId: 'c1', date: daysAgo(2), minutesSpent: 0,  lessonsDone: 0, xpEarned: 0,   streakMaintained: false },
+  { id: 'r4', childId: 'c1', date: daysAgo(1), minutesSpent: 50, lessonsDone: 5, xpEarned: 220, streakMaintained: true },
+  { id: 'r5', childId: 'c1', date: daysAgo(0), minutesSpent: 22, lessonsDone: 2, xpEarned: 90,  streakMaintained: true },
+  { id: 'r6', childId: 'c2', date: daysAgo(1), minutesSpent: 65, lessonsDone: 6, xpEarned: 280, streakMaintained: true },
 ];
 
 export const SUBTITLE_CARDS = [

@@ -208,6 +208,15 @@ export const uz: Translation = {
       perDay: 'daq/kun',
       none: '—',
     },
+    parentLink: {
+      title: "Ota-onani ulash",
+      description: "Ota-onangizdan Parent Dashboard'dagi 6 xonali kodni so'rang va shu yerga kiriting — shunda ular sizning progressingizni kuzatib borishlari mumkin bo'ladi.",
+      placeholder: '6 xonali kod',
+      button: 'Ulash',
+      linking: 'Ulanmoqda…',
+      success: "Ulandi! Endi ota-onangiz progressingizni ko'ra oladi.",
+      error: "Kod noto'g'ri yoki muddati o'tgan — ota-onangizdan yangi kod so'rang.",
+    },
   },
 
   stats: {

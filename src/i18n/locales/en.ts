@@ -215,6 +215,15 @@ export const en = {
       perDay: 'min/day',
       none: '—',
     },
+    parentLink: {
+      title: 'Link a parent',
+      description: 'Ask your parent for the 6-digit code from their Parent Dashboard, then enter it here so they can follow your progress.',
+      placeholder: '6-digit code',
+      button: 'Link account',
+      linking: 'Linking…',
+      success: "Linked! Your parent can now see your progress.",
+      error: 'Invalid or expired code — ask your parent for a new one.',
+    },
   },
 
   // ──────────────── Stats ────────────────

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Cosmos } from '@/components/layout/Cosmos';
 import { AppShell } from '@/components/layout/AppShell';
@@ -5,6 +6,7 @@ import { Topbar } from '@/components/layout/Topbar';
 import { useAuth } from '@/store/auth';
 import { isDevUser } from '@/lib/dev';
 import { EMAIL_SUPPORT, EMAIL_LEGAL, mailto } from '@/lib/contacts';
+import { parentApi } from '@/lib/api';
 import { Link } from 'react-router-dom';
 
 export function Profile() {
@@ -51,13 +53,17 @@ export function Profile() {
             </div>
           </aside>
 
-          <div className="grid grid-cols-2 gap-5 content-start">
-            <Card title={t('profile.fields.goal')} value={dash(onboarding.goal && t(`onboarding.goal.${onboarding.goal}`))} />
-            <Card title={t('profile.fields.level')} value={dash(onboarding.level && t(`onboarding.level.${onboarding.level}`))} />
-            <Card title={t('profile.fields.dailyTarget')} value={onboarding.dailyMinutes ? `${onboarding.dailyMinutes} ${t('profile.fields.perDay')}` : t('profile.fields.none')} />
-            <Card title={t('profile.fields.bandTarget')} value={dash(onboarding.bandTarget?.toString())} />
-            <Card title={t('profile.fields.examDate')} value={dash(onboarding.examDate)} />
-            <Card title={t('profile.fields.memberSince')} value={user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : t('profile.fields.none')} />
+          <div className="flex flex-col gap-5">
+            <div className="grid grid-cols-2 gap-5 content-start">
+              <Card title={t('profile.fields.goal')} value={dash(onboarding.goal && t(`onboarding.goal.${onboarding.goal}`))} />
+              <Card title={t('profile.fields.level')} value={dash(onboarding.level && t(`onboarding.level.${onboarding.level}`))} />
+              <Card title={t('profile.fields.dailyTarget')} value={onboarding.dailyMinutes ? `${onboarding.dailyMinutes} ${t('profile.fields.perDay')}` : t('profile.fields.none')} />
+              <Card title={t('profile.fields.bandTarget')} value={dash(onboarding.bandTarget?.toString())} />
+              <Card title={t('profile.fields.examDate')} value={dash(onboarding.examDate)} />
+              <Card title={t('profile.fields.memberSince')} value={user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : t('profile.fields.none')} />
+            </div>
+
+            {user?.role !== 'parent' && <ParentLinkCard />}
           </div>
         </section>
       </AppShell>
@@ -70,6 +76,58 @@ function Card({ title, value }: { title: string; value: string }) {
     <div className="glass-panel p-5">
       <p className="text-xs text-slate-400">{title}</p>
       <p className="mt-1 text-lg font-bold text-white">{value}</p>
+    </div>
+  );
+}
+
+function ParentLinkCard() {
+  const { t } = useTranslation();
+  const [code, setCode] = useState('');
+  const [status, setStatus] = useState<'idle' | 'linking' | 'success' | 'error'>('idle');
+
+  async function link() {
+    if (!/^\d{6}$/.test(code)) { setStatus('error'); return; }
+    setStatus('linking');
+    try {
+      const res = await parentApi.redeemLinkCode(code);
+      setStatus(res.ok ? 'success' : 'error');
+    } catch {
+      setStatus('error');
+    }
+  }
+
+  if (status === 'success') {
+    return (
+      <div className="glass-panel p-5 border border-cosmic-mint/30">
+        <p className="text-sm font-semibold text-cosmic-mint">✓ {t('profile.parentLink.success')}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="glass-panel p-5">
+      <p className="text-sm font-bold text-white mb-1">{t('profile.parentLink.title')}</p>
+      <p className="text-xs text-slate-400 mb-3">{t('profile.parentLink.description')}</p>
+      <div className="flex gap-2">
+        <input
+          value={code}
+          onChange={e => { setCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setStatus('idle'); }}
+          placeholder={t('profile.parentLink.placeholder')}
+          maxLength={6}
+          inputMode="numeric"
+          className="input-glass flex-1 tracking-widest text-center"
+        />
+        <button
+          onClick={link}
+          disabled={status === 'linking' || code.length !== 6}
+          className="btn-ghost px-4 disabled:opacity-40"
+        >
+          {status === 'linking' ? t('profile.parentLink.linking') : t('profile.parentLink.button')}
+        </button>
+      </div>
+      {status === 'error' && (
+        <p className="mt-2 text-xs text-rose-300">{t('profile.parentLink.error')}</p>
+      )}
     </div>
   );
 }
