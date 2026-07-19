@@ -395,18 +395,23 @@ export const parentApi = {
   },
 
   async getControls(childId: string): Promise<ParentalControls> {
-    if (useMock) {
-      await wait();
-      return PARENTAL_CONTROLS[childId] ?? { childId, dailyLimitMins: 60, allowedFrom: '15:00', allowedTo: '21:00', aiChatEnabled: false, leaderboardVisible: true };
-    }
+    const fallback: ParentalControls = {
+      childId, dailyLimitMins: 60, allowedFrom: '15:00', allowedTo: '21:00',
+      aiChatEnabled: false, leaderboardVisible: true,
+      notifyDailySummary: true, notifyMissedSession: true, notifyNewBadge: true,
+    };
+    if (useMock) { await wait(); return PARENTAL_CONTROLS[childId] ?? fallback; }
     const { data } = await supabase!.from('parental_controls').select('*').eq('child_id', childId).maybeSingle();
-    if (!data) return { childId, dailyLimitMins: 60, allowedFrom: '15:00', allowedTo: '21:00', aiChatEnabled: false, leaderboardVisible: true };
+    if (!data) return fallback;
     return {
       childId: data.child_id,
       dailyLimitMins: data.daily_limit_mins,
       allowedFrom: data.allowed_from, allowedTo: data.allowed_to,
       aiChatEnabled: data.ai_chat_enabled,
       leaderboardVisible: data.leaderboard_visible,
+      notifyDailySummary: data.notify_daily_summary,
+      notifyMissedSession: data.notify_missed_session,
+      notifyNewBadge: data.notify_new_badge,
     };
   },
 
@@ -418,6 +423,9 @@ export const parentApi = {
       allowed_from: c.allowedFrom, allowed_to: c.allowedTo,
       ai_chat_enabled: c.aiChatEnabled,
       leaderboard_visible: c.leaderboardVisible,
+      notify_daily_summary: c.notifyDailySummary,
+      notify_missed_session: c.notifyMissedSession,
+      notify_new_badge: c.notifyNewBadge,
     });
     return c;
   },

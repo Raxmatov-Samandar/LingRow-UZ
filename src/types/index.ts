@@ -82,6 +82,9 @@ export interface ParentalControls {
   allowedTo: string;             // "21:00"
   aiChatEnabled: boolean;
   leaderboardVisible: boolean;
+  notifyDailySummary: boolean;
+  notifyMissedSession: boolean;
+  notifyNewBadge: boolean;
 }
 
 export interface DailyReport {

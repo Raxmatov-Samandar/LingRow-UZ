@@ -4,11 +4,17 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Topbar } from '@/components/layout/Topbar';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { parentApi } from '@/lib/api';
+import { useAuth } from '@/store/auth';
 import type { ParentalControls } from '@/types';
 
 export function ParentSettings() {
   const qc = useQueryClient();
-  const { data: children } = useQuery({ queryKey: ['parent.children'], queryFn: () => parentApi.getChildren('p1') });
+  const user = useAuth(s => s.user);
+  const { data: children } = useQuery({
+    queryKey: ['parent.children'],
+    queryFn: () => parentApi.getChildren(user!.id),
+    enabled: !!user,
+  });
   const [activeChild, setActiveChild] = useState<string | null>(null);
 
   useEffect(() => { if (children?.length && !activeChild) setActiveChild(children[0].childId); }, [children, activeChild]);
@@ -83,12 +89,17 @@ export function ParentSettings() {
               </div>
 
               <div className="glass-panel p-5 col-span-2">
-                <h3 className="text-lg font-bold text-white mb-4">🔔 Notifications (Push + SMS)</h3>
+                <h3 className="text-lg font-bold text-white mb-4">🔔 Notifications (SMS)</h3>
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <Toggle label="Daily summary at 8:00 PM"   checked onChange={() => {}} />
-                  <Toggle label="When session is missed"     checked onChange={() => {}} />
-                  <Toggle label="When new badge earned"      checked onChange={() => {}} />
-                  <Toggle label="Weekly progress report"     checked onChange={() => {}} />
+                  <Toggle label="Daily summary at 8:00 PM"
+                          checked={controls.notifyDailySummary}
+                          onChange={v => setField('notifyDailySummary', v)} />
+                  <Toggle label="When session is missed"
+                          checked={controls.notifyMissedSession}
+                          onChange={v => setField('notifyMissedSession', v)} />
+                  <Toggle label="When new badge earned"
+                          checked={controls.notifyNewBadge}
+                          onChange={v => setField('notifyNewBadge', v)} />
                 </div>
               </div>
             </div>

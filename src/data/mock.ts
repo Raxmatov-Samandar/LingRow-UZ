@@ -62,8 +62,10 @@ export const PARENT_CHILDREN: ParentChild[] = [
 ];
 
 export const PARENTAL_CONTROLS: Record<string, ParentalControls> = {
-  c1: { childId: 'c1', dailyLimitMins: 45, allowedFrom: '15:00', allowedTo: '20:00', aiChatEnabled: false, leaderboardVisible: true  },
-  c2: { childId: 'c2', dailyLimitMins: 60, allowedFrom: '14:00', allowedTo: '21:00', aiChatEnabled: true,  leaderboardVisible: true  },
+  c1: { childId: 'c1', dailyLimitMins: 45, allowedFrom: '15:00', allowedTo: '20:00', aiChatEnabled: false, leaderboardVisible: true,
+        notifyDailySummary: true, notifyMissedSession: true, notifyNewBadge: true },
+  c2: { childId: 'c2', dailyLimitMins: 60, allowedFrom: '14:00', allowedTo: '21:00', aiChatEnabled: true,  leaderboardVisible: true,
+        notifyDailySummary: true, notifyMissedSession: false, notifyNewBadge: true },
 };
 
 // Relative to "today" so the parent dashboard demo shows real-looking recent
