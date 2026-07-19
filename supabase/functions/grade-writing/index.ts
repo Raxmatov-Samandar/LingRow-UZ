@@ -2,9 +2,10 @@
 // POST /functions/v1/grade-writing  { text: string, prompt?: string }
 // → { score, accuracy, fluency, pronunciation, feedback }
 
-import { corsHeaders, jsonResponse, preflight } from '../_shared/cors.ts';
+import { corsHeaders, jsonResponse, preflight, serverError } from '../_shared/cors.ts';
 import { getCallerUser, serviceClient }         from '../_shared/supabase.ts';
 import { chat, extractJson }                    from '../_shared/anthropic.ts';
+import { underAiQuota }                         from '../_shared/rateLimit.ts';
 
 interface AiResponse {
   score: number;
@@ -35,9 +36,17 @@ Deno.serve(async (req) => {
     const user = await getCallerUser(req);
     if (!user) return jsonResponse({ error: 'unauthorized' }, { status: 401, headers: corsHeaders });
 
+    const sb = serviceClient();
+    if (!(await underAiQuota(sb, user.id))) {
+      return jsonResponse({ error: 'Daily AI usage limit reached — try again tomorrow' }, { status: 429 });
+    }
+
     const { text, prompt } = await req.json();
     if (!text || typeof text !== 'string' || text.length < 20) {
       return jsonResponse({ error: 'text must be ≥20 chars' }, { status: 400 });
+    }
+    if (text.length > 6000) {
+      return jsonResponse({ error: 'text too long (max 6000 chars)' }, { status: 400 });
     }
 
     const userMsg = prompt
@@ -51,7 +60,6 @@ Deno.serve(async (req) => {
     const data = extractJson<AiResponse>(aiText);
 
     // Persist
-    const sb = serviceClient();
     await sb.from('ai_feedback').insert({
       user_id:       user.id,
       kind:          'writing',
@@ -73,6 +81,6 @@ Deno.serve(async (req) => {
       feedback:      data.feedback.map(f => `${f.type[0].toUpperCase() + f.type.slice(1)}: ${f.problem} → ${f.suggestion}`),
     });
   } catch (e) {
-    return jsonResponse({ error: (e as Error).message }, { status: 500 });
+    return serverError(e);
   }
 });

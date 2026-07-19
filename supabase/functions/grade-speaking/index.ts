@@ -10,9 +10,10 @@
 // POST /functions/v1/grade-speaking  multipart  audio=…  target="…"
 // → { accuracy, fluency, pronunciation, transcript, tip }
 
-import { corsHeaders, jsonResponse, preflight } from '../_shared/cors.ts';
+import { corsHeaders, jsonResponse, preflight, serverError } from '../_shared/cors.ts';
 import { getCallerUser, serviceClient }         from '../_shared/supabase.ts';
 import { chat, extractJson }                    from '../_shared/anthropic.ts';
+import { underAiQuota }                         from '../_shared/rateLimit.ts';
 
 const STT_API = 'https://api.openai.com/v1/audio/transcriptions';
 
@@ -49,14 +50,21 @@ Deno.serve(async (req) => {
     const user = await getCallerUser(req);
     if (!user) return jsonResponse({ error: 'unauthorized' }, { status: 401 });
 
+    const sb = serviceClient();
+    if (!(await underAiQuota(sb, user.id))) {
+      return jsonResponse({ error: 'Daily AI usage limit reached — try again tomorrow' }, { status: 429 });
+    }
+
     const fd = await req.formData();
     const audio  = fd.get('audio')  as File | null;
     const target = (fd.get('target') as string | null)?.toString() ?? '';
     if (!audio)  return jsonResponse({ error: 'audio file required' }, { status: 400 });
     if (!target) return jsonResponse({ error: 'target sentence required' }, { status: 400 });
+    if (audio.size > 10 * 1024 * 1024) {
+      return jsonResponse({ error: 'audio too large (max 10MB)' }, { status: 400 });
+    }
 
     // 1) Upload to Storage
-    const sb = serviceClient();
     const path = `${user.id}/${crypto.randomUUID()}.webm`;
     const up = await sb.storage.from('speaking').upload(path, audio, { contentType: audio.type });
     if (up.error) throw up.error;
@@ -86,6 +94,6 @@ Deno.serve(async (req) => {
 
     return jsonResponse({ ...score, transcript }, { headers: corsHeaders });
   } catch (e) {
-    return jsonResponse({ error: (e as Error).message }, { status: 500 });
+    return serverError(e);
   }
 });

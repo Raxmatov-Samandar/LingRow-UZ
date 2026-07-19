@@ -1,7 +1,7 @@
 // POST /functions/v1/parent-link-redeem  { code: "123456" }
 // Auth: child (logged-in user).
 // Marks the parent_children row active and binds child_id to the caller.
-import { jsonResponse, preflight } from '../_shared/cors.ts';
+import { jsonResponse, preflight, serverError } from '../_shared/cors.ts';
 import { getCallerUser, serviceClient } from '../_shared/supabase.ts';
 
 Deno.serve(async (req) => {
@@ -40,6 +40,6 @@ Deno.serve(async (req) => {
 
     return jsonResponse({ ok: true, parent_id: row.parent_id });
   } catch (e) {
-    return jsonResponse({ error: (e as Error).message }, { status: 500 });
+    return serverError(e);
   }
 });

@@ -12,14 +12,7 @@
 // Auth: Basic with merchant key (PAYME_MERCHANT_KEY).
 
 import { serviceClient } from '../_shared/supabase.ts';
-
-const PLAN_PRICE_UZS: Record<string, number> = {
-  kids:      35_000,    // ~$3
-  teen:      60_000,
-  ielts:     120_000,
-  family:    150_000,
-  corporate: 180_000,
-};
+import { PLAN_PRICE_UZS } from '../_shared/pricing.ts';
 
 const ERR = {
   INVALID_AMOUNT:   { code: -31001, message: { en: 'Invalid amount' } },
@@ -107,16 +100,17 @@ Deno.serve(async (req) => {
         return rpcResult(id, { transaction: row.id, perform_time: new Date(row.updated_at).getTime(), state: 2 });
       }
 
-      const performTime = Date.now();
-      await sb.from('payments').update({ status: 'paid', updated_at: new Date(performTime).toISOString() }).eq('id', row.id);
+      // A missing plan must fail the transaction, not silently grant the
+      // most expensive one — this is real money and a real subscription.
+      const plan = row.raw?.account?.plan;
+      if (!plan) return rpcError(id, ERR.CANT_PERFORM);
 
-      // Activate or extend subscription
-      const plan = row.raw?.account?.plan ?? 'family';
-      const periodEnd = new Date(Date.now() + 30 * 86_400_000).toISOString();
-      await sb.from('subscriptions').insert({
-        user_id: row.user_id, plan, current_period_end: periodEnd,
-      });
-      await sb.from('profiles').update({ plan }).eq('id', row.user_id);
+      // payments/subscriptions/profiles writes happen together in one
+      // transaction (see perform_payment() migration) — no partial state
+      // if the function dies mid-way.
+      const performTime = Date.now();
+      const { error: performErr } = await sb.rpc('perform_payment', { p_payment_id: row.id, p_plan: plan });
+      if (performErr) return rpcError(id, ERR.CANT_PERFORM);
 
       return rpcResult(id, { transaction: row.id, perform_time: performTime, state: 2 });
     }
@@ -126,8 +120,16 @@ Deno.serve(async (req) => {
       const { data: row } = await sb.from('payments')
         .select('*').eq('provider', 'payme').eq('external_id', trans_id).maybeSingle();
       if (!row) return rpcError(id, ERR.TRANS_NOT_FOUND);
-      await sb.from('payments').update({ status: 'cancelled', raw: { ...(row.raw || {}), cancel_reason: reason } }).eq('id', row.id);
-      return rpcResult(id, { transaction: row.id, cancel_time: Date.now(), state: -1 });
+
+      // Payme's protocol distinguishes cancelling a still-pending transaction
+      // (state -1) from cancelling one that was already performed — that's a
+      // refund, state -2. Returning -1 unconditionally fails their
+      // conformance tests and misreports refunds as plain cancellations.
+      const wasPerformed = row.status === 'paid';
+      const newStatus = wasPerformed ? 'refunded' : 'cancelled';
+      await sb.from('payments').update({ status: newStatus, raw: { ...(row.raw || {}), cancel_reason: reason } }).eq('id', row.id);
+
+      return rpcResult(id, { transaction: row.id, cancel_time: Date.now(), state: wasPerformed ? -2 : -1 });
     }
 
     case 'CheckTransaction': {

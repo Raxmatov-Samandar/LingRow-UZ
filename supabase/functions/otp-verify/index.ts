@@ -3,7 +3,7 @@
 //
 // Flow: we verify the OTP in our otp_codes table, then call admin-API
 // generateLink to mint a session for the phone-keyed user (creating one if needed).
-import { jsonResponse, preflight } from '../_shared/cors.ts';
+import { jsonResponse, preflight, serverError } from '../_shared/cors.ts';
 import { serviceClient }           from '../_shared/supabase.ts';
 
 async function hash(s: string) {
@@ -76,6 +76,6 @@ Deno.serve(async (req) => {
 
     return jsonResponse({ ok: true, token_hash: link.properties?.hashed_token });
   } catch (e) {
-    return jsonResponse({ error: (e as Error).message }, { status: 500 });
+    return serverError(e);
   }
 });

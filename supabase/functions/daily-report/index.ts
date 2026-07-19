@@ -6,7 +6,7 @@
 //   "0 15 * * *"   (15:00 UTC = 20:00 Tashkent)
 // Pass header  X-Cron-Secret: <DAILY_REPORT_SECRET>  to authenticate.
 
-import { jsonResponse, preflight } from '../_shared/cors.ts';
+import { jsonResponse, preflight, serverError } from '../_shared/cors.ts';
 import { serviceClient }            from '../_shared/supabase.ts';
 import { sendSms }                  from '../_shared/eskiz.ts';
 
@@ -61,6 +61,6 @@ Deno.serve(async (req) => {
 
     return jsonResponse({ ok: true, reports_built: built, sms_sent: sent });
   } catch (e) {
-    return jsonResponse({ error: (e as Error).message }, { status: 500 });
+    return serverError(e);
   }
 });

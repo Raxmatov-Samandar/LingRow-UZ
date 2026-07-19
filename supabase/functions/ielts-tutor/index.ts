@@ -4,9 +4,10 @@
 //   body: { messages: [{role:'user'|'assistant', content:string}], section?: 'listening'|'reading'|'writing'|'speaking' }
 //   → { reply: string, model: string }
 // =============================================================
-import { corsHeaders, jsonResponse, preflight } from '../_shared/cors.ts';
+import { corsHeaders, jsonResponse, preflight, serverError } from '../_shared/cors.ts';
 import { getCallerUser, serviceClient }         from '../_shared/supabase.ts';
 import { chat, type AiMessage }                 from '../_shared/anthropic.ts';
+import { underAiQuota }                         from '../_shared/rateLimit.ts';
 
 const SYSTEM = `You are **Professor Linguo** — the world's most charismatic IELTS instructor and a genuinely fun person to talk to.
 
@@ -83,6 +84,11 @@ Deno.serve(async (req) => {
     const user = await getCallerUser(req);
     if (!user) return jsonResponse({ error: 'unauthorized' }, { status: 401 });
 
+    const sb = serviceClient();
+    if (!(await underAiQuota(sb, user.id))) {
+      return jsonResponse({ error: 'Daily AI usage limit reached — try again tomorrow' }, { status: 429 });
+    }
+
     const { messages, section } = await req.json();
     if (!Array.isArray(messages) || messages.length === 0) {
       return jsonResponse({ error: 'messages required' }, { status: 400 });
@@ -103,7 +109,6 @@ Deno.serve(async (req) => {
 
     // Persist for analytics / continuity (optional)
     try {
-      const sb = serviceClient();
       await sb.from('ai_feedback').insert({
         user_id:  user.id,
         kind:     'writing',  // re-use; consider adding 'tutor' kind in a future migration
@@ -115,6 +120,6 @@ Deno.serve(async (req) => {
 
     return jsonResponse({ reply: text, model: raw.model }, { headers: corsHeaders });
   } catch (e) {
-    return jsonResponse({ error: (e as Error).message }, { status: 500 });
+    return serverError(e);
   }
 });

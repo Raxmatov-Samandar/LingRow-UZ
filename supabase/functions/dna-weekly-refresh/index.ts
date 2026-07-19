@@ -9,7 +9,7 @@
 // (reuses the same secret as daily-report — both are cron-only, service-side
 // triggers with no user-facing surface).
 
-import { jsonResponse, preflight } from '../_shared/cors.ts';
+import { jsonResponse, preflight, serverError } from '../_shared/cors.ts';
 import { serviceClient }           from '../_shared/supabase.ts';
 
 Deno.serve(async (req) => {
@@ -28,6 +28,6 @@ Deno.serve(async (req) => {
     console.info(`[dna-weekly-refresh] updated ${updated ?? 0} category scores`);
     return jsonResponse({ ok: true, updated });
   } catch (e) {
-    return jsonResponse({ error: (e as Error).message }, { status: 500 });
+    return serverError(e);
   }
 });

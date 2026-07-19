@@ -8,14 +8,7 @@
 // Auth: signed with sign_string = md5(click_trans_id + service_id + SECRET_KEY + …)
 
 import { serviceClient } from '../_shared/supabase.ts';
-
-const PLAN_PRICE_UZS: Record<string, number> = {
-  kids:      35_000,
-  teen:      60_000,
-  ielts:     120_000,
-  family:    150_000,
-  corporate: 180_000,
-};
+import { PLAN_PRICE_UZS } from '../_shared/pricing.ts';
 
 async function md5(str: string): Promise<string> {
   // Click expects MD5 in lowercase hex. Web Crypto doesn't support MD5,
@@ -31,6 +24,7 @@ function form(body: URLSearchParams) {
 }
 
 Deno.serve(async (req) => {
+  try {
   const sb = serviceClient();
   const params = form(new URLSearchParams(await req.text()));
   const SECRET = Deno.env.get('CLICK_SECRET');
@@ -94,12 +88,12 @@ Deno.serve(async (req) => {
         error: 0, error_note: 'Success',
       });
     }
-    await sb.from('payments').update({ status: 'paid' }).eq('id', row.id);
-    const periodEnd = new Date(Date.now() + 30 * 86_400_000).toISOString();
-    await sb.from('subscriptions').insert({
-      user_id: row.user_id, plan, current_period_end: periodEnd,
-    });
-    await sb.from('profiles').update({ plan }).eq('id', row.user_id);
+    // payments/subscriptions/profiles writes happen together in one
+    // transaction (see perform_payment() migration) — no partial state
+    // if the function dies mid-way.
+    const { error: performErr } = await sb.rpc('perform_payment', { p_payment_id: row.id, p_plan: plan });
+    if (performErr) return Response.json({ error: -1, error_note: 'Could not complete payment' });
+
     return Response.json({
       click_trans_id, merchant_trans_id,
       merchant_confirm_id: row.id,
@@ -108,4 +102,8 @@ Deno.serve(async (req) => {
   }
 
   return Response.json({ error: -3, error_note: 'Unknown action' });
+  } catch (e) {
+    console.error('[click-merchant]', e);
+    return Response.json({ error: -1, error_note: 'Internal error' });
+  }
 });

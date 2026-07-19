@@ -8,7 +8,7 @@
 // answers via the service-role client, and optionally asks Claude for a
 // short, encouraging narrative on top of the deterministic scores.
 
-import { corsHeaders, jsonResponse, preflight } from '../_shared/cors.ts';
+import { corsHeaders, jsonResponse, preflight, serverError } from '../_shared/cors.ts';
 import { getCallerUser, serviceClient }         from '../_shared/supabase.ts';
 import { chat }                                 from '../_shared/anthropic.ts';
 
@@ -62,6 +62,6 @@ Deno.serve(async (req) => {
 
     return jsonResponse({ scores, weakest_category: weakest, narrative }, { headers: corsHeaders });
   } catch (e) {
-    return jsonResponse({ error: (e as Error).message }, { status: 500 });
+    return serverError(e);
   }
 });

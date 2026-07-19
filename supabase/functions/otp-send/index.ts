@@ -3,7 +3,7 @@
 // 2. Hash + store in otp_codes (10 min expiry)
 // 3. Send via Eskiz SMS
 
-import { jsonResponse, preflight }           from '../_shared/cors.ts';
+import { jsonResponse, preflight, serverError } from '../_shared/cors.ts';
 import { serviceClient }                     from '../_shared/supabase.ts';
 import { sendSms }                           from '../_shared/eskiz.ts';
 
@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     const expiresAt = new Date(Date.now() + 10 * 60_000).toISOString();
 
     const sb = serviceClient();
-    // Throttle: max 3 OTPs in 10 minutes
+    // Throttle: max 3 OTPs in 10 minutes for this phone
     const { count } = await sb
       .from('otp_codes')
       .select('id', { count: 'exact', head: true })
@@ -32,11 +32,20 @@ Deno.serve(async (req) => {
       .gte('created_at', new Date(Date.now() - 10 * 60_000).toISOString());
     if ((count ?? 0) >= 3) return jsonResponse({ error: 'too many OTPs — wait 10 minutes' }, { status: 429 });
 
+    // Global circuit breaker: the per-phone cap above doesn't stop someone
+    // from SMS-bombing many *different* numbers at once — cap total sends
+    // across all phones in a short window too.
+    const { count: globalCount } = await sb
+      .from('otp_codes')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', new Date(Date.now() - 60_000).toISOString());
+    if ((globalCount ?? 0) >= 30) return jsonResponse({ error: 'service busy — try again in a minute' }, { status: 429 });
+
     await sb.from('otp_codes').insert({ phone, code_hash, expires_at: expiresAt });
     await sendSms(phone, `LingRow code: ${code}. Valid for 10 minutes.`);
 
     return jsonResponse({ ok: true });
   } catch (e) {
-    return jsonResponse({ error: (e as Error).message }, { status: 500 });
+    return serverError(e);
   }
 });

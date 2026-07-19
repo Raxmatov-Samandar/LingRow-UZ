@@ -1,7 +1,7 @@
 // POST /functions/v1/parent-link-code  { childName: string, childPhone?: string }
 // Auth: parent.
 // Creates a 6-digit code (10-min expiry). If childPhone supplied, also SMS the code.
-import { jsonResponse, preflight } from '../_shared/cors.ts';
+import { jsonResponse, preflight, serverError } from '../_shared/cors.ts';
 import { getCallerUser, serviceClient } from '../_shared/supabase.ts';
 import { sendSms } from '../_shared/eskiz.ts';
 
@@ -45,6 +45,6 @@ Deno.serve(async (req) => {
 
     return jsonResponse({ ok: true, code, expires_at: expiresAt, name: childName, link_id: data.id });
   } catch (e) {
-    return jsonResponse({ error: (e as Error).message }, { status: 500 });
+    return serverError(e);
   }
 });
