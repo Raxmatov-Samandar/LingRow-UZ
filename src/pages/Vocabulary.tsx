@@ -12,6 +12,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Topbar } from '@/components/layout/Topbar';
 import { useActivity } from '@/store/activity';
 import { useMemoryLab } from '@/store/memoryLab';
+import { learning } from '@/lib/api';
 import {
   CAMBRIDGE_BANK, searchDictionary, ALL_CEFR, ALL_TOPICS,
   type DictEntry, type CEFR, type Sense,
@@ -92,6 +93,7 @@ export function Vocabulary() {
           />
 
           <MemoryLabButton />
+          <ReviewButton />
           <span className="text-slate-600 mx-1">·</span>
 
           <div className="flex gap-1.5">
@@ -339,6 +341,27 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 // ───────────────────────── Memory Lab launcher ─────────────────────────
+
+function ReviewButton() {
+  const [due, setDue] = useState<number | null>(null);
+  useEffect(() => { learning.getDueVocab().then(words => setDue(words.length)); }, []);
+
+  return (
+    <Link to="/vocabulary/review"
+          title="Spaced-repetition review — words due right now."
+          className="group relative inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold
+                     border border-white/12 text-slate-200
+                     hover:bg-white/[0.06] hover:-translate-y-0.5 transition">
+      <span className="text-base">📇</span>
+      <span>Daily Review</span>
+      {!!due && (
+        <span className="px-1.5 py-0.5 rounded-full bg-cosmic-sky text-slate-900 text-[9px] tabular-nums">
+          {due}
+        </span>
+      )}
+    </Link>
+  );
+}
 
 function MemoryLabButton() {
   const mastered = useMemoryLab(s => Object.values(s.mastery).filter(m => m.masteredAt).length);

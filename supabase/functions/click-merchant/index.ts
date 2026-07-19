@@ -33,7 +33,10 @@ function form(body: URLSearchParams) {
 Deno.serve(async (req) => {
   const sb = serviceClient();
   const params = form(new URLSearchParams(await req.text()));
-  const SECRET = Deno.env.get('CLICK_SECRET') ?? '';
+  const SECRET = Deno.env.get('CLICK_SECRET');
+  // Fail closed: an unset secret must never let a signature computed with an
+  // empty string pass — that's a signature anyone could forge themselves.
+  if (!SECRET) return Response.json({ error: -1, error_note: 'Sign check failed' });
 
   const action          = Number(params.action);
   const click_trans_id  = params.click_trans_id;
@@ -81,6 +84,16 @@ Deno.serve(async (req) => {
   }
 
   if (action === 1) {                                    // Complete
+    // Idempotent: Click retries this call over flaky networks. If we
+    // already completed it, return the same success response instead of
+    // granting the subscription a second time.
+    if (row.status === 'paid') {
+      return Response.json({
+        click_trans_id, merchant_trans_id,
+        merchant_confirm_id: row.id,
+        error: 0, error_note: 'Success',
+      });
+    }
     await sb.from('payments').update({ status: 'paid' }).eq('id', row.id);
     const periodEnd = new Date(Date.now() + 30 * 86_400_000).toISOString();
     await sb.from('subscriptions').insert({

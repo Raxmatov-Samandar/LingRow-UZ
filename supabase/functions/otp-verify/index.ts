@@ -39,27 +39,42 @@ Deno.serve(async (req) => {
 
     await sb.from('otp_codes').update({ consumed_at: new Date().toISOString() }).eq('id', row.id);
 
-    // ensure user exists (admin API)
-    const cleanPhone = phone.replace(/^\+/, '');
-    const { data: existing } = await sb.auth.admin.listUsers({ page: 1, perPage: 200 });
-    let user = existing.users.find(u => u.phone === cleanPhone);
-    if (!user) {
+    // ensure user exists — look up via profiles.phone (unique, indexed),
+    // not admin.listUsers(): listUsers() only returns one page, so past the
+    // first page-size worth of users, existing accounts would read as "not
+    // found" and get a duplicate account created on every login.
+    const cleanPhone     = phone.replace(/^\+/, '');
+    const syntheticEmail = `${cleanPhone}@phone.lingrow.uz`;
+    const { data: profile } = await sb.from('profiles').select('id').eq('phone', cleanPhone).maybeSingle();
+
+    let user;
+    if (profile) {
+      const { data: got, error } = await sb.auth.admin.getUserById(profile.id);
+      if (error) throw error;
+      user = got.user;
+    } else {
+      // Give phone-only users a deterministic email too — generateLink()
+      // below needs one, and without it here it would silently mint a
+      // second, disconnected user record instead of linking this one.
       const { data: created, error } = await sb.auth.admin.createUser({
         phone: cleanPhone,
         phone_confirm: true,
+        email: syntheticEmail,
+        email_confirm: true,
       });
       if (error) throw error;
       user = created.user!;
     }
 
-    // Issue an access token via magic-link approach (recommended pattern)
+    // Mint a session the client can redeem with supabase.auth.verifyOtp()
+    // directly (no redirect / action_link round-trip needed).
     const { data: link, error } = await sb.auth.admin.generateLink({
       type: 'magiclink',
-      email: user.email ?? `${cleanPhone}@phone.lingrow.uz`,
+      email: user.email ?? syntheticEmail,
     });
     if (error) throw error;
 
-    return jsonResponse({ ok: true, action_link: link.properties?.action_link, user });
+    return jsonResponse({ ok: true, token_hash: link.properties?.hashed_token });
   } catch (e) {
     return jsonResponse({ error: (e as Error).message }, { status: 500 });
   }

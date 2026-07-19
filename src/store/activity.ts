@@ -9,6 +9,7 @@ export type ActivityKind =
   | 'lesson_started'
   | 'lesson_completed'
   | 'vocab_reviewed'
+  | 'dna_diagnostic_completed'
   | 'reading_completed'
   | 'article_read'
   | 'quiz_submitted'

@@ -6,13 +6,17 @@
 import type {
   User, Lesson, VocabWord, QuizQuestion, Badge, LeaderboardEntry,
   ParentChild, ParentalControls, DailyReport, UserRole,
+  DiagnosticQuestion, DnaScores, ErrorCategory, ErrorCatalogEntry,
 } from '@/types';
 import {
   LEVELS, VOCAB, QUIZ, BADGES, LEADERBOARD,
   PARENT_CHILDREN, PARENTAL_CONTROLS, DAILY_REPORTS,
 } from '@/data/mock';
+import { ERROR_CATALOG, DIAGNOSTIC_QUESTIONS } from '@/data/errorDna';
 import { supabase, isSupabaseConfigured } from './supabase';
 import { isDevEmail, DEV_PASSWORD } from './dev';
+import { useDna } from '@/store/dna';
+import { useVocabReview } from '@/store/vocabReview';
 
 const useMock = (import.meta.env.VITE_USE_MOCK_API ?? 'true') === 'true' || !isSupabaseConfigured();
 const wait    = (ms = 250) => new Promise(r => setTimeout(r, ms));
@@ -94,7 +98,12 @@ export const auth = {
 
   async verifyOtp(phone: string, code: string) {
     if (useMock) { await wait(); return { ok: code === '123456' }; }
-    return fn<{ ok: boolean; action_link?: string }>('otp-verify', { phone, code });
+    const res = await fn<{ ok: boolean; token_hash?: string }>('otp-verify', { phone, code });
+    if (res.ok && res.token_hash) {
+      const { error } = await supabase!.auth.verifyOtp({ token_hash: res.token_hash, type: 'magiclink' });
+      if (error) throw error;
+    }
+    return res;
   },
 
   async signOut() { if (!useMock && supabase) await supabase.auth.signOut(); },
@@ -144,17 +153,47 @@ export const learning = {
   },
 
   async getVocab(): Promise<VocabWord[]> {
-    if (useMock) { await wait(); return VOCAB; }
-    const { data } = await supabase!.from('vocab_words').select('*');
-    return (data ?? []).map(w => ({
-      id: w.id, word: w.word, phonetic: w.phonetic, definition: w.definition,
-      example: w.example, level: w.level,
-      sm2: { easeFactor: 2.5, interval: 1, repetitions: 0, nextReview: new Date().toISOString() },
-    }));
+    if (useMock) {
+      await wait();
+      const overrides = useVocabReview.getState().overrides;
+      return VOCAB.map(w => ({ ...w, sm2: overrides[w.id] ?? w.sm2 }));
+    }
+    const { data: { user } } = await supabase!.auth.getUser();
+    const { data: words } = await supabase!.from('vocab_words').select('*');
+    const { data: states } = user
+      ? await supabase!.from('user_vocab').select('*').eq('user_id', user.id)
+      : { data: [] as { word_id: string; ease_factor: number; interval_days: number; repetitions: number; next_review: string }[] };
+    const stateByWord = new Map((states ?? []).map(s => [s.word_id, s]));
+    return (words ?? []).map(w => {
+      const s = stateByWord.get(w.id);
+      return {
+        id: w.id, word: w.word, phonetic: w.phonetic, definition: w.definition,
+        example: w.example, level: w.level,
+        sm2: s
+          ? { easeFactor: s.ease_factor, interval: s.interval_days, repetitions: s.repetitions, nextReview: s.next_review }
+          : { easeFactor: 2.5, interval: 1, repetitions: 0, nextReview: new Date().toISOString() },
+      };
+    });
+  },
+
+  /** Words due for review right now (next_review <= now), soonest first. */
+  async getDueVocab(): Promise<VocabWord[]> {
+    const all = await this.getVocab();
+    const now = Date.now();
+    return all
+      .filter(w => new Date(w.sm2.nextReview).getTime() <= now)
+      .sort((a, b) => new Date(a.sm2.nextReview).getTime() - new Date(b.sm2.nextReview).getTime());
   },
 
   async reviewVocab(wordId: string, quality: 0|1|2|3|4|5) {
-    if (useMock) { await wait(); return; }
+    if (useMock) {
+      await wait();
+      const word = VOCAB.find(w => w.id === wordId);
+      const prev = useVocabReview.getState().overrides[wordId] ?? word?.sm2
+        ?? { easeFactor: 2.5, interval: 1, repetitions: 0, nextReview: new Date().toISOString() };
+      useVocabReview.getState().review(wordId, quality, prev);
+      return;
+    }
     const { data: { user } } = await supabase!.auth.getUser();
     if (!user) throw new Error('not authenticated');
     await supabase!.rpc('sm2_review', { p_user: user.id, p_word: wordId, p_quality: quality });
@@ -418,5 +457,71 @@ export const billing = {
     const serviceId  = import.meta.env.VITE_CLICK_SERVICE_ID  ?? '';
     const ret        = encodeURIComponent(window.location.origin + '/parent/billing?status=ok');
     return `https://my.click.uz/services/pay?service_id=${serviceId}&merchant_id=${merchantId}&amount=${opts.amountUzs}&transaction_param=${opts.orderId}&return_url=${ret}`;
+  },
+};
+
+// ----------------------- UZBEK ERROR DNA -----------------------
+
+export const dna = {
+  /** Reference catalog — same static content in both mock and real mode. */
+  getCatalog(): ErrorCatalogEntry[] {
+    return ERROR_CATALOG;
+  },
+
+  async getQuestions(): Promise<DiagnosticQuestion[]> {
+    if (useMock) { await wait(); return DIAGNOSTIC_QUESTIONS; }
+    const { data } = await supabase!.from('diagnostic_questions_public').select('*').order('order_index');
+    return (data ?? []).map(q => ({ id: q.id, category: q.category, prompt: q.prompt, options: q.options }));
+  },
+
+  async submitDiagnostic(answers: { questionId: string; selectedIndex: number }[]) {
+    if (useMock) {
+      await wait(500);
+      const byCat: Partial<Record<ErrorCategory, { total: number; wrong: number }>> = {};
+      for (const a of answers) {
+        const q = DIAGNOSTIC_QUESTIONS.find(q => q.id === a.questionId);
+        if (!q) continue;
+        const bucket = (byCat[q.category] ??= { total: 0, wrong: 0 });
+        bucket.total += 1;
+        if (a.selectedIndex !== q.correctIndex) bucket.wrong += 1;
+      }
+      const scores: DnaScores = {};
+      for (const [cat, { total, wrong }] of Object.entries(byCat) as [ErrorCategory, { total: number; wrong: number }][]) {
+        scores[cat] = Math.round((wrong / total) * 100);
+      }
+      useDna.getState().recordAttempt(scores);
+      const entries = Object.entries(scores) as [ErrorCategory, number][];
+      const weakestCategory = entries.length ? entries.reduce((a, b) => (b[1] > a[1] ? b : a))[0] : null;
+      return { scores, weakestCategory, narrative: undefined as string | undefined };
+    }
+    const res = await fn<{ scores: DnaScores; weakest_category: string | null; narrative?: string }>('dna-diagnostic', {
+      answers: answers.map(a => ({ question_id: a.questionId, selected_index: a.selectedIndex })),
+    });
+    return {
+      scores: res.scores,
+      weakestCategory: (res.weakest_category as ErrorCategory | null) ?? null,
+      narrative: res.narrative,
+    };
+  },
+
+  async getScores(): Promise<DnaScores> {
+    if (useMock) { await wait(); return useDna.getState().scores; }
+    const { data: { user } } = await supabase!.auth.getUser();
+    if (!user) return {};
+    const { data } = await supabase!.from('user_dna_scores').select('*').eq('user_id', user.id);
+    const scores: DnaScores = {};
+    for (const row of data ?? []) scores[row.category as ErrorCategory] = row.score;
+    return scores;
+  },
+
+  async getRecommendedLessons(limit = 6): Promise<Lesson[]> {
+    if (useMock) { await wait(); return LEVELS.slice(0, limit); }
+    const { data: { user } } = await supabase!.auth.getUser();
+    if (!user) return [];
+    const { data } = await supabase!.rpc('recommended_lessons_for', { p_user: user.id, p_limit: limit });
+    return (data ?? []).map((row: { id: string; title: string; level: string; type: string; description?: string }) => ({
+      id: row.id, title: row.title, level: row.level as Lesson['level'],
+      totalLessons: 1, completedLessons: 0, type: row.type as Lesson['type'], description: row.description,
+    }));
   },
 };

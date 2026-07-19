@@ -83,31 +83,30 @@ function ContactCard({ icon, dot, glow, title, email, subject, hint, extra }: {
   extra?:  React.ReactNode
 }) {
   return (
-    <a
-      href={mailto(email, subject)}
-      className={`glass-panel block p-5 transition-all duration-300 hover:-translate-y-1 ${glow}`}
-    >
-      {/* header row */}
-      <div className="flex items-center gap-2.5">
-        <span className="relative w-10 h-10 rounded-xl grid place-items-center bg-white/[0.07] border border-white/12 text-white">
-          {icon}
-          <span className={`absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full ${dot}`} />
-        </span>
-        <span className="text-[11px] uppercase tracking-[0.18em] font-bold text-slate-300">
-          {title}
-        </span>
-      </div>
+    <div className={`glass-panel p-5 transition-all duration-300 hover:-translate-y-1 ${glow}`}>
+      <a href={mailto(email, subject)} className="block">
+        {/* header row */}
+        <div className="flex items-center gap-2.5">
+          <span className="relative w-10 h-10 rounded-xl grid place-items-center bg-white/[0.07] border border-white/12 text-white">
+            {icon}
+            <span className={`absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full ${dot}`} />
+          </span>
+          <span className="text-[11px] uppercase tracking-[0.18em] font-bold text-slate-300">
+            {title}
+          </span>
+        </div>
 
-      {/* email */}
-      <p className="mt-3.5 text-[15px] font-extrabold text-white break-all leading-tight tracking-tight">
-        {email}
-      </p>
-      <p className="mt-1.5 text-[11.5px] text-slate-400 leading-relaxed">
-        {hint}
-      </p>
+        {/* email */}
+        <p className="mt-3.5 text-[15px] font-extrabold text-white break-all leading-tight tracking-tight">
+          {email}
+        </p>
+        <p className="mt-1.5 text-[11.5px] text-slate-400 leading-relaxed">
+          {hint}
+        </p>
+      </a>
 
       {extra}
-    </a>
+    </div>
   )
 }
 

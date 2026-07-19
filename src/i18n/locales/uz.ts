@@ -60,6 +60,7 @@ export const uz: Translation = {
     speaking: 'Speaking',
     writing: 'Writing',
     vocabulary: "Lug'at",
+    errorDna: 'Error DNA',
     stats: 'Statistika',
     profile: 'Profil',
     reports: 'Hisobotlar',

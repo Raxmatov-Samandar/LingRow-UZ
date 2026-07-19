@@ -61,6 +61,7 @@ export const en = {
     speaking: 'Speaking',
     writing: 'Writing',
     vocabulary: 'Vocabulary',
+    errorDna: 'Error DNA',
     stats: 'My Stats',
     profile: 'Profile',
     reports: 'Reports',

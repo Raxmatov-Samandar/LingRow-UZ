@@ -14,7 +14,10 @@ import { Speaking }   from '@/pages/Speaking';
 import { Writing }    from '@/pages/Writing';
 import { Stats }      from '@/pages/Stats';
 import { Vocabulary } from '@/pages/Vocabulary';
+import { VocabReview } from '@/pages/VocabReview';
 import { MemoryLab }  from '@/pages/MemoryLab';
+import { ErrorDNA }        from '@/pages/ErrorDNA';
+import { ErrorDiagnostic } from '@/pages/ErrorDiagnostic';
 import { Profile }    from '@/pages/Profile';
 import { AiTutor }    from '@/pages/AiTutor';
 import { Library }    from '@/pages/Library';
@@ -68,7 +71,10 @@ export default function App() {
         <Route path="/speaking"    element={<Speaking />} />
         <Route path="/writing"     element={<Writing />} />
         <Route path="/vocabulary"      element={<Vocabulary />} />
-        <Route path="/vocabulary/lab"  element={<MemoryLab />} />
+        <Route path="/vocabulary/lab"    element={<MemoryLab />} />
+        <Route path="/vocabulary/review" element={<VocabReview />} />
+        <Route path="/dna"             element={<ErrorDNA />} />
+        <Route path="/dna/diagnostic"  element={<ErrorDiagnostic />} />
         <Route path="/library"          element={<Library />} />
         <Route path="/library/new"      element={<ArticleEditor />} />
         <Route path="/library/edit/:id" element={<ArticleEditor />} />

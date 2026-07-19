@@ -38,7 +38,7 @@ function rpcError(id: unknown, error: { code: number; message: { en: string } })
 
 async function checkAuth(req: Request): Promise<boolean> {
   const expected = Deno.env.get('PAYME_MERCHANT_KEY');
-  if (!expected) return true;                                         // dev mode
+  if (!expected) return false;   // fail closed — a missing secret must never mean "allow everyone"
   const auth = req.headers.get('Authorization') ?? '';
   if (!auth.startsWith('Basic ')) return false;
   const decoded = atob(auth.slice(6));
@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
       const { data: existing } = await sb.from('payments')
         .select('*').eq('provider', 'payme').eq('external_id', trans_id).maybeSingle();
       if (existing) {
-        return rpcResult(id, { create_time: existing.created_at, transaction: existing.id, state: 1 });
+        return rpcResult(id, { create_time: new Date(existing.created_at).getTime(), transaction: existing.id, state: 1 });
       }
       const ins = await sb.from('payments').insert({
         user_id:   account.user_id,
@@ -80,7 +80,17 @@ Deno.serve(async (req) => {
         status:    'pending',
         raw:       { time, account },
       }).select().single();
-      if (ins.error) return rpcError(id, ERR.CANT_PERFORM);
+      if (ins.error) {
+        // Unique-violation (payments_provider_external_id_key) means a
+        // concurrent retry of this same CreateTransaction call already won —
+        // Payme expects the same answer on retry, not an error.
+        if (ins.error.code === '23505') {
+          const { data: raced } = await sb.from('payments')
+            .select('*').eq('provider', 'payme').eq('external_id', trans_id).single();
+          if (raced) return rpcResult(id, { create_time: new Date(raced.created_at).getTime(), transaction: raced.id, state: 1 });
+        }
+        return rpcError(id, ERR.CANT_PERFORM);
+      }
       return rpcResult(id, { create_time: time, transaction: ins.data.id, state: 1 });
     }
 
@@ -89,6 +99,14 @@ Deno.serve(async (req) => {
       const { data: row } = await sb.from('payments')
         .select('*').eq('provider', 'payme').eq('external_id', trans_id).maybeSingle();
       if (!row) return rpcError(id, ERR.TRANS_NOT_FOUND);
+
+      // Idempotent: Payme retries this call over flaky networks. If we
+      // already performed it, return the same result instead of granting
+      // the subscription a second time.
+      if (row.status === 'paid') {
+        return rpcResult(id, { transaction: row.id, perform_time: new Date(row.updated_at).getTime(), state: 2 });
+      }
+
       const performTime = Date.now();
       await sb.from('payments').update({ status: 'paid', updated_at: new Date(performTime).toISOString() }).eq('id', row.id);
 

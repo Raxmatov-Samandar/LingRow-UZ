@@ -16,6 +16,7 @@ const STUDENT_NAV = [
   { to: '/speaking',   labelKey: 'nav.speaking',   icon: 'mic'     },
   { to: '/writing',    labelKey: 'nav.writing',    icon: 'pen'     },
   { to: '/vocabulary', labelKey: 'nav.vocabulary', icon: 'cards'   },
+  { to: '/dna',        labelKey: 'nav.errorDna',   icon: 'dna'     },
   { to: '/stats',      labelKey: 'nav.stats',      icon: 'chart'   },
 ];
 
@@ -57,6 +58,7 @@ const Icon = ({ name }: { name: string }) => {
     case 'target':     return <svg viewBox="0 0 24 24" {...props}><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>;
     case 'archive':    return <svg viewBox="0 0 24 24" {...props}><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a2 2 0 002 2h10a2 2 0 002-2V8"/><path d="M10 13h4"/></svg>;
     case 'sigma':      return <svg viewBox="0 0 24 24" {...props}><path d="M5 4h14M5 4l8 8-8 8M5 20h14"/></svg>;
+    case 'dna':        return <svg viewBox="0 0 24 24" {...props}><path d="M7 3c0 6 10 6 10 12 0 3-2 5-2 5"/><path d="M17 21c0-6-10-6-10-12 0-3 2-5 2-5"/><path d="M8 8h8M7 12h10M8 16h8"/></svg>;
     default: return null;
   }
 };

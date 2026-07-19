@@ -27,10 +27,12 @@ Deno.serve(async (req) => {
     const code        = String(Math.floor(100000 + Math.random() * 900000));
     const expiresAt   = new Date(Date.now() + 10 * 60_000).toISOString();
 
-    // child_id is NULL until child redeems the code; insert pending row
+    // child_id stays NULL until the child redeems the code (parent-link-redeem
+    // fills it in). Leaving it NULL — not the parent's own id — lets a parent
+    // create more than one pending invite: unique(parent_id, child_id) never
+    // fires because Postgres treats every NULL as distinct from every other.
     const { data, error } = await sb.from('parent_children').insert({
       parent_id: parent.id,
-      child_id:  user.id,                       // placeholder — will be replaced on redeem
       link_code: code,
       code_expires_at: expiresAt,
       is_active: false,

@@ -121,3 +121,26 @@ export interface LeaderboardEntry {
   level: number;
   isMe?: boolean;
 }
+
+// ---------------- Uzbek Error DNA ----------------
+
+export type ErrorCategory = 'articles' | 'prepositions' | 'tenses' | 'word_order' | 'vocabulary';
+
+export interface ErrorCatalogEntry {
+  id: string;
+  category: ErrorCategory;
+  wrongExample: string;
+  correctExample: string;
+  uzbekRootCause: string;
+  explanation?: string;
+}
+
+export interface DiagnosticQuestion {
+  id: string;
+  category: ErrorCategory;
+  prompt: string;
+  options: string[];
+}
+
+/** category → 0-100 "problem score" (higher = bigger problem). */
+export type DnaScores = Partial<Record<ErrorCategory, number>>;
