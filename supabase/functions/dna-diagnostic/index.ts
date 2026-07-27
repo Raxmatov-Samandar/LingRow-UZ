@@ -40,16 +40,18 @@ Deno.serve(async (req) => {
     });
     if (error) throw error;
 
+    // scores are 0-100 MASTERY (higher = stronger) — the weakest category is
+    // the lowest score, not the highest.
     const entries = Object.entries(scores ?? {}) as [string, number][];
     const weakest = entries.length
-      ? entries.reduce((a, b) => (b[1] > a[1] ? b : a))[0]
+      ? entries.reduce((a, b) => (b[1] < a[1] ? b : a))[0]
       : null;
 
     let narrative: string | undefined;
     try {
       const { text } = await chat([{
         role: 'user',
-        content: `A learner's Uzbek Error DNA diagnostic scores (0-100, higher = bigger problem): ${JSON.stringify(scores)}. Weakest category: ${weakest}. Write 2 short encouraging sentences in English pointing them at that one category to work on first.`,
+        content: `A learner's Uzbek Error DNA diagnostic scores (0-100 mastery, higher = stronger): ${JSON.stringify(scores)}. Weakest category: ${weakest}. Write 2 short encouraging sentences in English pointing them at that one category to work on first.`,
       }], {
         system: 'You are a warm, concise IELTS coach. Two sentences max. No markdown.',
         maxTokens: 150, temperature: 0.4,

@@ -1,16 +1,18 @@
 -- =============================================================================
 -- Uzbek Error DNA — schema.
 --   error_catalog             — the reference catalog of Uzbek-L1 English errors
---   diagnostic_questions      — the 20-question placement test (5 categories x 4)
+--   diagnostic_questions      — the question bank (5 categories x 8 questions);
+--                                each attempt samples 4 per category (20 total),
+--                                reshuffled, so retakes don't repeat the same set.
 --   user_diagnostic_attempts  — one row per completed diagnostic test
---   user_dna_scores           — the current per-category "problem score" (0-100,
---                                higher = bigger problem), recomputed after each
+--   user_dna_scores           — the current per-category mastery score (0-100,
+--                                higher = stronger), recomputed after each
 --                                attempt and by the weekly refresh cron.
 --   lessons.target_error_category — lets the curriculum generator prioritize
 --                                lessons that address the learner's weakest areas.
 -- =============================================================================
 
-create type error_category as enum ('articles', 'prepositions', 'tenses', 'word_order', 'vocabulary');
+create type error_category as enum ('articles', 'prepositions', 'tense', 'word_order', 'vocabulary');
 
 -- ---------------------------------------------------------------------------
 -- error_catalog — reference material shown to the learner as "why this
@@ -33,14 +35,13 @@ alter table error_catalog enable row level security;
 create policy "error catalog readable" on error_catalog for select using (auth.role() = 'authenticated');
 
 -- ---------------------------------------------------------------------------
--- diagnostic_questions — unlike error_catalog, this table's correct_index is
--- an answer key and must never be readable by the client taking the test.
--- RLS on the base table stays fully locked down (no select policy for
--- authenticated at all); a column-filtered view is what the client actually
--- queries. Views run with the *owner's* privileges by default (PG15
--- security_invoker defaults to false), and table owners bypass their own
--- table's RLS, so the view sees every row while the client never gets
--- correct_index or explanation before submitting.
+-- diagnostic_questions — unlike error_catalog, this table's correct_index and
+-- explanation are the answer key and must never be bulk-readable by the
+-- client taking the test. RLS on the base table stays fully locked down (no
+-- select policy for authenticated at all); sample_diagnostic_quiz() and
+-- check_diagnostic_answer() (0010 migration) are the only sanctioned reads —
+-- both security definer, so they run with the owner's privileges and bypass
+-- this table's RLS, while only ever returning the safe columns each needs.
 -- ---------------------------------------------------------------------------
 create table diagnostic_questions (
   id             uuid primary key default uuid_generate_v4(),
@@ -55,15 +56,6 @@ create index diagnostic_questions_category_idx on diagnostic_questions(category,
 
 alter table diagnostic_questions enable row level security;
 -- (intentionally no select policy — the base table is not directly queryable)
-
-create view diagnostic_questions_public
-  with (security_invoker = false)
-  as
-  select id, category, prompt, options, order_index
-  from diagnostic_questions
-  order by order_index;
-
-grant select on diagnostic_questions_public to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- user_diagnostic_attempts / user_dna_scores — both are written only by the

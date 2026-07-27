@@ -6,7 +6,7 @@
 import type {
   User, Lesson, VocabWord, QuizQuestion, Badge, LeaderboardEntry,
   ParentChild, ParentalControls, DailyReport, UserRole,
-  DiagnosticQuestion, DnaScores, ErrorCategory, ErrorCatalogEntry,
+  DiagnosticQuestion, DiagnosticAnswerCheck, DnaScores, ErrorCategory, ErrorCatalogEntry,
   Subscription, Invoice,
 } from '@/types';
 import {
@@ -14,7 +14,7 @@ import {
   PARENT_CHILDREN, PARENTAL_CONTROLS, DAILY_REPORTS,
   MOCK_SUBSCRIPTION, MOCK_INVOICES,
 } from '@/data/mock';
-import { ERROR_CATALOG, DIAGNOSTIC_QUESTIONS } from '@/data/errorDna';
+import { ERROR_CATALOG, DIAGNOSTIC_QUESTIONS, buildStratifiedQuiz } from '@/data/errorDna';
 import { supabase, isSupabaseConfigured } from './supabase';
 import { isDevEmail, DEV_PASSWORD } from './dev';
 import { useDna } from '@/store/dna';
@@ -504,30 +504,55 @@ export const dna = {
     return ERROR_CATALOG;
   },
 
+  /** A fresh 20-question sample (4 per category, reshuffled) — a retake
+   *  shows a different set instead of the same fixed order every time. */
   async getQuestions(): Promise<DiagnosticQuestion[]> {
-    if (useMock) { await wait(); return DIAGNOSTIC_QUESTIONS; }
-    const { data } = await supabase!.from('diagnostic_questions_public').select('*').order('order_index');
-    return (data ?? []).map(q => ({ id: q.id, category: q.category, prompt: q.prompt, options: q.options }));
+    if (useMock) {
+      await wait();
+      return buildStratifiedQuiz().map(({ id, category, prompt, options }) => ({ id, category, prompt, options }));
+    }
+    const { data } = await supabase!.rpc('sample_diagnostic_quiz', { p_per_category: 4 });
+    return (data ?? []).map((q: { id: string; category: ErrorCategory; prompt: string; options: string[] }) => ({
+      id: q.id, category: q.category, prompt: q.prompt, options: q.options,
+    }));
+  },
+
+  /** Reveals whether a single answer was right, plus the Uzbek explanation —
+   *  fetched one question at a time, right after the learner answers it, so
+   *  the full answer key never ships with the question set. */
+  async checkAnswer(questionId: string, selectedIndex: number): Promise<DiagnosticAnswerCheck> {
+    if (useMock) {
+      await wait(150);
+      const q = DIAGNOSTIC_QUESTIONS.find(q => q.id === questionId);
+      if (!q) throw new Error('question not found');
+      return { correct: selectedIndex === q.correctIndex, correctIndex: q.correctIndex, explanation: q.explanation };
+    }
+    const { data, error } = await supabase!.rpc('check_diagnostic_answer', {
+      p_question_id: questionId, p_selected_index: selectedIndex,
+    });
+    if (error) throw error;
+    return { correct: data.correct, correctIndex: data.correct_index, explanation: data.explanation };
   },
 
   async submitDiagnostic(answers: { questionId: string; selectedIndex: number }[]) {
     if (useMock) {
       await wait(500);
-      const byCat: Partial<Record<ErrorCategory, { total: number; wrong: number }>> = {};
+      const byCat: Partial<Record<ErrorCategory, { total: number; correct: number }>> = {};
       for (const a of answers) {
         const q = DIAGNOSTIC_QUESTIONS.find(q => q.id === a.questionId);
         if (!q) continue;
-        const bucket = (byCat[q.category] ??= { total: 0, wrong: 0 });
+        const bucket = (byCat[q.category] ??= { total: 0, correct: 0 });
         bucket.total += 1;
-        if (a.selectedIndex !== q.correctIndex) bucket.wrong += 1;
+        if (a.selectedIndex === q.correctIndex) bucket.correct += 1;
       }
       const scores: DnaScores = {};
-      for (const [cat, { total, wrong }] of Object.entries(byCat) as [ErrorCategory, { total: number; wrong: number }][]) {
-        scores[cat] = Math.round((wrong / total) * 100);
+      for (const [cat, { total, correct }] of Object.entries(byCat) as [ErrorCategory, { total: number; correct: number }][]) {
+        scores[cat] = Math.round((correct / total) * 100);
       }
       useDna.getState().recordAttempt(scores);
       const entries = Object.entries(scores) as [ErrorCategory, number][];
-      const weakestCategory = entries.length ? entries.reduce((a, b) => (b[1] > a[1] ? b : a))[0] : null;
+      // Mastery score: higher = stronger, so the weakest category is the MIN.
+      const weakestCategory = entries.length ? entries.reduce((a, b) => (b[1] < a[1] ? b : a))[0] : null;
       return { scores, weakestCategory, narrative: undefined as string | undefined };
     }
     const res = await fn<{ scores: DnaScores; weakest_category: string | null; narrative?: string }>('dna-diagnostic', {

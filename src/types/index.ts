@@ -142,7 +142,7 @@ export interface LeaderboardEntry {
 
 // ---------------- Uzbek Error DNA ----------------
 
-export type ErrorCategory = 'articles' | 'prepositions' | 'tenses' | 'word_order' | 'vocabulary';
+export type ErrorCategory = 'articles' | 'prepositions' | 'tense' | 'word_order' | 'vocabulary';
 
 export interface ErrorCatalogEntry {
   id: string;
@@ -160,5 +160,13 @@ export interface DiagnosticQuestion {
   options: string[];
 }
 
-/** category → 0-100 "problem score" (higher = bigger problem). */
+/** Result of checking a single answer — only fetched after the learner
+ *  answers that question, so the answer key never ships with the question set. */
+export interface DiagnosticAnswerCheck {
+  correct:      boolean;
+  correctIndex: number;
+  explanation:  string;
+}
+
+/** category → 0-100 mastery score (higher = stronger). */
 export type DnaScores = Partial<Record<ErrorCategory, number>>;

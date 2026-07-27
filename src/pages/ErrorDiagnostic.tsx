@@ -1,8 +1,9 @@
 // =============================================================================
 // Uzbek Error DNA — 20-question diagnostic test.
-// One question at a time, 5 categories x 4 questions. Grading (and the real
-// answer key) lives server-side; this page only collects the answers and
-// submits them once at the end via api.dna.submitDiagnostic().
+// 4 questions per category, freshly resampled from an 8-per-category bank
+// each attempt. Grading (and the real answer key) lives server-side; this
+// page collects answers, reveals correct/incorrect + a Uzbek explanation
+// after each one (the "aha moment" worth sharing), then submits at the end.
 // =============================================================================
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -11,7 +12,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Topbar } from '@/components/layout/Topbar';
 import { dna } from '@/lib/api';
 import { useActivity } from '@/store/activity';
-import type { DiagnosticQuestion } from '@/types';
+import type { DiagnosticQuestion, DiagnosticAnswerCheck } from '@/types';
 
 export function ErrorDiagnostic() {
   const log = useActivity(s => s.log);
@@ -20,6 +21,9 @@ export function ErrorDiagnostic() {
   const [questions, setQuestions] = useState<DiagnosticQuestion[] | null>(null);
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState<{ questionId: string; selectedIndex: number }[]>([]);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [check, setCheck] = useState<DiagnosticAnswerCheck | null>(null);
+  const [checking, setChecking] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -40,18 +44,30 @@ export function ErrorDiagnostic() {
 
   const question = questions[idx];
   const progress = Math.round((idx / questions.length) * 100);
+  const isLast = idx + 1 >= questions.length;
 
   async function choose(selectedIndex: number) {
-    const next = [...answers, { questionId: question.id, selectedIndex }];
-    setAnswers(next);
+    if (check) return; // already answered — ignore further clicks until "Next"
+    setSelected(selectedIndex);
+    setChecking(true);
+    const result = await dna.checkAnswer(question.id, selectedIndex);
+    setCheck(result);
+    setChecking(false);
+  }
 
-    if (idx + 1 < questions!.length) {
+  async function next() {
+    const nextAnswers = [...answers, { questionId: question.id, selectedIndex: selected! }];
+    setAnswers(nextAnswers);
+    setSelected(null);
+    setCheck(null);
+
+    if (!isLast) {
       setIdx(idx + 1);
       return;
     }
 
     setSubmitting(true);
-    const result = await dna.submitDiagnostic(next);
+    const result = await dna.submitDiagnostic(nextAnswers);
     log('dna_diagnostic_completed', { weakestCategory: result.weakestCategory });
     setSubmitting(false);
     navigate('/dna', { state: { justCompleted: true } });
@@ -86,15 +102,39 @@ export function ErrorDiagnostic() {
               <h1 className="text-2xl font-bold text-white mb-6 leading-snug">{question.prompt}</h1>
 
               <div className="flex flex-col gap-3">
-                {question.options.map((opt, i) => (
-                  <button key={i} onClick={() => choose(i)}
-                          className="text-left px-5 py-4 rounded-2xl border border-white/10 bg-white/[0.03]
-                                     hover:bg-cosmic-mint/10 hover:border-cosmic-mint/40 hover:-translate-y-0.5
-                                     transition-all duration-200 active:scale-[0.98] text-slate-100">
-                    {opt}
-                  </button>
-                ))}
+                {question.options.map((opt, i) => {
+                  const isPicked  = selected === i;
+                  const isRight   = check && i === check.correctIndex;
+                  const isWrongPick = check && isPicked && !check.correct;
+                  return (
+                    <button key={i} onClick={() => choose(i)} disabled={!!check || checking}
+                            className={`text-left px-5 py-4 rounded-2xl border transition-all duration-200
+                                        ${isRight ? 'border-cosmic-mint/60 bg-cosmic-mint/10 text-white'
+                                          : isWrongPick ? 'border-rose-400/60 bg-rose-400/10 text-white'
+                                          : 'border-white/10 bg-white/[0.03] text-slate-100 hover:bg-cosmic-mint/10 hover:border-cosmic-mint/40 hover:-translate-y-0.5 active:scale-[0.98]'}
+                                        ${check ? 'cursor-default' : ''}`}>
+                      {opt}
+                      {isRight && <span className="float-right">✅</span>}
+                      {isWrongPick && <span className="float-right">❌</span>}
+                    </button>
+                  );
+                })}
               </div>
+
+              {checking && <p className="text-xs text-slate-400 mt-4">Tekshirilmoqda…</p>}
+
+              {check && (
+                <div className={`mt-5 rounded-2xl p-4 border ${check.correct ? 'border-cosmic-mint/30 bg-cosmic-mint/[0.05]' : 'border-amber-300/30 bg-amber-300/[0.05]'}`}>
+                  <p className="text-sm font-bold mb-1.5">
+                    {check.correct ? '✅ To\'g\'ri!' : '❌ Noto\'g\'ri'}
+                  </p>
+                  <p className="text-sm text-slate-200 leading-relaxed">💡 {check.explanation}</p>
+                  <button onClick={next}
+                          className="mt-4 btn-mint text-sm px-5 py-2">
+                    {isLast ? 'Natijalarni ko\'rish →' : 'Keyingi savol →'}
+                  </button>
+                </div>
+              )}
             </>
           )}
         </section>
