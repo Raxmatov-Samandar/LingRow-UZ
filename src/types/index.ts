@@ -170,3 +170,17 @@ export interface DiagnosticAnswerCheck {
 
 /** category → 0-100 mastery score (higher = stronger). */
 export type DnaScores = Partial<Record<ErrorCategory, number>>;
+
+/** One row of the admin retention dashboard — real per-user usage, not local-only stats. */
+export interface RetentionRow {
+  userId:          string;
+  name:            string;
+  email:           string | null;
+  role:            UserRole;
+  signedUpAt:      string;
+  daysSinceSignup: number;
+  lastActiveDate:  string | null;
+  activeToday:     boolean;
+  streak:          number;
+  xp:              number;
+}

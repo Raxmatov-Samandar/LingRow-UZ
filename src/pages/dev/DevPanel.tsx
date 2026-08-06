@@ -6,7 +6,7 @@
 //   • Lessons  — create/edit custom lessons stored in localStorage
 //   • Stats    — content counts + storage usage
 // =============================================================================
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Cosmos } from '@/components/layout/Cosmos'
@@ -19,8 +19,10 @@ import { isDevUser, DEV_EMAIL } from '@/lib/dev'
 import { cn } from '@/lib/cn'
 import { extractPdfText, parseCambridgeReading } from '@/lib/pdfParser'
 import { MediaPlayer } from '@/components/ui/MediaPlayer'
+import { admin, isMockMode } from '@/lib/api'
+import type { RetentionRow, UserRole } from '@/types'
 
-type Tab = 'audio' | 'articles' | 'books' | 'dtm' | 'lessons' | 'stats'
+type Tab = 'audio' | 'articles' | 'books' | 'dtm' | 'lessons' | 'stats' | 'retention'
 
 export function DevPanel() {
   const { t } = useTranslation()
@@ -48,6 +50,7 @@ export function DevPanel() {
             ['dtm',      '🎓', t('dev.tabs.dtm')],
             ['lessons',  '🎬', t('dev.tabs.lessons')],
             ['stats',    '📊', t('dev.tabs.stats')],
+            ['retention', '📈', t('dev.tabs.retention')],
           ] as const).map(([id, emoji, label]) => (
             <button key={id} onClick={() => setTab(id as Tab)}
                     className={cn('px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5',
@@ -69,6 +72,7 @@ export function DevPanel() {
           {tab === 'dtm'      && <DtmTab />}
           {tab === 'lessons'  && <LessonsTab />}
           {tab === 'stats'    && <StatsTab />}
+          {tab === 'retention' && <RetentionTab />}
         </section>
       </AppShell>
     </>
@@ -767,6 +771,122 @@ function StatsTab() {
       <StatCard label={t('dev.stats.articles')} value={articles.length} emoji="📰" />
       <StatCard label={t('dev.stats.lessons')}  value={lessons.length}  emoji="🎬" />
       <StatCard label={t('dev.stats.sizeUsed')} value={formatBytes(totalSize)} emoji="💾" />
+    </div>
+  )
+}
+
+// ───────────────────────── Retention (14-day pilot) ─────────────────────────
+
+const ROLE_FILTERS: (UserRole | 'all')[] = ['dtm', 'all', 'student', 'adult', 'parent']
+const MATURE_DAYS = 14
+const RECENT_WINDOW_DAYS = 2 // "still coming back" = active within the last 2 days
+
+function RetentionTab() {
+  const { t } = useTranslation()
+  const [rows, setRows] = useState<RetentionRow[] | null>(null)
+  const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('dtm')
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    admin.getRetentionSummary(roleFilter === 'all' ? undefined : roleFilter)
+      .then(r => { if (!cancelled) setRows(r) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [roleFilter])
+
+  const { matureCohort, stillActive, retentionPct } = useMemo(() => {
+    const mature = (rows ?? []).filter(r => r.daysSinceSignup >= MATURE_DAYS)
+    const active = mature.filter(r => {
+      if (!r.lastActiveDate) return false
+      const days = (Date.now() - new Date(r.lastActiveDate).getTime()) / 86_400_000
+      return days <= RECENT_WINDOW_DAYS
+    })
+    return {
+      matureCohort: mature,
+      stillActive: active,
+      retentionPct: mature.length ? Math.round((active.length / mature.length) * 100) : null,
+    }
+  }, [rows])
+
+  return (
+    <div className="flex flex-col gap-5 p-1">
+      <div className="glass-panel p-5">
+        <h3 className="text-lg font-bold text-white">{t('dev.retention.title')}</h3>
+        <p className="text-xs text-slate-400 mt-1 leading-relaxed">{t('dev.retention.sub')}</p>
+
+        <div className="flex items-center gap-2 flex-wrap mt-3">
+          {ROLE_FILTERS.map(r => (
+            <button key={r} onClick={() => setRoleFilter(r)}
+                    className={cn('px-3 py-1.5 rounded-full text-xs font-bold border transition capitalize',
+                      roleFilter === r
+                        ? 'bg-cosmic-mint/15 border-cosmic-mint/45 text-cosmic-mint'
+                        : 'border-white/10 text-slate-300 hover:bg-white/[0.05]')}>
+              {r === 'all' ? t('dev.retention.filterAll') : r}
+            </button>
+          ))}
+        </div>
+
+        {isMockMode && (
+          <p className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5 mt-3">
+            {t('dev.retention.mockNotice')}
+          </p>
+        )}
+      </div>
+
+      <div className="grid grid-cols-3 gap-5">
+        <StatCard label={t('dev.retention.matureCohort')} value={matureCohort.length} emoji="👥" />
+        <StatCard label={t('dev.retention.stillActive')} value={stillActive.length} emoji="🔁" />
+        <StatCard label={t('dev.retention.retentionRate')}
+                  value={retentionPct === null ? '—' : `${retentionPct}%`} emoji="📈" />
+      </div>
+
+      {matureCohort.length === 0 && !loading && (
+        <p className="text-xs text-slate-400 italic px-1">{t('dev.retention.noMatureCohort')}</p>
+      )}
+
+      <div className="glass-panel p-5">
+        {loading ? (
+          <p className="text-xs text-slate-400 italic">…</p>
+        ) : !rows || rows.length === 0 ? (
+          <p className="text-xs text-slate-400 italic">{t('dev.retention.noUsers')}</p>
+        ) : (
+          <div className="flex flex-col gap-1.5 max-h-[560px] overflow-auto pr-1">
+            <div className="grid text-[10px] uppercase tracking-wide text-slate-500 px-2 pb-2 border-b border-white/5"
+                 style={{ gridTemplateColumns: '1.6fr 80px 90px 60px 100px 60px 100px' }}>
+              <span>{t('dev.retention.table.name')}</span>
+              <span>{t('dev.retention.table.role')}</span>
+              <span>{t('dev.retention.table.signedUp')}</span>
+              <span>{t('dev.retention.table.days')}</span>
+              <span>{t('dev.retention.table.lastActive')}</span>
+              <span>{t('dev.retention.table.streak')}</span>
+              <span>{t('dev.retention.table.status')}</span>
+            </div>
+            {rows.map(r => (
+              <div key={r.userId}
+                   className="grid items-center gap-2 px-2 py-2 text-[12px] rounded-lg hover:bg-white/[0.04]"
+                   style={{ gridTemplateColumns: '1.6fr 80px 90px 60px 100px 60px 100px' }}>
+                <span className="text-slate-100 truncate">
+                  {r.name}
+                  {r.email && <span className="block text-[10px] text-slate-500 truncate">{r.email}</span>}
+                </span>
+                <span className="text-slate-300 capitalize">{r.role}</span>
+                <span className="text-slate-400">{new Date(r.signedUpAt).toLocaleDateString()}</span>
+                <span className="text-slate-300 tabular-nums">{r.daysSinceSignup}</span>
+                <span className="text-slate-400">{r.lastActiveDate ? new Date(r.lastActiveDate).toLocaleDateString() : '—'}</span>
+                <span className="text-slate-300 tabular-nums">{r.streak}</span>
+                <span className={cn('text-[10px] px-2 py-0.5 rounded-full border font-bold w-fit',
+                  r.activeToday
+                    ? 'bg-cosmic-mint/15 text-cosmic-mint border-cosmic-mint/40'
+                    : 'bg-white/[0.04] text-slate-400 border-white/10')}>
+                  {r.activeToday ? t('dev.retention.activeToday') : t('dev.retention.inactive')}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

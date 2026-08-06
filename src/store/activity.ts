@@ -4,6 +4,7 @@
 // =============================================================================
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { supabase } from '@/lib/supabase';
 
 export type ActivityKind =
   | 'lesson_started'
@@ -44,6 +45,23 @@ interface ActivityState {
 
 const MAX_EVENTS = 200;
 
+// Best-effort ping so progress.last_active_date reflects real usage, not just
+// XP-granting quizzes — the 14-day pilot's retention read depends on this.
+// One call per day per page load is enough; no-op in mock mode.
+let touchedToday: string | null = null;
+function touchServerActivity() {
+  if (!supabase) return;
+  const today = new Date().toISOString().slice(0, 10);
+  if (touchedToday === today) return;
+  touchedToday = today;
+  supabase.auth.getUser()
+    .then(({ data }) => {
+      if (!data.user) return;
+      return supabase!.rpc('touch_daily_activity', { p_user: data.user.id });
+    })
+    .catch(() => { touchedToday = null; });
+}
+
 export const useActivity = create<ActivityState>()(
   persist(
     (set, get) => ({
@@ -53,6 +71,7 @@ export const useActivity = create<ActivityState>()(
         const next = [...get().events, event];
         if (next.length > MAX_EVENTS) next.splice(0, next.length - MAX_EVENTS);
         set({ events: next });
+        touchServerActivity();
       },
       reset: () => set({ events: [] }),
     }),

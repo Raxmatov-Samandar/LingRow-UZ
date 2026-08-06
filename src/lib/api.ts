@@ -7,7 +7,7 @@ import type {
   User, Lesson, VocabWord, QuizQuestion, Badge, LeaderboardEntry,
   ParentChild, ParentalControls, DailyReport, UserRole,
   DiagnosticQuestion, DiagnosticAnswerCheck, DnaScores, ErrorCategory, ErrorCatalogEntry,
-  Subscription, Invoice,
+  Subscription, Invoice, RetentionRow,
 } from '@/types';
 import {
   LEVELS, VOCAB, QUIZ, BADGES, LEADERBOARD,
@@ -21,6 +21,8 @@ import { useDna } from '@/store/dna';
 import { useVocabReview } from '@/store/vocabReview';
 
 const useMock = (import.meta.env.VITE_USE_MOCK_API ?? 'true') === 'true' || !isSupabaseConfigured();
+/** True when running against local mock data — no other real users exist to report on. */
+export const isMockMode = useMock;
 const wait    = (ms = 250) => new Promise(r => setTimeout(r, ms));
 
 /** Helper: call a Supabase edge function with auth token. */
@@ -583,6 +585,30 @@ export const dna = {
     return (data ?? []).map((row: { id: string; title: string; level: string; type: string; description?: string }) => ({
       id: row.id, title: row.title, level: row.level as Lesson['level'],
       totalLessons: 1, completedLessons: 0, type: row.type as Lesson['type'], description: row.description,
+    }));
+  },
+};
+
+// ----------------------- ADMIN (dev-account only) -----------------------
+
+export const admin = {
+  /** Per-user retention snapshot for the pilot-validation dashboard. Server
+   *  enforces the admin check (admin_retention_summary rejects non-admins by
+   *  returning zero rows) — this is not a client-side-only gate.
+   *  Mock mode has no other users to report on, so it always returns []. */
+  async getRetentionSummary(role?: UserRole): Promise<RetentionRow[]> {
+    if (useMock) { await wait(); return []; }
+    const { data, error } = await supabase!.rpc('admin_retention_summary', { p_role: role ?? null });
+    if (error) throw error;
+    return (data ?? []).map((r: {
+      user_id: string; name: string; email: string | null; role: UserRole;
+      signed_up_at: string; days_since_signup: number; last_active_date: string | null;
+      active_today: boolean; streak: number; xp: number;
+    }) => ({
+      userId: r.user_id, name: r.name, email: r.email, role: r.role,
+      signedUpAt: r.signed_up_at, daysSinceSignup: r.days_since_signup,
+      lastActiveDate: r.last_active_date, activeToday: r.active_today,
+      streak: r.streak, xp: r.xp,
     }));
   },
 };
