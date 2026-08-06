@@ -15,6 +15,7 @@ export function Register() {
   const [role, setRole] = useState<UserRole>('student');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmEmailSent, setConfirmEmailSent] = useState(false);
 
   const { signUp, setRole: storeSetRole } = useAuth();
   const navigate = useNavigate();
@@ -27,8 +28,28 @@ export function Register() {
       storeSetRole(user.role);
       navigate('/onboarding');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t('common.error'));
+      if (err instanceof Error && err.message === 'EMAIL_CONFIRMATION_REQUIRED') {
+        setConfirmEmailSent(true);
+      } else {
+        setError(err instanceof Error ? err.message : t('common.error'));
+      }
     } finally { setLoading(false); }
+  }
+
+  if (confirmEmailSent) {
+    return (
+      <>
+        <Cosmos />
+        <div className="h-screen flex items-center justify-center px-6">
+          <div className="glass-panel w-full max-w-md p-8 flex flex-col gap-3 text-center">
+            <p className="text-4xl mb-1">📩</p>
+            <h1 className="text-xl font-bold text-white">{t('register.confirmEmailTitle')}</h1>
+            <p className="text-sm text-slate-300 leading-relaxed">{t('register.confirmEmailBody', { email })}</p>
+            <Link to="/login" className="btn-mint mt-3">{t('common.signIn')}</Link>
+          </div>
+        </div>
+      </>
+    );
   }
 
   return (

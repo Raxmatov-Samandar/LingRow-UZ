@@ -108,6 +108,8 @@ export const uz: Translation = {
     submit: 'Akkaunt yaratish',
     creating: 'Yaratilmoqda…',
     haveAccount: 'Hisobingiz bormi?',
+    confirmEmailTitle: 'Emailingizni tekshiring',
+    confirmEmailBody: "{{email}} manziliga tasdiqlash havolasi yubordik. Havolani bosgach, tizimga kirishingiz mumkin.",
   },
 
   onboarding: {

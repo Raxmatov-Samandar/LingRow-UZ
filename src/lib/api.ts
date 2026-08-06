@@ -86,6 +86,11 @@ export const auth = {
       options: { data: { name: opts.name, role: opts.role, age: opts.age } },
     });
     if (error || !data.user) throw error ?? new Error('Sign-up failed');
+    // With "Confirm email" on (the Supabase default), signUp succeeds but
+    // issues no session until the user clicks the emailed link — loadProfile
+    // would fail anyway (RLS has no auth.uid() to match), so surface a
+    // distinct, expected state instead of a confusing generic error.
+    if (!data.session) throw new Error('EMAIL_CONFIRMATION_REQUIRED');
     // Trigger handle_new_user creates the profile row.
     return await loadProfile(data.user.id);
   },

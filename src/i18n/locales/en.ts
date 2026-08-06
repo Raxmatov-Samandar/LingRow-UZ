@@ -112,6 +112,8 @@ export const en = {
     submit: 'Create account',
     creating: 'Creating…',
     haveAccount: 'Already have an account?',
+    confirmEmailTitle: 'Check your email',
+    confirmEmailBody: "We sent a confirmation link to {{email}}. Click it, then sign in.",
   },
 
   // ──────────────── Onboarding ────────────────
