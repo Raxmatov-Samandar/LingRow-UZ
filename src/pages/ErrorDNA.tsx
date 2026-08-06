@@ -135,7 +135,7 @@ export function ErrorDNA() {
         <Topbar variant="banner" bannerEmoji="🧬" bannerTitle="Error DNA"
                 bannerSubtitle="Your personal map of where Uzbek→English mistakes hide." />
 
-        <section className="grid lg:grid-cols-[1fr_320px] grid-cols-1 gap-5 flex-1">
+        <section className="grid lg:grid-cols-[1fr_320px] grid-cols-1 gap-5 flex-1 min-h-0 overflow-auto">
           {/* Score bars */}
           <div className="glass-panel p-7">
             <div className="flex items-center justify-between mb-6 flex-wrap gap-2">

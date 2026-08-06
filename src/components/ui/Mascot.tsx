@@ -50,6 +50,18 @@ export function Mascot({ onClick, active }: Props) {
   const [anchor, setAnchor] = useState(0);
   const [tip, setTip]       = useState<string | null>(null);
   const [mood, setMood]     = useState<Mood>('idle');
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  // Below lg, some anchors sit mid-screen and overlap scrollable content —
+  // a thumb trying to scroll there lands on the mascot's tap target instead.
+  // Only let it wander on desktop; phones keep it pinned to a safe corner.
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    setIsDesktop(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
 
   // Trigger a temporary mood, then return to idle.
   function pulseMood(m: Mood, ms = 2400) {
@@ -59,14 +71,14 @@ export function Mascot({ onClick, active }: Props) {
 
   // Drift to a new anchor every ~25s — sets walking mood while in motion.
   useEffect(() => {
-    if (reduced) return;
+    if (reduced || !isDesktop) return;
     const id = window.setInterval(() => {
       setMood('walking');
       setAnchor(a => (a + 1 + Math.floor(Math.random() * 3)) % 4);
       window.setTimeout(() => setMood('idle'), 3400);
     }, 22_000 + Math.random() * 8_000);
     return () => clearInterval(id);
-  }, [reduced]);
+  }, [reduced, isDesktop]);
 
   // Random emotion ticks — every 18-30 s pick a random brief mood.
   useEffect(() => {
@@ -102,7 +114,7 @@ export function Mascot({ onClick, active }: Props) {
     { right: 24,            top:    96 },
     { right: '7%' as const, bottom: 100 },
   ];
-  const pos = ANCHORS[anchor];
+  const pos = isDesktop ? ANCHORS[anchor] : ANCHORS[0];
 
   // While popover is open, force a "thinking" pose.
   const effective: Mood = active ? 'thinking' : mood;

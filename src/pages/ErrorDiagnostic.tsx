@@ -80,7 +80,7 @@ export function ErrorDiagnostic() {
         <Topbar variant="banner" bannerEmoji="🧬" bannerTitle="Error DNA Diagnostic"
                 bannerSubtitle="20 quick questions — find out exactly where Uzbek→English mistakes hide for you." />
 
-        <section className="glass-panel p-8 max-w-2xl mx-auto w-full flex-1 flex flex-col">
+        <section className="glass-panel p-8 max-w-2xl mx-auto w-full flex-1 min-h-0 flex flex-col overflow-auto">
           {/* Progress bar */}
           <div className="flex items-center gap-3 mb-8">
             <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
