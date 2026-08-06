@@ -79,7 +79,7 @@ export function AppShell({ children }: Props) {
               exit={{ x: '-100%' }}
               transition={{ duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
             >
-              <Sidebar />
+              <Sidebar forceExpanded />
             </motion.div>
           </>
         )}

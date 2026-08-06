@@ -63,9 +63,17 @@ const Icon = ({ name }: { name: string }) => {
   }
 };
 
-export function Sidebar() {
-  const user      = useAuth(s => s.user);
-  const collapsed = useUi(s => s.sidebarCollapsed);
+interface Props {
+  /** Mobile drawer is an ephemeral overlay, not persistent chrome — the
+   *  desktop "focus mode" collapse preference doesn't apply there, so the
+   *  drawer always renders expanded regardless of the shared collapsed state. */
+  forceExpanded?: boolean;
+}
+
+export function Sidebar({ forceExpanded }: Props = {}) {
+  const user           = useAuth(s => s.user);
+  const collapsedPref  = useUi(s => s.sidebarCollapsed);
+  const collapsed      = forceExpanded ? false : collapsedPref;
   const toggle    = useUi(s => s.toggleSidebar);
   const setMobileNav = useUi(s => s.setMobileNav);
   const items     = user?.role === 'parent' ? PARENT_NAV
@@ -97,22 +105,24 @@ export function Sidebar() {
             style={{
               background: 'radial-gradient(circle, rgba(126,247,211,0.10) 0%, transparent 70%)',
             }} />
-      {/* Collapse toggle */}
-      <button
-        onClick={toggle}
-        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        title={collapsed ? 'Expand sidebar' : 'Collapse sidebar (focus mode)'}
-        className="absolute top-3 right-2 w-7 h-7 rounded-lg grid place-items-center text-slate-400 hover:bg-white/10 hover:text-white transition z-10"
-      >
-        <motion.svg
-          width="14" height="14" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-          animate={{ rotate: collapsed ? 180 : 0 }}
-          transition={{ duration: 0.25 }}
+      {/* Collapse toggle — desktop focus-mode only, doesn't apply to the mobile drawer */}
+      {!forceExpanded && (
+        <button
+          onClick={toggle}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar (focus mode)'}
+          className="absolute top-3 right-2 w-7 h-7 rounded-lg grid place-items-center text-slate-400 hover:bg-white/10 hover:text-white transition z-10"
         >
-          <path d="M15 18l-6-6 6-6"/>
-        </motion.svg>
-      </button>
+          <motion.svg
+            width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            animate={{ rotate: collapsed ? 180 : 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <path d="M15 18l-6-6 6-6"/>
+          </motion.svg>
+        </button>
+      )}
 
       {/* brand */}
       <div className={cn('flex items-center pt-1 pb-7', collapsed ? 'justify-center px-0 gap-0' : 'gap-3 px-1.5')}>
