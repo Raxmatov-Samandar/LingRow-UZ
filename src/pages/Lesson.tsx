@@ -118,9 +118,9 @@ export function Lesson() {
       <AppShell>
         <Topbar variant="search" />
 
-        <section className="grid lg:grid-cols-[1fr_320px] grid-cols-1 gap-5 flex-1 min-h-0 overflow-auto">
+        <section className="flex flex-col lg:grid lg:grid-cols-[1fr_320px] gap-5 flex-1 min-h-0 overflow-y-auto">
           {/* Video block */}
-          <div className="glass-panel flex flex-col gap-4 p-5">
+          <div className="glass-panel flex flex-col gap-4 p-5 shrink-0">
             {activeLesson?.mediaUrl ? (
               <MediaPlayer url={activeLesson.mediaUrl} title={activeLesson.title} />
             ) : (
@@ -132,7 +132,7 @@ export function Lesson() {
             <SubtitleBar activeIdx={activeIdx} setActiveIdx={setActiveIdx} />
           </div>
 
-          <aside className="flex flex-col gap-4 min-h-0">
+          <aside className="flex flex-col gap-4 shrink-0 lg:min-h-0">
             <VocabPanel />
 
             <div className="glass-panel p-4">
@@ -207,17 +207,28 @@ function DemoVideoPlaceholder({ title }: { title: string }) {
          style={{ background: 'linear-gradient(135deg,#3a4d8c,#1a2350)' }}>
       <img className="w-full h-full object-cover"
            src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1200&q=85" alt="Teacher" />
-      <div className="absolute top-4 left-5 text-2xl font-bold text-white drop-shadow-lg">
-        {title}
+
+      {/* Scrims: darken the top (for the title) and bottom (for the bar) so
+          text stays readable over any thumbnail. */}
+      <div className="pointer-events-none absolute inset-0"
+           style={{ background: 'linear-gradient(to bottom, rgba(10,14,32,0.72) 0%, rgba(10,14,32,0) 34%, rgba(10,14,32,0) 62%, rgba(10,14,32,0.78) 100%)' }} />
+
+      <div className="absolute top-3 left-4 right-4 flex items-center gap-2">
+        <span className="text-[9px] font-bold uppercase tracking-[0.15em] px-2 py-0.5 rounded-full bg-cosmic-mint/20 border border-cosmic-mint/40 text-cosmic-mint shrink-0">Video</span>
+        <h3 className="text-base lg:text-xl font-bold text-white truncate drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">
+          {title}
+        </h3>
       </div>
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[70px] h-[70px] rounded-full grid place-items-center"
+
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[58px] h-[58px] lg:w-[70px] lg:h-[70px] rounded-full grid place-items-center transition-transform active:scale-95"
            style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.45)',
                     backdropFilter: 'blur(8px)', boxShadow: '0 0 30px rgba(120,180,255,0.5)' }}>
-        <svg viewBox="0 0 24 24" width="28" height="28" fill="#fff"><path d="M8 5.5v13l11-6.5z"/></svg>
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="#fff"><path d="M8 5.5v13l11-6.5z"/></svg>
       </div>
-      <div className="absolute left-5 right-5 bottom-3 flex items-center gap-3 text-white text-xs">
+
+      <div className="absolute left-4 right-4 bottom-3 flex items-center gap-3 text-white text-xs">
         <div className="flex-1 h-1 rounded bg-gradient-to-r from-cosmic-mint via-cosmic-mint/60 to-white/20" />
-        <span className="opacity-80">Demo</span>
+        <span className="opacity-80 shrink-0">Demo</span>
       </div>
     </div>
   );
@@ -395,21 +406,21 @@ function VocabPanel() {
   useEffect(onScroll, []);
 
   return (
-    <div className="glass-panel p-4 flex flex-col min-h-0 flex-1 relative overflow-hidden">
+    <div className="glass-panel p-4 flex flex-col relative lg:min-h-0 lg:flex-1 lg:overflow-hidden">
       <div className="flex items-center justify-between mb-3">
         <h4 className="text-base font-bold text-white">Lesson Vocabulary</h4>
         <span className="text-[11px] text-slate-400">{VOCAB_ROWS.length} words</span>
       </div>
 
-      {/* fade gradient at top */}
-      <div className={`pointer-events-none absolute left-4 right-4 top-12 h-6 z-10 transition-opacity duration-200
+      {/* fade gradient at top (desktop internal-scroll only) */}
+      <div className={`hidden lg:block pointer-events-none absolute left-4 right-4 top-12 h-6 z-10 transition-opacity duration-200
                        ${atTop ? 'opacity-0' : 'opacity-100'}`}
            style={{ background: 'linear-gradient(to bottom, rgba(15,20,40,0.95), transparent)' }} />
 
       <motion.div
         ref={scrollRef}
         onScroll={onScroll}
-        className="flex flex-col gap-2 overflow-y-auto pr-1 scroll-smooth"
+        className="flex flex-col gap-2 pr-1 scroll-smooth lg:overflow-y-auto lg:flex-1 lg:min-h-0"
         initial="hidden"
         animate="visible"
         variants={{
@@ -457,8 +468,8 @@ function VocabPanel() {
         ))}
       </motion.div>
 
-      {/* fade gradient at bottom */}
-      <div className={`pointer-events-none absolute left-4 right-4 bottom-4 h-8 z-10 transition-opacity duration-200
+      {/* fade gradient at bottom (desktop internal-scroll only) */}
+      <div className={`hidden lg:block pointer-events-none absolute left-4 right-4 bottom-4 h-8 z-10 transition-opacity duration-200
                        ${atBottom ? 'opacity-0' : 'opacity-100'}`}
            style={{ background: 'linear-gradient(to top, rgba(15,20,40,0.95), transparent)' }} />
 
@@ -468,7 +479,7 @@ function VocabPanel() {
           aria-hidden
           animate={{ y: [0, 4, 0] }}
           transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-          className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 z-20 text-cosmic-mint/70"
+          className="hidden lg:block pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 z-20 text-cosmic-mint/70"
         >
           <svg width="20" height="12" viewBox="0 0 20 12" fill="none">
             <path d="M2 2l8 8 8-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
