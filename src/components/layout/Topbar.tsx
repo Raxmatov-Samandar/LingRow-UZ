@@ -31,34 +31,34 @@ export function Topbar({
   return (
     <header className="flex items-center justify-between gap-2 lg:gap-4 lg:pl-0 pl-12 pt-1 relative z-30">
       {variant === 'search' ? (
-        <div className="glass-soft flex-1 max-w-[520px] flex items-center gap-2.5 px-4 py-3 rounded-full text-slate-300">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+        <div className="glass-soft flex-1 min-w-0 max-w-[520px] flex items-center gap-2.5 px-4 py-3 rounded-full text-slate-300">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" className="shrink-0">
             <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
           </svg>
-          <input className="bg-transparent border-0 outline-none text-white w-full text-sm placeholder:text-slate-400" placeholder={t('topbar.searchPlaceholder')} />
+          <input className="bg-transparent border-0 outline-none text-white w-full min-w-0 text-sm placeholder:text-slate-400" placeholder={t('topbar.searchPlaceholder')} />
         </div>
       ) : (
-        <div className="glass-soft flex-1 max-w-[720px] flex items-center gap-3.5 pl-2 pr-4 py-2 rounded-2xl">
+        <div className="glass-soft flex-1 min-w-0 max-w-[720px] flex items-center gap-2.5 lg:gap-3.5 pl-2 pr-3 lg:pr-4 py-2 rounded-2xl">
           {bannerEmoji ? (
-            <div className="w-14 h-14 rounded-xl grid place-items-center text-3xl shrink-0 border border-white/12"
+            <div className="w-11 h-11 lg:w-14 lg:h-14 rounded-xl grid place-items-center text-2xl lg:text-3xl shrink-0 border border-white/12"
                  style={{ background: bannerTint ?? 'linear-gradient(135deg, rgba(126,247,211,0.18), rgba(90,169,255,0.10))' }}>
               {bannerEmoji}
             </div>
           ) : (
-            <img className="w-14 h-14 rounded-xl object-cover"
+            <img className="w-11 h-11 lg:w-14 lg:h-14 rounded-xl object-cover shrink-0"
                  src={bannerImage ?? DEFAULT_BANNER_IMAGE} alt="" />
           )}
-          <div className="text-left">
-            <h3 className="text-lg font-bold text-white">{bannerTitle ?? t('stats.title')}</h3>
-            <p className="text-xs text-slate-400">{bannerSubtitle ?? t('stats.subtitle')}</p>
+          <div className="text-left min-w-0">
+            <h3 className="text-base lg:text-lg font-bold text-white truncate">{bannerTitle ?? t('stats.title')}</h3>
+            <p className="text-[11px] lg:text-xs text-slate-400 line-clamp-1 lg:line-clamp-2">{bannerSubtitle ?? t('stats.subtitle')}</p>
           </div>
         </div>
       )}
 
-      <div className="flex items-center gap-3.5">
+      <div className="flex items-center gap-2 lg:gap-3.5 shrink-0">
         <LanguageSwitcher />
-        <AppsButton />
-        <NotificationsButton />
+        <div className="hidden sm:block"><AppsButton /></div>
+        <div className="hidden sm:block"><NotificationsButton /></div>
         <AvatarMenu user={user} />
       </div>
     </header>

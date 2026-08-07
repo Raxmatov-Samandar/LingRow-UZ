@@ -94,9 +94,11 @@ export function Mascot({ onClick, active }: Props) {
     return () => clearTimeout(timer);
   }, [reduced]);
 
-  // Speech bubble loop
+  // Speech bubble loop — desktop only. On a phone the bubble pops over the
+  // content next to the corner (stat numbers, card buttons), so suppress it;
+  // the tap-to-open mascot still works.
   useEffect(() => {
-    if (reduced) return;
+    if (reduced || !isDesktop) return;
     let timer: number;
     const loop = () => {
       const t = TIPS[Math.floor(Math.random() * TIPS.length)];
@@ -106,7 +108,7 @@ export function Mascot({ onClick, active }: Props) {
     };
     timer = window.setTimeout(loop, 9_000);
     return () => clearTimeout(timer);
-  }, [reduced]);
+  }, [reduced, isDesktop]);
 
   const ANCHORS = [
     { right: 24,            bottom: 24 },
@@ -204,10 +206,8 @@ export function Mascot({ onClick, active }: Props) {
         <img
           src="/mascot.png"
           alt=""
-          width={88}
-          height={88}
           draggable={false}
-          className="select-none drop-shadow-[0_8px_18px_rgba(126,247,180,0.40)]"
+          className="select-none w-14 h-14 lg:w-[88px] lg:h-[88px] drop-shadow-[0_8px_18px_rgba(126,247,180,0.40)]"
           onError={(e) => {
             const el = e.currentTarget;
             el.style.display = 'none';
