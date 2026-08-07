@@ -66,7 +66,7 @@ export function Stats() {
 
         <section className="flex-1 min-h-0 overflow-auto flex flex-col gap-5">
           {/* Top row */}
-          <div className="grid gap-5" style={{ gridTemplateColumns: '1fr 1fr 1.6fr' }}>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1.6fr] gap-5">
             {/* Donut */}
             <div className="glass-panel p-5 text-center">
               <h4 className="text-base font-bold text-white text-left mb-3">{t('stats.dailyGoal')}</h4>
@@ -163,10 +163,10 @@ export function Stats() {
           </div>
 
           {/* Bottom row */}
-          <div className="grid gap-5" style={{ gridTemplateColumns: '1fr 1.4fr' }}>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-5">
             <div className="glass-panel p-5">
               <h4 className="text-base font-bold text-white mb-3">{t('stats.badges')}</h4>
-              <div className="grid grid-cols-4 gap-3.5">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
                 {badges?.slice(0, 4).map(b => (
                   <div key={b.id} className={`text-center flex flex-col items-center gap-1.5 ${!b.unlocked ? 'opacity-50 grayscale' : ''}`}>
                     <div className="w-[86px] h-[86px] rounded-2xl grid place-items-center text-[38px]"

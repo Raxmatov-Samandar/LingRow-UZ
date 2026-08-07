@@ -93,7 +93,7 @@ export function Billing() {
 
           <div>
             <h3 className="text-lg font-bold text-white mb-3">Available plans</h3>
-            <div className="grid grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               {PLANS.map(p => {
                 const isCurrent = subscription?.plan === p.id && !subscription.cancelAtPeriodEnd;
                 return (
@@ -125,7 +125,7 @@ export function Billing() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div className="glass-panel p-5">
               <h3 className="text-lg font-bold text-white mb-3">Payment method</h3>
               <p className="text-sm text-slate-300">

@@ -113,7 +113,7 @@ function AudioTab() {
   }
 
   return (
-    <div className="grid grid-cols-[1fr_1fr] gap-5 p-1">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-5 p-1">
       {/* Upload card */}
       <div className="glass-panel p-5 flex flex-col gap-3 h-fit">
         <header>
@@ -186,7 +186,7 @@ function ArticlesTab() {
   const { t } = useTranslation()
   const list = useUserArticles(s => s.list)
   return (
-    <div className="grid grid-cols-[1fr_1fr] gap-5 p-1">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-5 p-1">
       <div className="glass-panel p-6 flex flex-col gap-3">
         <h3 className="text-lg font-bold text-white">{t('dev.articles.title')}</h3>
         <p className="text-sm text-slate-300 leading-relaxed">{t('dev.articles.sub')}</p>
@@ -308,7 +308,7 @@ function BooksTab() {
   }
 
   return (
-    <div className="grid grid-cols-[1fr_1.2fr] gap-5 p-1">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-5 p-1">
       {/* Upload card */}
       <div className="glass-panel p-5 flex flex-col gap-3 h-fit">
         <header>
@@ -525,7 +525,7 @@ function DtmTab() {
   }
 
   return (
-    <div className="grid grid-cols-[1fr_1.2fr] gap-5 p-1">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-5 p-1">
       {/* Upload card */}
       <div className="glass-panel p-5 flex flex-col gap-3 h-fit">
         <header>
@@ -655,7 +655,7 @@ function LessonsTab() {
   }
 
   return (
-    <div className="grid grid-cols-[1.1fr_1fr] gap-5 p-1">
+    <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-5 p-1">
       <div className="glass-panel p-5">
         <header className="flex items-center justify-between mb-3">
           <div>
@@ -835,7 +835,7 @@ function RetentionTab() {
         )}
       </div>
 
-      <div className="grid grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <StatCard label={t('dev.retention.matureCohort')} value={matureCohort.length} emoji="👥" />
         <StatCard label={t('dev.retention.stillActive')} value={stillActive.length} emoji="🔁" />
         <StatCard label={t('dev.retention.retentionRate')}
@@ -852,38 +852,40 @@ function RetentionTab() {
         ) : !rows || rows.length === 0 ? (
           <p className="text-xs text-slate-400 italic">{t('dev.retention.noUsers')}</p>
         ) : (
-          <div className="flex flex-col gap-1.5 max-h-[560px] overflow-auto pr-1">
-            <div className="grid text-[10px] uppercase tracking-wide text-slate-500 px-2 pb-2 border-b border-white/5"
-                 style={{ gridTemplateColumns: '1.6fr 80px 90px 60px 100px 60px 100px' }}>
-              <span>{t('dev.retention.table.name')}</span>
-              <span>{t('dev.retention.table.role')}</span>
-              <span>{t('dev.retention.table.signedUp')}</span>
-              <span>{t('dev.retention.table.days')}</span>
-              <span>{t('dev.retention.table.lastActive')}</span>
-              <span>{t('dev.retention.table.streak')}</span>
-              <span>{t('dev.retention.table.status')}</span>
-            </div>
-            {rows.map(r => (
-              <div key={r.userId}
-                   className="grid items-center gap-2 px-2 py-2 text-[12px] rounded-lg hover:bg-white/[0.04]"
+          <div className="overflow-x-auto">
+            <div className="flex flex-col gap-1.5 max-h-[560px] overflow-y-auto pr-1 min-w-[640px]">
+              <div className="grid text-[10px] uppercase tracking-wide text-slate-500 px-2 pb-2 border-b border-white/5"
                    style={{ gridTemplateColumns: '1.6fr 80px 90px 60px 100px 60px 100px' }}>
-                <span className="text-slate-100 truncate">
-                  {r.name}
-                  {r.email && <span className="block text-[10px] text-slate-500 truncate">{r.email}</span>}
-                </span>
-                <span className="text-slate-300 capitalize">{r.role}</span>
-                <span className="text-slate-400">{new Date(r.signedUpAt).toLocaleDateString()}</span>
-                <span className="text-slate-300 tabular-nums">{r.daysSinceSignup}</span>
-                <span className="text-slate-400">{r.lastActiveDate ? new Date(r.lastActiveDate).toLocaleDateString() : '—'}</span>
-                <span className="text-slate-300 tabular-nums">{r.streak}</span>
-                <span className={cn('text-[10px] px-2 py-0.5 rounded-full border font-bold w-fit',
-                  r.activeToday
-                    ? 'bg-cosmic-mint/15 text-cosmic-mint border-cosmic-mint/40'
-                    : 'bg-white/[0.04] text-slate-400 border-white/10')}>
-                  {r.activeToday ? t('dev.retention.activeToday') : t('dev.retention.inactive')}
-                </span>
+                <span>{t('dev.retention.table.name')}</span>
+                <span>{t('dev.retention.table.role')}</span>
+                <span>{t('dev.retention.table.signedUp')}</span>
+                <span>{t('dev.retention.table.days')}</span>
+                <span>{t('dev.retention.table.lastActive')}</span>
+                <span>{t('dev.retention.table.streak')}</span>
+                <span>{t('dev.retention.table.status')}</span>
               </div>
-            ))}
+              {rows.map(r => (
+                <div key={r.userId}
+                     className="grid items-center gap-2 px-2 py-2 text-[12px] rounded-lg hover:bg-white/[0.04]"
+                     style={{ gridTemplateColumns: '1.6fr 80px 90px 60px 100px 60px 100px' }}>
+                  <span className="text-slate-100 truncate">
+                    {r.name}
+                    {r.email && <span className="block text-[10px] text-slate-500 truncate">{r.email}</span>}
+                  </span>
+                  <span className="text-slate-300 capitalize">{r.role}</span>
+                  <span className="text-slate-400">{new Date(r.signedUpAt).toLocaleDateString()}</span>
+                  <span className="text-slate-300 tabular-nums">{r.daysSinceSignup}</span>
+                  <span className="text-slate-400">{r.lastActiveDate ? new Date(r.lastActiveDate).toLocaleDateString() : '—'}</span>
+                  <span className="text-slate-300 tabular-nums">{r.streak}</span>
+                  <span className={cn('text-[10px] px-2 py-0.5 rounded-full border font-bold w-fit',
+                    r.activeToday
+                      ? 'bg-cosmic-mint/15 text-cosmic-mint border-cosmic-mint/40'
+                      : 'bg-white/[0.04] text-slate-400 border-white/10')}>
+                    {r.activeToday ? t('dev.retention.activeToday') : t('dev.retention.inactive')}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

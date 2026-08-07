@@ -67,7 +67,7 @@ export function ParentDashboard() {
         <Topbar variant="banner" bannerTitle="Parent Dashboard" bannerSubtitle="Track your child's learning progress" />
 
         <section className="flex-1 min-h-0 overflow-auto flex flex-col gap-5">
-          <div className="grid grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <StatCard label="Children linked" value={String(children?.length ?? 0)} accent="mint" />
             <StatCard label="Active today"     value={String(activeToday)} accent="sky" />
             <StatCard label="Total XP this week" value={totalXpThisWeek.toLocaleString()} accent="gold" />
@@ -79,7 +79,7 @@ export function ParentDashboard() {
               <Link to="/onboarding" className="btn-mint text-xs px-4 py-2">+ Link a child</Link>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {children?.map(c => {
                 const { streak, totalXp } = childStats(c.childId, allReports);
                 return (
@@ -103,7 +103,7 @@ export function ParentDashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div className="glass-panel p-5">
               <h3 className="text-lg font-bold text-white mb-3">This week's activity</h3>
               <div className="grid grid-cols-7 gap-1.5 h-24 items-end">

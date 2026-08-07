@@ -56,7 +56,7 @@ export function ParentSettings() {
           </div>
 
           {controls && (
-            <div className="grid grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="glass-panel p-5">
                 <h3 className="text-lg font-bold text-white mb-4">⏰ Time controls</h3>
                 <Field label="Daily limit (minutes)">

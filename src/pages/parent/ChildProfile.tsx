@@ -21,14 +21,14 @@ export function ChildProfile() {
         <section className="flex-1 min-h-0 overflow-auto flex flex-col gap-5">
           <Link to="/parent" className="text-xs text-slate-400 hover:text-white">← Back to dashboard</Link>
 
-          <div className="grid grid-cols-4 gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
             <Stat label="Today"     value={`${reports?.[reports.length - 1]?.minutesSpent ?? 0} min`} />
             <Stat label="Lessons"   value={String(reports?.[reports.length - 1]?.lessonsDone ?? 0)} />
             <Stat label="XP earned" value={String(reports?.reduce((a, r) => a + r.xpEarned, 0) ?? 0)} />
             <Stat label="Streak"    value="7 days" />
           </div>
 
-          <div className="grid grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div className="glass-panel p-5">
               <h3 className="text-lg font-bold text-white mb-3">Daily activity</h3>
               <div className="h-[220px]">

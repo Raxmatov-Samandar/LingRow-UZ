@@ -235,7 +235,7 @@ export function Reading() {
         </div>
 
         {/* Two-column passage / questions — PAPER STYLE for focus */}
-        <section className="grid grid-cols-2 gap-5 flex-1 min-h-0 overflow-hidden">
+        <section className="grid lg:grid-cols-2 grid-cols-1 gap-5 flex-1 min-h-0 lg:overflow-hidden overflow-y-auto">
           <article className="paper-panel overflow-auto" ref={passageRef}>
             <p className="text-[10px] tracking-[0.25em] text-slate-500 mb-1">{section.title}</p>
             {part.intro && <p className="text-xs text-slate-600 italic mb-4">{part.intro}</p>}

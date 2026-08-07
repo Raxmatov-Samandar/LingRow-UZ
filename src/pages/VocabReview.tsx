@@ -59,7 +59,7 @@ export function VocabReview() {
         <Topbar variant="banner" bannerEmoji="📇" bannerTitle="Daily Review"
                 bannerSubtitle="Spaced repetition — the words most likely to slip away, right when you're about to forget them." />
 
-        <section className="glass-panel p-8 max-w-xl mx-auto w-full flex-1 flex flex-col">
+        <section className="glass-panel p-8 max-w-xl mx-auto w-full flex-1 min-h-0 flex flex-col overflow-auto">
           {queue.length === 0 ? (
             <div className="grid place-items-center flex-1 text-center gap-2">
               <p className="text-4xl mb-2">{reviewed > 0 ? '🌟' : '📭'}</p>
