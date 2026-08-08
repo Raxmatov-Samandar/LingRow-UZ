@@ -515,6 +515,7 @@ export const uz: Translation = {
     panelSub: 'Audio, maqolalar va darslar yuklash. Faqat dev akkaunti uchun ko\'rinadi.',
     badge: 'DEV',
     tabs: {
+      panels: 'Panellar',
       audio: 'Audio',
       articles: 'Maqolalar',
       books: 'Kitoblar (PDF)',

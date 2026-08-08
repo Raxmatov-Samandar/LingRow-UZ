@@ -7,7 +7,7 @@
 //   • Stats    — content counts + storage usage
 // =============================================================================
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Cosmos } from '@/components/layout/Cosmos'
 import { AppShell } from '@/components/layout/AppShell'
@@ -22,12 +22,12 @@ import { MediaPlayer } from '@/components/ui/MediaPlayer'
 import { admin, isMockMode } from '@/lib/api'
 import type { RetentionRow, UserRole } from '@/types'
 
-type Tab = 'audio' | 'articles' | 'books' | 'dtm' | 'lessons' | 'stats' | 'retention'
+type Tab = 'panels' | 'audio' | 'articles' | 'books' | 'dtm' | 'lessons' | 'stats' | 'retention'
 
 export function DevPanel() {
   const { t } = useTranslation()
   const user = useAuth(s => s.user)
-  const [tab, setTab] = useState<Tab>('audio')
+  const [tab, setTab] = useState<Tab>('panels')
 
   if (!isDevUser(user)) {
     // Block non-dev users
@@ -44,6 +44,7 @@ export function DevPanel() {
         <div className="glass-panel px-4 py-3 flex items-center gap-2 flex-wrap">
           <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-cosmic-mint/20 text-cosmic-mint border border-cosmic-mint/40 mr-2">{t('dev.badge')}</span>
           {([
+            ['panels',   '🧭', t('dev.tabs.panels')],
             ['audio',    '🎧', t('dev.tabs.audio')],
             ['articles', '📰', t('dev.tabs.articles')],
             ['books',    '📚', t('dev.tabs.books')],
@@ -66,6 +67,7 @@ export function DevPanel() {
         </div>
 
         <section className="flex-1 min-h-0 overflow-auto">
+          {tab === 'panels'   && <PanelsTab />}
           {tab === 'audio'    && <AudioTab />}
           {tab === 'articles' && <ArticlesTab />}
           {tab === 'books'    && <BooksTab />}
@@ -76,6 +78,115 @@ export function DevPanel() {
         </section>
       </AppShell>
     </>
+  )
+}
+
+// ───────────────────────── Panels (role switcher) ─────────────────────────
+// Lets the single dev/founder account preview each role's panel without
+// creating separate accounts. previewRole() overrides the role locally only
+// (client-side) — the real profile in Supabase is untouched.
+
+const PANEL_ROLES: {
+  role: UserRole
+  emoji: string
+  name: string
+  desc: string
+  home: string
+  nav: string[]
+  accent: string
+}[] = [
+  {
+    role: 'student', emoji: '👦', name: 'Student panel', home: '/home',
+    desc: 'Umumiy ingliz tili — darslar, lug‘at, Error DNA, statistika.',
+    nav: ['Dashboard', 'AI Tutor', 'Lesson', 'Listening', 'Reading', 'Speaking', 'Writing', 'Vocabulary', 'Error DNA', 'Stats'],
+    accent: 'from-cosmic-mint/20 to-cosmic-sky/10 border-cosmic-mint/40',
+  },
+  {
+    role: 'adult', emoji: '🎓', name: 'Adult / IELTS panel', home: '/home',
+    desc: 'Kattalar / IELTS yo‘nalishi — bir xil o‘quv oqimi, IELTS urg‘usi bilan.',
+    nav: ['Dashboard', 'AI Tutor', 'Lesson', 'Listening', 'Reading', 'Speaking', 'Writing', 'Vocabulary', 'Error DNA', 'Stats'],
+    accent: 'from-violet-400/20 to-blue-500/10 border-violet-300/40',
+  },
+  {
+    role: 'dtm', emoji: '🎯', name: 'DTM panel', home: '/dtm/home',
+    desc: 'O‘zbekiston DTM tayyorgarligi — Matematika, Ingliz tili, Ona tili, Mock, Past Papers.',
+    nav: ['DTM Home', 'Mathematics', 'English', 'Native language', 'Mock Tests', 'Past Papers', 'My Progress'],
+    accent: 'from-emerald-400/20 to-teal-500/10 border-emerald-300/40',
+  },
+  {
+    role: 'parent', emoji: '👨‍👩‍👧', name: 'Parent panel', home: '/parent',
+    desc: 'Ota-ona nazorati — farzand progressi, hisobotlar, nazorat sozlamalari, billing.',
+    nav: ['Dashboard', 'Reports', 'Controls', 'Billing'],
+    accent: 'from-amber-300/20 to-orange-500/10 border-amber-300/40',
+  },
+]
+
+function PanelsTab() {
+  const user = useAuth(s => s.user)
+  const previewRole = useAuth(s => s.previewRole)
+  const navigate = useNavigate()
+  const activeRole = user?.role
+
+  function switchTo(role: UserRole, home: string) {
+    previewRole(role)
+    navigate(home)
+  }
+
+  return (
+    <div className="flex flex-col gap-5 p-1">
+      <div className="glass-panel p-5">
+        <h3 className="text-lg font-bold text-white">Panellar (rol almashtirish)</h3>
+        <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+          Bitta dev akkaunt bilan har bir foydalanuvchi panelini ko‘rib chiqing. Faqat lokal
+          ko‘rinishni o‘zgartiradi — Supabase’dagi haqiqiy profil (<span className="font-mono">{user?.role}</span>) o‘zgarmaydi.
+          Dev Panel har doim ochiq qoladi, shuning uchun istalgan vaqtda qaytishingiz mumkin.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {PANEL_ROLES.map(p => {
+          const isActive = activeRole === p.role
+          return (
+            <div key={p.role}
+                 className={cn('glass-panel p-5 flex flex-col gap-3 border bg-gradient-to-br',
+                   isActive ? p.accent : 'from-white/[0.02] to-white/[0.01] border-white/10')}>
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl grid place-items-center text-2xl border border-white/12 bg-white/[0.04] shrink-0">
+                  {p.emoji}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-base font-bold text-white truncate">{p.name}</p>
+                  <p className="text-[11px] text-slate-400 font-mono">role: {p.role}</p>
+                </div>
+                {isActive && (
+                  <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-cosmic-mint/20 text-cosmic-mint border border-cosmic-mint/40 shrink-0">
+                    HOZIRGI
+                  </span>
+                )}
+              </div>
+
+              <p className="text-xs text-slate-300 leading-relaxed">{p.desc}</p>
+
+              <div className="flex flex-wrap gap-1.5">
+                {p.nav.map(n => (
+                  <span key={n} className="text-[10px] px-2 py-0.5 rounded-full border border-white/10 text-slate-400">{n}</span>
+                ))}
+              </div>
+
+              <button
+                onClick={() => switchTo(p.role, p.home)}
+                disabled={isActive}
+                className={cn('mt-auto w-full py-2.5 rounded-xl text-sm font-bold transition active:scale-[0.98]',
+                  isActive
+                    ? 'bg-white/[0.04] border border-white/10 text-slate-500 cursor-default'
+                    : 'btn-mint')}>
+                {isActive ? 'Hozir shu panel' : `${p.name}ga o‘tish →`}
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 

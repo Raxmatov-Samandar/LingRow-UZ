@@ -535,6 +535,7 @@ export const en = {
     panelSub: 'Upload audio, articles and lessons. Visible only to the dev account.',
     badge: 'DEV',
     tabs: {
+      panels: 'Panels',
       audio: 'Audio',
       articles: 'Articles',
       books: 'Books (PDF)',

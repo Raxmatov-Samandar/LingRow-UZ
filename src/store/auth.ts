@@ -13,6 +13,10 @@ interface AuthState {
   signIn: (email: string, password: string, role?: UserRole) => Promise<User>;
   signUp: (opts: { name: string; email: string; password: string; role: UserRole; age?: number }) => Promise<User>;
   signOut: () => Promise<void>;
+  /** Dev-only: locally override the signed-in user's role to preview another
+   *  panel (student / adult / dtm / parent). Client-side only — never touches
+   *  the real profile in Supabase. Guarded in the UI by the Dev Panel. */
+  previewRole: (role: UserRole) => void;
 }
 
 export const useAuth = create<AuthState>()(
@@ -40,6 +44,12 @@ export const useAuth = create<AuthState>()(
       async signOut() {
         await auth.signOut();
         set({ user: null, onboarding: {}, selectedRole: null });
+      },
+
+      previewRole(role) {
+        const user = get().user;
+        if (!user) return;
+        set({ user: { ...user, role } });
       },
     }),
     { name: 'lr-auth' }
