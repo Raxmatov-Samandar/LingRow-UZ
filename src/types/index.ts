@@ -184,3 +184,14 @@ export interface RetentionRow {
   streak:          number;
   xp:              number;
 }
+
+/** One uploaded Listening audio file — stored in Supabase Storage + the
+ *  listening_audio table, keyed by slot (matches the static /public/audio
+ *  naming, e.g. 'c18-t1-p1') so real users on any device can hear it. */
+export interface ListeningAudioRow {
+  slot:       string;
+  url:        string;
+  filename:   string;
+  sizeBytes:  number;
+  uploadedAt: string;
+}

@@ -7,7 +7,7 @@ import type {
   User, Lesson, VocabWord, QuizQuestion, Badge, LeaderboardEntry,
   ParentChild, ParentalControls, DailyReport, UserRole,
   DiagnosticQuestion, DiagnosticAnswerCheck, DnaScores, ErrorCategory, ErrorCatalogEntry,
-  Subscription, Invoice, RetentionRow,
+  Subscription, Invoice, RetentionRow, ListeningAudioRow,
 } from '@/types';
 import {
   LEVELS, VOCAB, QUIZ, BADGES, LEADERBOARD,
@@ -261,6 +261,15 @@ export const learning = {
     fd.append('audio', audio, 'audio.webm');
     fd.append('target', target);
     return fn<{ accuracy: number; fluency: number; pronunciation: number; transcript: string; tip: string }>('grade-speaking', fd);
+  },
+
+  /** slot -> public URL, e.g. { 'c18-t1-p1': 'https://...listening-audio/....mp3' }.
+   *  Empty in mock mode -- Listening.tsx falls back to the static /public/audio
+   *  path for any slot missing from this map, so nothing breaks pre-upload. */
+  async getListeningAudioMap(): Promise<Record<string, string>> {
+    if (useMock) return {};
+    const { data } = await supabase!.from('listening_audio').select('slot, url');
+    return Object.fromEntries((data ?? []).map(r => [r.slot, r.url]));
   },
 };
 
@@ -615,5 +624,38 @@ export const admin = {
       lastActiveDate: r.last_active_date, activeToday: r.active_today,
       streak: r.streak, xp: r.xp,
     }));
+  },
+
+  /** Real per-user retention needs a real backend — mock mode has no other
+   *  users, and Listening audio uploads need somewhere real to land, so all
+   *  three functions below throw a clear message instead of silently no-op'ing. */
+  async listListeningAudio(): Promise<ListeningAudioRow[]> {
+    if (useMock) return [];
+    const { data, error } = await supabase!.from('listening_audio').select('*').order('slot');
+    if (error) throw error;
+    return (data ?? []).map(r => ({
+      slot: r.slot, url: r.url, filename: r.filename,
+      sizeBytes: r.size_bytes, uploadedAt: r.uploaded_at,
+    }));
+  },
+
+  async uploadListeningAudio(slot: string, file: File): Promise<ListeningAudioRow> {
+    if (useMock) throw new Error('Audio yuklash faqat real backend rejimida ishlaydi (mock rejimda emas).');
+    const path = `${slot}-${Date.now()}.mp3`;
+    const up = await supabase!.storage.from('listening-audio').upload(path, file, { contentType: file.type || 'audio/mpeg' });
+    if (up.error) throw up.error;
+    const { data: pub } = supabase!.storage.from('listening-audio').getPublicUrl(path);
+    const row = {
+      slot, url: pub.publicUrl, filename: file.name, size_bytes: file.size,
+    };
+    const { data, error } = await supabase!.from('listening_audio').upsert(row).select().single();
+    if (error) throw error;
+    return { slot: data.slot, url: data.url, filename: data.filename, sizeBytes: data.size_bytes, uploadedAt: data.uploaded_at };
+  },
+
+  async removeListeningAudio(slot: string): Promise<void> {
+    if (useMock) return;
+    const { error } = await supabase!.from('listening_audio').delete().eq('slot', slot);
+    if (error) throw error;
   },
 };

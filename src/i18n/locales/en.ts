@@ -578,6 +578,7 @@ export const en = {
     audio: {
       title: 'Listening audio',
       sub: 'Upload Cambridge / custom MP3s. The slot key matches what the Listening test page asks for (e.g. c18-t1-p1).',
+      mockNotice: "You're in mock mode — audio upload only works connected to the live Supabase backend.",
       uploadBtn: 'Upload MP3',
       slotLabel: 'Slot key',
       slotPlaceholder: 'c18-t1-p1',

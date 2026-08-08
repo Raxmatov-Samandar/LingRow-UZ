@@ -558,6 +558,7 @@ export const uz: Translation = {
     audio: {
       title: 'Listening audio',
       sub: "Cambridge yoki o'zingizning MP3 fayllarini yuklang. Slot kaliti Listening sahifasi so'raydigan kalit bilan mos bo'lishi kerak (masalan, c18-t1-p1).",
+      mockNotice: "Mock rejimdasiz — audio yuklash faqat real Supabase backend'ga ulanganda ishlaydi.",
       uploadBtn: 'MP3 yuklash',
       slotLabel: 'Slot kaliti',
       slotPlaceholder: 'c18-t1-p1',

@@ -1,12 +1,14 @@
 // =============================================================================
 // Dev-uploaded content store. Holds:
-//   • audio assets (uploaded MP3s for Listening tests)
 //   • lessons (custom video / reading / speaking / writing materials)
+//   • books / DTM PDFs (still base64-in-localStorage — see note below)
 //
-// Persisted to localStorage so the dev can manage content while the
-// Supabase Storage backend is still being wired. When the real backend
-// goes live, swap this store with a Supabase-backed query layer — the
-// component contracts won't have to change.
+// Listening audio used to live here as base64 data URLs too, but that had
+// two real problems: localStorage caps out around 5-10MB (a couple of MP3s
+// and it breaks), and it's per-browser, so an upload never reached real
+// users on other devices. It's been moved to Supabase Storage + the
+// listening_audio table (see admin.uploadListeningAudio in lib/api.ts) —
+// same trade-off still applies to books/DTM PDFs below, not yet migrated.
 //
 // Articles already have their own store (useUserArticles).
 // =============================================================================
@@ -16,18 +18,6 @@ import { persist } from 'zustand/middleware'
 
 export type LessonKind = 'video' | 'reading' | 'speaking' | 'writing' | 'quiz'
 export type LessonLevel = 'beginner' | 'intermediate' | 'advanced' | 'mastery'
-
-export interface DevAudio {
-  id:        string
-  /** Slot key e.g. 'c18-t1-p1', 'c18-t2-p3' — what the test page asks for. */
-  slot:      string
-  filename:  string
-  mime:      string
-  /** base64-data: URL. Cheap, persistable, fine for moderate file sizes. */
-  dataUrl:   string
-  sizeBytes: number
-  uploadedAt: string
-}
 
 export type BookKind = 'cambridge_ielts' | 'general' | 'other'
 
@@ -102,13 +92,9 @@ export interface DevLesson {
 }
 
 interface State {
-  audio:   DevAudio[]
   books:   DevBook[]
   lessons: DevLesson[]
   dtm:     DtmDocument[]
-
-  addAudio:    (a: Omit<DevAudio, 'id' | 'uploadedAt'>) => DevAudio
-  removeAudio: (id: string) => void
 
   addBook:     (b: Omit<DevBook, 'id' | 'uploadedAt'>) => DevBook
   updateBook:  (id: string, patch: Partial<DevBook>) => void
@@ -127,23 +113,9 @@ interface State {
 export const useDevContent = create<State>()(
   persist(
     (set, get) => ({
-      audio: [],
       books: [],
       lessons: [],
       dtm: [],
-
-      addAudio: (a) => {
-        const item: DevAudio = {
-          ...a,
-          id: crypto.randomUUID(),
-          uploadedAt: new Date().toISOString(),
-        }
-        // Replace any existing entry with the same slot — last upload wins
-        const next = [item, ...get().audio.filter(x => x.slot !== a.slot)]
-        set({ audio: next })
-        return item
-      },
-      removeAudio: (id) => set({ audio: get().audio.filter(a => a.id !== id) }),
 
       addBook: (b) => {
         const item: DevBook = {
@@ -182,7 +154,7 @@ export const useDevContent = create<State>()(
       },
       removeDtmDocument: (id) => set({ dtm: get().dtm.filter(d => d.id !== id) }),
 
-      clearAll: () => set({ audio: [], books: [], lessons: [], dtm: [] }),
+      clearAll: () => set({ books: [], lessons: [], dtm: [] }),
     }),
     { name: 'lr-dev-content' }
   )

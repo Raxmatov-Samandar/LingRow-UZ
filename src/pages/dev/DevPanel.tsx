@@ -20,7 +20,7 @@ import { cn } from '@/lib/cn'
 import { extractPdfText, parseCambridgeReading } from '@/lib/pdfParser'
 import { MediaPlayer } from '@/components/ui/MediaPlayer'
 import { admin, isMockMode } from '@/lib/api'
-import type { RetentionRow, UserRole } from '@/types'
+import type { RetentionRow, UserRole, ListeningAudioRow } from '@/types'
 
 type Tab = 'panels' | 'audio' | 'articles' | 'books' | 'dtm' | 'lessons' | 'stats' | 'retention'
 
@@ -194,33 +194,47 @@ function PanelsTab() {
 
 function AudioTab() {
   const { t } = useTranslation()
-  const audio   = useDevContent(s => s.audio)
-  const addAudio = useDevContent(s => s.addAudio)
-  const removeAudio = useDevContent(s => s.removeAudio)
 
+  const [audio, setAudio] = useState<ListeningAudioRow[]>([])
+  const [loading, setLoading] = useState(true)
   const [slot, setSlot] = useState('')
   const [picked, setPicked] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const ok = slot.trim().length >= 3 && !!picked
+  const ok = slot.trim().length >= 3 && !!picked && !isMockMode
+
+  function refresh() {
+    setLoading(true)
+    admin.listListeningAudio().then(setAudio).finally(() => setLoading(false))
+  }
+  useEffect(refresh, [])
 
   async function upload() {
     if (!ok || !picked) return
     setUploading(true)
+    setError(null)
     try {
-      const dataUrl = await fileToDataUrl(picked)
-      addAudio({
-        slot:      slot.trim(),
-        filename:  picked.name,
-        mime:      picked.type || 'audio/mpeg',
-        dataUrl,
-        sizeBytes: picked.size,
-      })
+      await admin.uploadListeningAudio(slot.trim(), picked)
       setSlot('')
       setPicked(null)
       if (fileRef.current) fileRef.current.value = ''
-    } finally { setUploading(false) }
+      refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  async function remove(s: string) {
+    try {
+      await admin.removeListeningAudio(s)
+      refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    }
   }
 
   return (
@@ -231,6 +245,12 @@ function AudioTab() {
           <h3 className="text-lg font-bold text-white">{t('dev.audio.title')}</h3>
           <p className="text-xs text-slate-400 mt-1 leading-relaxed">{t('dev.audio.sub')}</p>
         </header>
+
+        {isMockMode && (
+          <p className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5">
+            {t('dev.audio.mockNotice')}
+          </p>
+        )}
 
         <label className="text-[11px] uppercase tracking-wider text-slate-300 font-semibold">
           {t('dev.audio.slotLabel')}
@@ -258,26 +278,34 @@ function AudioTab() {
                 className="btn-mint disabled:opacity-40 disabled:cursor-not-allowed">
           {uploading ? '…' : t('dev.audio.uploadBtn')}
         </button>
+
+        {error && (
+          <p className="text-xs text-rose-300 bg-rose-500/10 border border-rose-500/30 rounded-lg p-2">
+            {error}
+          </p>
+        )}
       </div>
 
       {/* Existing list */}
       <div className="glass-panel p-5">
         <h4 className="text-sm font-bold text-white mb-3">{t('dev.audio.uploaded')} ({audio.length})</h4>
-        {audio.length === 0
+        {loading ? (
+          <p className="text-xs text-slate-400 italic">…</p>
+        ) : audio.length === 0
           ? <p className="text-xs text-slate-400 italic">{t('dev.audio.noneYet')}</p>
           : (
             <div className="flex flex-col gap-2 max-h-[480px] overflow-auto pr-1">
               {audio.map(a => (
-                <div key={a.id} className="rounded-xl p-3 bg-white/[0.03] border border-white/8">
+                <div key={a.slot} className="rounded-xl p-3 bg-white/[0.03] border border-white/8">
                   <div className="flex items-baseline gap-2 flex-wrap">
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cosmic-sky/15 text-cosmic-sky border border-cosmic-sky/30 font-mono">{a.slot}</span>
                     <span className="text-xs text-white truncate flex-1 min-w-0">{a.filename}</span>
                     <span className="text-[10px] text-slate-500">{formatBytes(a.sizeBytes)}</span>
                   </div>
-                  <audio controls preload="metadata" className="w-full mt-2 h-8" src={a.dataUrl} />
+                  <audio controls preload="metadata" className="w-full mt-2 h-8" src={a.url} />
                   <div className="mt-2 flex items-center justify-between text-[10px] text-slate-500">
                     <span>{new Date(a.uploadedAt).toLocaleString()}</span>
-                    <button onClick={() => removeAudio(a.id)}
+                    <button onClick={() => remove(a.slot)}
                             className="text-rose-300 hover:text-rose-400">
                       {t('dev.audio.remove')}
                     </button>
@@ -863,11 +891,13 @@ function LessonsTab() {
 
 function StatsTab() {
   const { t } = useTranslation()
-  const audio = useDevContent(s => s.audio)
   const books = useDevContent(s => s.books)
   const dtm = useDevContent(s => s.dtm)
   const lessons = useDevContent(s => s.lessons)
   const articles = useUserArticles(s => s.list)
+  const [audio, setAudio] = useState<ListeningAudioRow[]>([])
+
+  useEffect(() => { admin.listListeningAudio().then(setAudio) }, [])
 
   const totalSize = useMemo(
     () => audio.reduce((sum, a) => sum + a.sizeBytes, 0) + dtm.reduce((sum, d) => sum + d.pdfSize, 0),

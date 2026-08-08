@@ -8,6 +8,7 @@ import { Cosmos } from '@/components/layout/Cosmos';
 import { AppShell } from '@/components/layout/AppShell';
 import { Topbar } from '@/components/layout/Topbar';
 import { useActivity } from '@/store/activity';
+import { learning } from '@/lib/api';
 import { LIST_TEST, type ListeningQuestion, type ListeningPart } from '@/data/listening/cambridge18-test1';
 
 export function Listening() {
@@ -18,8 +19,18 @@ export function Listening() {
   const [submitted, setSubmitted] = useState(false);
   const [timeLeft,  setTimeLeft]  = useState(LIST_TEST.durationMin * 60);
   const [running,   setRunning]   = useState(false);                  // manual start
+  const [audioMap,  setAudioMap]  = useState<Record<string, string>>({});
+
+  useEffect(() => { learning.getListeningAudioMap().then(setAudioMap); }, []);
 
   const part = LIST_TEST.parts[partIdx];
+  // part.audioSrc is like 'audio/c18-t1-p1.mp3' — the slot key the Dev Panel
+  // audio uploader asks for is the basename without extension. Prefer a
+  // Supabase-hosted upload for that slot; fall back to the static
+  // /public/audio/... path (works pre-upload / in mock mode).
+  const partSlot = part.audioSrc?.split('/').pop()?.replace(/\.mp3$/i, '') ?? '';
+  const partAudioUploaded = !!audioMap[partSlot];
+  const partAudioSrc = audioMap[partSlot] ?? (part.audioSrc ? `/${part.audioSrc}` : undefined);
 
   // Countdown — only when running
   useEffect(() => {
@@ -120,7 +131,7 @@ export function Listening() {
               {part.scenario && <p className="text-sm text-slate-700 italic mt-1">{part.scenario}</p>}
             </header>
 
-            <AudioPlayer src={part.audioSrc} label={`Part ${part.partNum} audio`} />
+            <AudioPlayer src={partAudioSrc} label={`Part ${part.partNum} audio`} />
 
             {part.intro && (
               <div className="rounded-xl px-4 py-3 bg-white/70 border border-slate-300 text-[13px] text-slate-800 leading-relaxed">
@@ -130,7 +141,11 @@ export function Listening() {
 
             <div className="text-[12px] text-slate-600 leading-6">
               <p className="mb-1"><b className="text-slate-800">Tip:</b> press play, then answer in real-time. Pause if you need a moment.</p>
-              <p>Audio file is loaded from <code className="text-blue-700 bg-white/60 px-1 rounded">/public/{part.audioSrc}</code>. If the MP3 isn't placed there yet, the player will be silent — answers are still graded.</p>
+              <p>
+                {partAudioUploaded
+                  ? 'Audio uploaded via Dev Panel.'
+                  : <>No audio uploaded for this part yet (Dev Panel → Audio → slot <code className="text-blue-700 bg-white/60 px-1 rounded">{partSlot}</code>). The player will be silent — answers are still graded.</>}
+              </p>
             </div>
           </div>
 
@@ -172,7 +187,7 @@ function AudioPlayer({ src, label }: { src?: string; label: string }) {
     const onTime   = () => setTime(a.currentTime);
     const onPlay   = () => setPlaying(true);
     const onPause  = () => setPlaying(false);
-    const onError  = () => setErr('Audio file not found. Place the MP3 in /public/audio/.');
+    const onError  = () => setErr('Audio file not found. Upload it via Dev Panel → Audio.');
     a.addEventListener('loadedmetadata', onLoaded);
     a.addEventListener('timeupdate',     onTime);
     a.addEventListener('play',           onPlay);
@@ -201,7 +216,7 @@ function AudioPlayer({ src, label }: { src?: string; label: string }) {
 
   return (
     <div className="rounded-2xl p-4 bg-white/70 border border-slate-300">
-      <audio ref={audioRef} src={src ? `/${src}` : undefined} preload="metadata" />
+      <audio ref={audioRef} src={src} preload="metadata" />
       <div className="flex items-center gap-3">
         <button onClick={toggle}
                 className="w-12 h-12 rounded-full grid place-items-center bg-blue-600 shadow-[0_4px_14px_rgba(37,99,235,0.4)] text-white">
