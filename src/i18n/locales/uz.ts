@@ -573,6 +573,7 @@ export const uz: Translation = {
     lessons: {
       title: 'Darslar',
       sub: "Video / o'qish / gapirish / yozish / test darslari yarating. Nashrdan keyin darslar katalogida ko'rinadi.",
+      mockNotice: "Mock rejimdasiz — dars nashr qilish faqat real Supabase backend'ga ulanganda ishlaydi.",
       addBtn: "+ Dars qo'shish",
       lessonTitle: 'Sarlavha',
       level: 'Daraja',

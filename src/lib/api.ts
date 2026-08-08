@@ -7,7 +7,7 @@ import type {
   User, Lesson, VocabWord, QuizQuestion, Badge, LeaderboardEntry,
   ParentChild, ParentalControls, DailyReport, UserRole,
   DiagnosticQuestion, DiagnosticAnswerCheck, DnaScores, ErrorCategory, ErrorCatalogEntry,
-  Subscription, Invoice, RetentionRow, ListeningAudioRow,
+  Subscription, Invoice, RetentionRow, ListeningAudioRow, LessonDetail, LessonLevel, LessonKind,
 } from '@/types';
 import {
   LEVELS, VOCAB, QUIZ, BADGES, LEADERBOARD,
@@ -271,7 +271,37 @@ export const learning = {
     const { data } = await supabase!.from('listening_audio').select('slot, url');
     return Object.fromEntries((data ?? []).map(r => [r.slot, r.url]));
   },
+
+  /** Individually-viewable lessons published from the Dev Panel, real
+   *  Supabase rows (not the local dev-content store). Empty in mock mode --
+   *  Lesson.tsx falls back to its own hardcoded demo lesson. */
+  async getLessonsList(): Promise<LessonDetail[]> {
+    if (useMock) return [];
+    const { data, error } = await supabase!.from('lessons').select('*').order('order_index');
+    if (error) throw error;
+    return (data ?? []).map(mapLessonRow);
+  },
+
+  async getLesson(id: string): Promise<LessonDetail | null> {
+    if (useMock) return null;
+    const { data, error } = await supabase!.from('lessons').select('*').eq('id', id).maybeSingle();
+    if (error) throw error;
+    return data ? mapLessonRow(data) : null;
+  },
 };
+
+function mapLessonRow(r: {
+  id: string; title: string; level: string; type: string; description: string | null;
+  order_index: number; duration_min: number | null; content: { body?: string; mediaUrl?: string } | null;
+  is_published: boolean; created_at: string;
+}): LessonDetail {
+  return {
+    id: r.id, title: r.title, level: r.level as LessonLevel, kind: r.type as LessonKind,
+    description: r.description ?? undefined, body: r.content?.body ?? '',
+    mediaUrl: r.content?.mediaUrl, durationMin: r.duration_min ?? undefined,
+    orderIndex: r.order_index, isPublished: r.is_published, createdAt: r.created_at,
+  };
+}
 
 // ----------------------- AI TUTOR (Professor Linguo) -----------------------
 
@@ -656,6 +686,31 @@ export const admin = {
   async removeListeningAudio(slot: string): Promise<void> {
     if (useMock) return;
     const { error } = await supabase!.from('listening_audio').delete().eq('slot', slot);
+    if (error) throw error;
+  },
+
+  /** Publishes into the real `lessons` table (same table Dashboard's level
+   *  cards already read from) so it's visible to every real user, not just
+   *  the founder's own browser. */
+  async publishLesson(input: {
+    title: string; level: LessonLevel; kind: LessonKind; description?: string;
+    body: string; mediaUrl?: string; durationMin?: number;
+  }): Promise<LessonDetail> {
+    if (useMock) throw new Error('Dars nashr qilish faqat real backend rejimida ishlaydi (mock rejimda emas).');
+    const { data, error } = await supabase!.from('lessons').insert({
+      title: input.title, level: input.level, type: input.kind,
+      description: input.description ?? null,
+      duration_min: input.durationMin ?? null,
+      content: { body: input.body, mediaUrl: input.mediaUrl },
+      is_published: true,
+    }).select().single();
+    if (error) throw error;
+    return mapLessonRow(data);
+  },
+
+  async removeLesson(id: string): Promise<void> {
+    if (useMock) return;
+    const { error } = await supabase!.from('lessons').delete().eq('id', id);
     if (error) throw error;
   },
 };

@@ -1,13 +1,14 @@
 // =============================================================================
 // Dev-uploaded content store. Holds:
-//   • lessons (custom video / reading / speaking / writing materials)
 //   • books / DTM PDFs (still base64-in-localStorage — see note below)
 //
-// Listening audio used to live here as base64 data URLs too, but that had
-// two real problems: localStorage caps out around 5-10MB (a couple of MP3s
-// and it breaks), and it's per-browser, so an upload never reached real
-// users on other devices. It's been moved to Supabase Storage + the
-// listening_audio table (see admin.uploadListeningAudio in lib/api.ts) —
+// Listening audio and lessons used to live here too (base64 audio, and a
+// local-only DevLesson list), but that had two real problems: localStorage
+// caps out around 5-10MB, and it's per-browser, so an upload/publish never
+// reached real users on other devices — Lesson.tsx and Listening.tsx read
+// from this same local store, so content "published" from the founder's
+// laptop was invisible everywhere else. Both moved to real Supabase tables
+// (see admin.uploadListeningAudio / admin.publishLesson in lib/api.ts) —
 // same trade-off still applies to books/DTM PDFs below, not yet migrated.
 //
 // Articles already have their own store (useUserArticles).
@@ -15,9 +16,6 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-
-export type LessonKind = 'video' | 'reading' | 'speaking' | 'writing' | 'quiz'
-export type LessonLevel = 'beginner' | 'intermediate' | 'advanced' | 'mastery'
 
 export type BookKind = 'cambridge_ielts' | 'general' | 'other'
 
@@ -77,32 +75,13 @@ export interface DtmDocument {
   uploadedAt:  string
 }
 
-export interface DevLesson {
-  id:          string
-  title:       string
-  level:       LessonLevel
-  kind:        LessonKind
-  description?: string
-  /** Free-form body — markdown / passage / cue card. */
-  body:        string
-  /** Optional URL or data-URL for video / audio asset. */
-  mediaUrl?:   string
-  durationMin?: number
-  createdAt:   string
-}
-
 interface State {
   books:   DevBook[]
-  lessons: DevLesson[]
   dtm:     DtmDocument[]
 
   addBook:     (b: Omit<DevBook, 'id' | 'uploadedAt'>) => DevBook
   updateBook:  (id: string, patch: Partial<DevBook>) => void
   removeBook:  (id: string) => void
-
-  addLesson:    (l: Omit<DevLesson, 'id' | 'createdAt'>) => DevLesson
-  updateLesson: (id: string, patch: Partial<DevLesson>) => void
-  removeLesson: (id: string) => void
 
   addDtmDocument:    (d: Omit<DtmDocument, 'id' | 'uploadedAt'>) => DtmDocument
   removeDtmDocument: (id: string) => void
@@ -114,7 +93,6 @@ export const useDevContent = create<State>()(
   persist(
     (set, get) => ({
       books: [],
-      lessons: [],
       dtm: [],
 
       addBook: (b) => {
@@ -130,19 +108,6 @@ export const useDevContent = create<State>()(
         set({ books: get().books.map(b => (b.id === id ? { ...b, ...patch } : b)) }),
       removeBook: (id) => set({ books: get().books.filter(b => b.id !== id) }),
 
-      addLesson: (l) => {
-        const item: DevLesson = {
-          ...l,
-          id: crypto.randomUUID(),
-          createdAt: new Date().toISOString(),
-        }
-        set({ lessons: [item, ...get().lessons] })
-        return item
-      },
-      updateLesson: (id, patch) =>
-        set({ lessons: get().lessons.map(l => (l.id === id ? { ...l, ...patch } : l)) }),
-      removeLesson: (id) => set({ lessons: get().lessons.filter(l => l.id !== id) }),
-
       addDtmDocument: (d) => {
         const item: DtmDocument = {
           ...d,
@@ -154,7 +119,7 @@ export const useDevContent = create<State>()(
       },
       removeDtmDocument: (id) => set({ dtm: get().dtm.filter(d => d.id !== id) }),
 
-      clearAll: () => set({ books: [], lessons: [], dtm: [] }),
+      clearAll: () => set({ books: [], dtm: [] }),
     }),
     { name: 'lr-dev-content' }
   )

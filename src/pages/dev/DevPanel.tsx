@@ -13,14 +13,14 @@ import { Cosmos } from '@/components/layout/Cosmos'
 import { AppShell } from '@/components/layout/AppShell'
 import { Topbar } from '@/components/layout/Topbar'
 import { useAuth } from '@/store/auth'
-import { useDevContent, type LessonKind, type LessonLevel, type BookKind, type DevBook, type DtmSubject, type DtmDocument } from '@/store/devContent'
+import { useDevContent, type BookKind, type DevBook, type DtmSubject, type DtmDocument } from '@/store/devContent'
 import { useUserArticles } from '@/store/userArticles'
 import { isDevUser, DEV_EMAIL } from '@/lib/dev'
 import { cn } from '@/lib/cn'
 import { extractPdfText, parseCambridgeReading } from '@/lib/pdfParser'
 import { MediaPlayer } from '@/components/ui/MediaPlayer'
-import { admin, isMockMode } from '@/lib/api'
-import type { RetentionRow, UserRole, ListeningAudioRow } from '@/types'
+import { admin, learning, isMockMode } from '@/lib/api'
+import type { RetentionRow, UserRole, ListeningAudioRow, LessonDetail, LessonLevel, LessonKind } from '@/types'
 
 type Tab = 'panels' | 'audio' | 'articles' | 'books' | 'dtm' | 'lessons' | 'stats' | 'retention'
 
@@ -766,10 +766,9 @@ const KINDS:  LessonKind[]  = ['video', 'reading', 'speaking', 'writing', 'quiz'
 
 function LessonsTab() {
   const { t } = useTranslation()
-  const lessons = useDevContent(s => s.lessons)
-  const addLesson = useDevContent(s => s.addLesson)
-  const removeLesson = useDevContent(s => s.removeLesson)
 
+  const [lessons, setLessons] = useState<LessonDetail[]>([])
+  const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
   const [title, setTitle] = useState('')
   const [level, setLevel] = useState<LessonLevel>('beginner')
@@ -778,19 +777,44 @@ function LessonsTab() {
   const [body,  setBody]  = useState('')
   const [mediaUrl, setMediaUrl] = useState('')
   const [duration, setDuration] = useState<number | ''>('')
+  const [publishing, setPublishing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  function publish() {
-    if (!title.trim() || !body.trim()) return
-    addLesson({
-      title: title.trim(),
-      level, kind,
-      description: desc.trim() || undefined,
-      body: body.trim(),
-      mediaUrl: mediaUrl.trim() || undefined,
-      durationMin: typeof duration === 'number' ? duration : undefined,
-    })
-    setTitle(''); setDesc(''); setBody(''); setMediaUrl(''); setDuration('')
-    setAdding(false)
+  function refresh() {
+    setLoading(true)
+    learning.getLessonsList().then(setLessons).finally(() => setLoading(false))
+  }
+  useEffect(refresh, [])
+
+  async function publish() {
+    if (!title.trim() || !body.trim() || isMockMode) return
+    setPublishing(true)
+    setError(null)
+    try {
+      await admin.publishLesson({
+        title: title.trim(), level, kind,
+        description: desc.trim() || undefined,
+        body: body.trim(),
+        mediaUrl: mediaUrl.trim() || undefined,
+        durationMin: typeof duration === 'number' ? duration : undefined,
+      })
+      setTitle(''); setDesc(''); setBody(''); setMediaUrl(''); setDuration('')
+      setAdding(false)
+      refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setPublishing(false)
+    }
+  }
+
+  async function remove(id: string) {
+    try {
+      await admin.removeLesson(id)
+      refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    }
   }
 
   return (
@@ -805,6 +829,12 @@ function LessonsTab() {
             <button onClick={() => setAdding(true)} className="btn-mint text-xs">{t('dev.lessons.addBtn')}</button>
           )}
         </header>
+
+        {isMockMode && (
+          <p className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5 mb-3">
+            {t('dev.lessons.mockNotice')}
+          </p>
+        )}
 
         {adding && (
           <div className="rounded-2xl p-4 bg-white/[0.03] border border-cosmic-mint/30 flex flex-col gap-2 mb-4">
@@ -840,15 +870,22 @@ function LessonsTab() {
             </Field>
             <div className="flex gap-2 justify-end mt-1">
               <button onClick={() => setAdding(false)} className="btn-ghost px-4 py-2 text-xs">×</button>
-              <button onClick={publish} disabled={!title.trim() || !body.trim()}
+              <button onClick={publish} disabled={!title.trim() || !body.trim() || publishing || isMockMode}
                       className="btn-mint text-xs disabled:opacity-40">
-                {t('dev.lessons.save')}
+                {publishing ? '…' : t('dev.lessons.save')}
               </button>
             </div>
+            {error && (
+              <p className="text-xs text-rose-300 bg-rose-500/10 border border-rose-500/30 rounded-lg p-2">
+                {error}
+              </p>
+            )}
           </div>
         )}
 
-        {lessons.length === 0 && !adding
+        {loading ? (
+          <p className="text-xs text-slate-400 italic">…</p>
+        ) : lessons.length === 0 && !adding
           ? <p className="text-xs text-slate-400 italic">{t('dev.lessons.noneYet')}</p>
           : (
             <div className="flex flex-col gap-2 max-h-[480px] overflow-auto pr-1">
@@ -858,7 +895,7 @@ function LessonsTab() {
                     <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-cosmic-sky/15 text-cosmic-sky border border-cosmic-sky/30 capitalize">{l.level}</span>
                     <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-white/[0.06] text-slate-300 border border-white/10 capitalize">{l.kind}</span>
                     {l.durationMin && <span className="text-[10px] text-slate-500">{l.durationMin} min</span>}
-                    <button onClick={() => removeLesson(l.id)}
+                    <button onClick={() => remove(l.id)}
                             className="ml-auto text-rose-300 hover:text-rose-400 text-xs opacity-0 group-hover:opacity-100 transition">
                       ×
                     </button>
@@ -893,11 +930,12 @@ function StatsTab() {
   const { t } = useTranslation()
   const books = useDevContent(s => s.books)
   const dtm = useDevContent(s => s.dtm)
-  const lessons = useDevContent(s => s.lessons)
   const articles = useUserArticles(s => s.list)
   const [audio, setAudio] = useState<ListeningAudioRow[]>([])
+  const [lessons, setLessons] = useState<LessonDetail[]>([])
 
   useEffect(() => { admin.listListeningAudio().then(setAudio) }, [])
+  useEffect(() => { learning.getLessonsList().then(setLessons) }, [])
 
   const totalSize = useMemo(
     () => audio.reduce((sum, a) => sum + a.sizeBytes, 0) + dtm.reduce((sum, d) => sum + d.pdfSize, 0),

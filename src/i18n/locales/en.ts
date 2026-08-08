@@ -593,6 +593,7 @@ export const en = {
     lessons: {
       title: 'Lessons',
       sub: 'Create video / reading / speaking / writing / quiz lessons. They appear inside the lesson catalog after publishing.',
+      mockNotice: "You're in mock mode — publishing a lesson only works connected to the live Supabase backend.",
       addBtn: '+ Add lesson',
       lessonTitle: 'Title',
       level: 'Level',

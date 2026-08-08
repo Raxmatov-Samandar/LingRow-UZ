@@ -7,7 +7,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useActivity } from '@/store/activity';
 import { useUi } from '@/store/ui';
-import { useDevContent, type DevLesson } from '@/store/devContent';
+import { learning } from '@/lib/api';
+import type { LessonDetail } from '@/types';
 import { MediaPlayer } from '@/components/ui/MediaPlayer';
 import { LessonQuiz } from '@/components/lesson/LessonQuiz';
 
@@ -91,9 +92,11 @@ export function Lesson() {
   const log = useActivity(s => s.log);
   const setSidebar = useUi(s => s.setSidebar);
 
-  const lessons = useDevContent(s => s.lessons);
+  const [lessons, setLessons] = useState<LessonDetail[]>([]);
+  useEffect(() => { learning.getLessonsList().then(setLessons); }, []);
+
   // Active lesson: matched by URL param, otherwise first video lesson, otherwise undefined.
-  const activeLesson = useMemo<DevLesson | undefined>(() => {
+  const activeLesson = useMemo<LessonDetail | undefined>(() => {
     if (id) return lessons.find(l => l.id === id);
     return lessons.find(l => l.kind === 'video' && !!l.mediaUrl) ?? lessons[0];
   }, [lessons, id]);
@@ -237,7 +240,7 @@ function DemoVideoPlaceholder({ title }: { title: string }) {
 // ───────────────────────────── LessonSwitcher ─────────────────────────────
 // Horizontal chip list of all dev-uploaded lessons. Click → /lesson/<id>.
 
-function LessonSwitcher({ lessons, activeId }: { lessons: DevLesson[]; activeId: string | undefined }) {
+function LessonSwitcher({ lessons, activeId }: { lessons: LessonDetail[]; activeId: string | undefined }) {
   return (
     <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
       {lessons.map(l => (

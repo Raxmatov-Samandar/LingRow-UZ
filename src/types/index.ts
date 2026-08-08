@@ -38,6 +38,28 @@ export interface Lesson {
   description?: string;
 }
 
+export type LessonKind = 'video' | 'reading' | 'speaking' | 'writing' | 'quiz';
+
+/** One real, individually-viewable lesson row (Dashboard's `Lesson` type
+ *  above is the aggregated level-card shape). Read/written against the
+ *  real Supabase `lessons` table, not the local dev-content store, so a
+ *  lesson published from the Dev Panel is visible to every real user. */
+export interface LessonDetail {
+  id:           string;
+  title:        string;
+  level:        LessonLevel;
+  kind:         LessonKind;
+  description?: string;
+  /** Free-form body — markdown / passage / cue card. */
+  body:         string;
+  /** YouTube / Vimeo / mp3 / mp4 URL. */
+  mediaUrl?:    string;
+  durationMin?: number;
+  orderIndex:   number;
+  isPublished:  boolean;
+  createdAt:    string;
+}
+
 export interface VocabWord {
   id: string;
   word: string;
