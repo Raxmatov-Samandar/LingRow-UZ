@@ -207,7 +207,7 @@ export function Mascot({ onClick, active }: Props) {
           src="/mascot.png"
           alt=""
           draggable={false}
-          className="select-none w-14 h-14 lg:w-[88px] lg:h-[88px] drop-shadow-[0_8px_18px_rgba(126,247,180,0.40)]"
+          className="select-none w-14 lg:w-[88px] h-auto drop-shadow-[0_8px_18px_rgba(126,247,180,0.40)]"
           onError={(e) => {
             const el = e.currentTarget;
             el.style.display = 'none';
