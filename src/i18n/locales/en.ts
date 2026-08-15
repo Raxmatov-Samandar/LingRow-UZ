@@ -565,6 +565,11 @@ export const en = {
       uploadAudio: 'Upload MP3',
       testNumber: 'Test',
       testBadge: 'Test {{n}}',
+      skillTarget: 'What to parse',
+      skill: { reading: 'Reading', listening: 'Listening' },
+      skillTargetHint: 'Reading fills the passage/question preview below. Listening extracts just the question text (no answer key exists for it either way) into its own section, without touching Reading.',
+      listeningQuestions: 'Listening questions',
+      noListeningYet: 'No Listening questions parsed yet.',
     },
     books: {
       title: 'General book PDFs',

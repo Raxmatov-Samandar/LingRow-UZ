@@ -260,5 +260,10 @@ export interface CambridgeBook {
   rawText:     string;
   parts:       CambridgeBookPart[];
   warnings:    string[];
+  /** Same shape as `parts`, but for Listening question text (no audio, no
+   *  passage in the reading sense) -- parsed separately so re-parsing one
+   *  skill never overwrites the other. */
+  listeningParts:    CambridgeBookPart[];
+  listeningWarnings: string[];
   createdAt:   string;
 }

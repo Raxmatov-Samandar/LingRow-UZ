@@ -306,7 +306,9 @@ function mapCambridgeBookRow(r: {
   id: string; title: string; kind: string; module: string | null; source: string | null;
   test_number: number | null;
   pdf_url: string; pdf_filename: string; pdf_size: number; num_pages: number; raw_text: string;
-  parts: CambridgeBookPart[]; warnings: string[]; created_at: string;
+  parts: CambridgeBookPart[]; warnings: string[];
+  listening_parts: CambridgeBookPart[] | null; listening_warnings: string[] | null;
+  created_at: string;
 }): CambridgeBook {
   return {
     id: r.id, title: r.title, kind: r.kind as BookKind,
@@ -314,7 +316,9 @@ function mapCambridgeBookRow(r: {
     testNumber: r.test_number ?? undefined,
     pdfUrl: r.pdf_url, pdfFilename: r.pdf_filename, pdfSize: r.pdf_size,
     numPages: r.num_pages, rawText: r.raw_text,
-    parts: r.parts ?? [], warnings: r.warnings ?? [], createdAt: r.created_at,
+    parts: r.parts ?? [], warnings: r.warnings ?? [],
+    listeningParts: r.listening_parts ?? [], listeningWarnings: r.listening_warnings ?? [],
+    createdAt: r.created_at,
   };
 }
 
@@ -755,6 +759,7 @@ export const admin = {
   async uploadCambridgeBook(input: {
     title: string; kind: BookKind; module?: string; source?: string; testNumber?: number; file: File;
     numPages: number; rawText: string; parts: CambridgeBookPart[]; warnings: string[];
+    listeningParts?: CambridgeBookPart[]; listeningWarnings?: string[];
   }): Promise<CambridgeBook> {
     if (useMock) throw new Error('Kitob yuklash faqat real backend rejimida ishlaydi (mock rejimda emas).');
     const path = `${Date.now()}-${input.file.name}`;
@@ -766,22 +771,32 @@ export const admin = {
       test_number: input.testNumber ?? null,
       pdf_url: pub.publicUrl, pdf_filename: input.file.name, pdf_size: input.file.size,
       num_pages: input.numPages, raw_text: input.rawText, parts: input.parts, warnings: input.warnings,
+      listening_parts: input.listeningParts ?? [], listening_warnings: input.listeningWarnings ?? [],
     }).select().single();
     if (error) throw error;
     return mapCambridgeBookRow(data);
   },
 
-  /** Re-parse in place (same PDF, freshly extracted text/parts) -- no new upload. */
-  async updateCambridgeBook(id: string, patch: {
+  /** Re-parse in place (same PDF, freshly extracted text/parts) -- no new
+   *  upload. `target` picks which skill's fields get touched: 'reading'
+   *  updates the shared numPages/rawText/module/source plus `parts`
+   *  (unchanged behavior from before Listening existed); 'listening' only
+   *  touches listening_parts/listening_warnings, since it was very likely
+   *  OCR'd from a different page range and shouldn't overwrite the Reading
+   *  pass's numPages/rawText. */
+  async updateCambridgeBook(id: string, target: 'reading' | 'listening', patch: {
     numPages: number; rawText: string; module?: string; source?: string;
     parts: CambridgeBookPart[]; warnings: string[];
   }): Promise<CambridgeBook> {
     if (useMock) throw new Error('Kitobni qayta tahlil qilish faqat real backend rejimida ishlaydi.');
-    const { data, error } = await supabase!.from('cambridge_books').update({
-      num_pages: patch.numPages, raw_text: patch.rawText,
-      module: patch.module ?? null, source: patch.source ?? null,
-      parts: patch.parts, warnings: patch.warnings,
-    }).eq('id', id).select().single();
+    const update = target === 'reading'
+      ? {
+          num_pages: patch.numPages, raw_text: patch.rawText,
+          module: patch.module ?? null, source: patch.source ?? null,
+          parts: patch.parts, warnings: patch.warnings,
+        }
+      : { listening_parts: patch.parts, listening_warnings: patch.warnings };
+    const { data, error } = await supabase!.from('cambridge_books').update(update).eq('id', id).select().single();
     if (error) throw error;
     return mapCambridgeBookRow(data);
   },

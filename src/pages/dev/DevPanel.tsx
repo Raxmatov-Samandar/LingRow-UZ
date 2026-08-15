@@ -17,7 +17,7 @@ import { useDevContent, type DtmSubject, type DtmDocument } from '@/store/devCon
 import { useUserArticles } from '@/store/userArticles'
 import { isDevUser, DEV_EMAIL } from '@/lib/dev'
 import { cn } from '@/lib/cn'
-import { extractPdfText, parseCambridgeReading, looksScanned, ocrPdfPages, type OcrProgress, type PdfExtraction } from '@/lib/pdfParser'
+import { extractPdfText, parseCambridgeReading, parseCambridgeListening, looksScanned, ocrPdfPages, type OcrProgress, type PdfExtraction, type ParsedPart } from '@/lib/pdfParser'
 import { MediaPlayer } from '@/components/ui/MediaPlayer'
 import { admin, learning, isMockMode } from '@/lib/api'
 import type { RetentionRow, UserRole, ListeningAudioRow, LessonDetail, LessonLevel, LessonKind, CambridgeBook, BookKind } from '@/types'
@@ -375,6 +375,7 @@ function BookManager({ scope }: { scope: 'cambridge' | 'other' }) {
   const [picked, setPicked] = useState<File | null>(null)
   const [kind, setKind] = useState<BookKind>(kindOptions[0])
   const [testNumber, setTestNumber] = useState<number | undefined>(scope === 'cambridge' ? 1 : undefined)
+  const [skillTarget, setSkillTarget] = useState<'reading' | 'listening'>('reading')
   const [title, setTitle] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -414,14 +415,29 @@ function BookManager({ scope }: { scope: 'cambridge' | 'other' }) {
     }
   }
 
+  function mapParsedParts(parts: ParsedPart[]) {
+    return parts.map(p => ({
+      partNum: p.partNum,
+      title: p.title,
+      intro: p.intro,
+      passage: p.passage,
+      questionRange: p.questionRange,
+      questions: p.questions.map(q => ({
+        num: q.num, kind: q.kind, prompt: q.prompt,
+        options: q.options, answers: q.answers,
+      })),
+    }))
+  }
+
   async function uploadAndParse() {
     if (!picked || !ok) return
     setBusy(true)
     setError(null)
     try {
       const { extraction, usedOcr } = await resolveExtraction(picked)
+      const parseFn = skillTarget === 'listening' ? parseCambridgeListening : parseCambridgeReading
       const parsed = kind === 'cambridge_ielts'
-        ? parseCambridgeReading(extraction, testNumber ?? 1)
+        ? parseFn(extraction, testNumber ?? 1)
         : { source: '', module: 'unknown' as const, parts: [], warnings: ['Auto-parse skipped for non-Cambridge book.'] }
       if (usedOcr) {
         parsed.warnings = [
@@ -430,6 +446,7 @@ function BookManager({ scope }: { scope: 'cambridge' | 'other' }) {
         ]
       }
 
+      const mappedParts = mapParsedParts(parsed.parts)
       await admin.uploadCambridgeBook({
         title: title.trim(),
         kind,
@@ -439,18 +456,10 @@ function BookManager({ scope }: { scope: 'cambridge' | 'other' }) {
         file: picked,
         numPages: extraction.numPages,
         rawText: extraction.fullText,
-        parts: parsed.parts.map(p => ({
-          partNum: p.partNum,
-          title: p.title,
-          intro: p.intro,
-          passage: p.passage,
-          questionRange: p.questionRange,
-          questions: p.questions.map(q => ({
-            num: q.num, kind: q.kind, prompt: q.prompt,
-            options: q.options, answers: q.answers,
-          })),
-        })),
-        warnings: parsed.warnings,
+        parts: skillTarget === 'reading' ? mappedParts : [],
+        warnings: skillTarget === 'reading' ? parsed.warnings : [],
+        listeningParts: skillTarget === 'listening' ? mappedParts : undefined,
+        listeningWarnings: skillTarget === 'listening' ? parsed.warnings : undefined,
       })
 
       setPicked(null)
@@ -472,26 +481,20 @@ function BookManager({ scope }: { scope: 'cambridge' | 'other' }) {
       const blob = await (await fetch(book.pdfUrl)).blob()
       const file = new File([blob], book.pdfFilename, { type: 'application/pdf' })
       const { extraction, usedOcr } = await resolveExtraction(file)
-      const parsed = parseCambridgeReading(extraction, book.testNumber ?? 1)
+      const parseFn = skillTarget === 'listening' ? parseCambridgeListening : parseCambridgeReading
+      const parsed = parseFn(extraction, book.testNumber ?? 1)
       if (usedOcr) {
         parsed.warnings = [
           'This PDF had no text layer -- OCR was used instead. Double-check the parsed passages/questions for recognition errors.',
           ...parsed.warnings,
         ]
       }
-      await admin.updateCambridgeBook(book.id, {
+      await admin.updateCambridgeBook(book.id, skillTarget, {
         rawText: extraction.fullText,
         numPages: extraction.numPages,
         module: parsed.module,
         source: parsed.source || undefined,
-        parts: parsed.parts.map(p => ({
-          partNum: p.partNum, title: p.title, intro: p.intro,
-          passage: p.passage, questionRange: p.questionRange,
-          questions: p.questions.map(q => ({
-            num: q.num, kind: q.kind, prompt: q.prompt,
-            options: q.options, answers: q.answers,
-          })),
-        })),
+        parts: mapParsedParts(parsed.parts),
         warnings: parsed.warnings,
       })
       refresh()
@@ -570,6 +573,24 @@ function BookManager({ scope }: { scope: 'cambridge' | 'other' }) {
           </Field>
         )}
 
+        {scope === 'cambridge' && (
+          <Field label={t('dev.cambridge.skillTarget')}>
+            <div className="flex gap-1.5">
+              {(['reading', 'listening'] as const).map(s => (
+                <button key={s} type="button" onClick={() => setSkillTarget(s)}
+                        className={cn('flex-1 py-1.5 rounded-lg text-xs font-bold border transition flex items-center justify-center gap-1.5',
+                          skillTarget === s
+                            ? 'bg-cosmic-mint/15 border-cosmic-mint/45 text-cosmic-mint'
+                            : 'border-white/10 text-slate-400 hover:bg-white/[0.05]')}>
+                  <span>{s === 'reading' ? '📖' : '🎧'}</span>
+                  {t(`dev.cambridge.skill.${s}`)}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-slate-500 mt-1">{t('dev.cambridge.skillTargetHint')}</p>
+          </Field>
+        )}
+
         <button type="button" onClick={() => fileRef.current?.click()}
                 className="rounded-2xl border-2 border-dashed border-white/15 hover:border-cosmic-mint/50 hover:bg-white/[0.03] transition px-4 py-6 text-center mt-1">
           <p className="text-2xl mb-1">{scope === 'cambridge' ? '📘' : '📚'}</p>
@@ -641,6 +662,7 @@ function BookCard({ book, onRemove, onReparse, busy, ocrProgress, showAudio }: {
 }) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
+  const [openListening, setOpenListening] = useState(false)
   const totalQ = book.parts.reduce((s, p) => s + p.questions.length, 0)
 
   return (
@@ -674,6 +696,12 @@ function BookCard({ book, onRemove, onReparse, busy, ocrProgress, showAudio }: {
                 className="px-2.5 py-1 rounded-md border border-white/15 text-slate-200 hover:bg-white/[0.05]">
           {open ? '▼' : '▶'} {t('dev.books.preview')}
         </button>
+        {showAudio && (
+          <button onClick={() => setOpenListening(o => !o)}
+                  className="px-2.5 py-1 rounded-md border border-white/15 text-slate-200 hover:bg-white/[0.05]">
+            {openListening ? '▼' : '▶'} 🎧 {t('dev.cambridge.listeningQuestions')} ({book.listeningParts.reduce((s, p) => s + p.questions.length, 0)})
+          </button>
+        )}
         <button onClick={onReparse} disabled={busy}
                 className="px-2.5 py-1 rounded-md border border-cosmic-mint/40 text-cosmic-mint hover:bg-cosmic-mint/10 disabled:opacity-40">
           {busy && ocrProgress
@@ -730,6 +758,28 @@ function BookCard({ book, onRemove, onReparse, busy, ocrProgress, showAudio }: {
             <summary className="text-[10px] text-slate-500 cursor-pointer">{t('dev.books.raw')}</summary>
             <pre className="text-[10px] text-slate-400 mt-1 max-h-60 overflow-auto whitespace-pre-wrap">{book.rawText.slice(0, 5000)}{book.rawText.length > 5000 ? '\n…' : ''}</pre>
           </details>
+        </div>
+      )}
+
+      {openListening && (
+        <div className="mt-3 border-t border-white/8 pt-3 flex flex-col gap-3">
+          {book.listeningWarnings.length > 0 && (
+            <p className="text-[10px] text-amber-300">⚠ {book.listeningWarnings.join(' ')}</p>
+          )}
+          {book.listeningParts.length === 0
+            ? <p className="text-[11px] text-slate-400 italic">{t('dev.cambridge.noListeningYet')}</p>
+            : book.listeningParts.map(p => (
+                <div key={p.partNum} className="rounded-lg bg-white/[0.02] border border-white/5 p-3">
+                  <p className="text-xs font-bold text-cosmic-sky">Part {p.partNum} · {p.title}</p>
+                  {p.questions.length > 0 && (
+                    <ol className="text-[11px] text-slate-200 mt-1.5 space-y-1 pl-4 list-decimal">
+                      {p.questions.slice(0, 20).map(q => (
+                        <li key={q.num}>{q.prompt}</li>
+                      ))}
+                    </ol>
+                  )}
+                </div>
+              ))}
         </div>
       )}
     </div>

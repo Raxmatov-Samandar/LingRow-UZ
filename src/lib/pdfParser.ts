@@ -119,7 +119,9 @@ export async function ocrPdfPages(
   }
 
   return {
-    numPages: pages.length,
+    // The book's true page count, not just how many were OCR'd -- a
+    // restricted page range shouldn't make the card report a shorter book.
+    numPages: doc.numPages,
     pages,
     fullText: pages.map(p => p.text).join('\n\f\n'),
   }
@@ -163,40 +165,48 @@ const RE_QNUM = /^\s*(\d{1,2})[.)\s]+(.+)/
 // A real Cambridge book PDF bundles all four skills. Listening also uses
 // "Section 1-4" headings and Speaking also uses "Part 1-3" -- if RE_PART is
 // run over the whole document, it happily matches those too and mixes
-// Listening/Speaking text into what's supposed to be pure Reading content.
-// This isolates the text between a standalone "READING" skill heading and
-// the next skill heading (Writing/Speaking/Listening) before RE_PART ever
-// runs, so only genuine Reading passages get split into parts. A book with
-// multiple tests has multiple "READING" headings -- testIndex (1-based,
-// matching the Dev Panel's Test 1-4 picker) selects which one.
+// other skills' text into what's supposed to be one skill's content. This
+// isolates the text between a standalone skill heading (LISTENING/READING/
+// WRITING/SPEAKING) and the next one before RE_PART ever runs. A book with
+// multiple tests has multiple headings of each kind -- testIndex (1-based,
+// matching the Dev Panel's Test 1-4 picker) selects which occurrence.
 const RE_SKILL_HEADING = /(?:^|\n)\s*(LISTENING|READING|WRITING|SPEAKING)\s*(?:\n|$)/gi
 
-function isolateReadingZone(text: string, testIndex: number): { zone: string; found: boolean } {
+export type Skill = 'READING' | 'LISTENING'
+
+function isolateSkillZone(text: string, skill: Skill, testIndex: number): { zone: string; found: boolean } {
   const matches = [...text.matchAll(RE_SKILL_HEADING)]
-  const readingHeadings = matches.filter(m => m[1].toUpperCase() === 'READING')
-  const target = readingHeadings[testIndex - 1]
+  const headings = matches.filter(m => m[1].toUpperCase() === skill)
+  const target = headings[testIndex - 1]
   if (!target || target.index === undefined) return { zone: text, found: false }
 
   const start = target.index + target[0].length
-  const next = matches.find(m => m[1].toUpperCase() !== 'READING' && (m.index ?? 0) > target.index!)
+  const next = matches.find(m => m[1].toUpperCase() !== skill && (m.index ?? 0) > target.index!)
   const end = next?.index ?? text.length
   return { zone: text.slice(start, end), found: true }
 }
 
-export function parseCambridgeReading(extraction: PdfExtraction, testIndex = 1): ParsedTest {
+/** Shared by parseCambridgeReading/parseCambridgeListening -- same
+ *  zone-isolation + SECTION/PART splitting, only the target skill heading
+ *  differs. Listening has no real "passage" (it's a question sheet read
+ *  while listening to audio), but the same passage/questions shape still
+ *  works fine: `passage` just ends up holding whatever instructional text
+ *  sits above the "Questions N-M" line -- and `answers` is always empty
+ *  for Listening since there's no printed answer key to extract either way. */
+function parseCambridgeSkill(extraction: PdfExtraction, skill: Skill, testIndex = 1): ParsedTest {
   const warnings: string[] = []
   const fullText = extraction.fullText
     .replace(/\r\n/g, '\n')
     .replace(/[ \t]+\n/g, '\n')
 
-  const { zone, found } = isolateReadingZone(fullText, testIndex)
+  const { zone, found } = isolateSkillZone(fullText, skill, testIndex)
   if (!found) {
-    warnings.push(`Could not find a "READING" heading for Test ${testIndex} — scanning the whole document instead (Listening/Speaking/Writing text may leak into the parsed parts).`)
+    warnings.push(`Could not find a "${skill}" heading for Test ${testIndex} — scanning the whole document instead (other skills' text may leak into the parsed parts).`)
   }
   const text = zone
 
   // detect module -- title-page wording can sit outside the isolated
-  // Reading zone, so this still looks at the full document.
+  // zone, so this still looks at the full document.
   const module: ParsedTest['module'] =
     /general\s*training/i.test(fullText) ? 'GT'
     : /academic/i.test(fullText)         ? 'AC'
@@ -225,6 +235,17 @@ export function parseCambridgeReading(extraction: PdfExtraction, testIndex = 1):
     parts,
     warnings,
   }
+}
+
+export function parseCambridgeReading(extraction: PdfExtraction, testIndex = 1): ParsedTest {
+  return parseCambridgeSkill(extraction, 'READING', testIndex)
+}
+
+/** Extracts Listening question text (no audio, no answer key -- see
+ *  parseCambridgeSkill's note above). Stored separately from Reading's
+ *  `parts` so re-parsing one skill never clobbers the other. */
+export function parseCambridgeListening(extraction: PdfExtraction, testIndex = 1): ParsedTest {
+  return parseCambridgeSkill(extraction, 'LISTENING', testIndex)
 }
 
 function detectSource(text: string): string {

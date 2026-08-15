@@ -545,6 +545,11 @@ export const uz: Translation = {
       uploadAudio: 'MP3 yuklash',
       testNumber: 'Test',
       testBadge: 'Test {{n}}',
+      skillTarget: 'Nima parse qilinsin',
+      skill: { reading: 'Reading', listening: 'Listening' },
+      skillTargetHint: "Reading pastdagi passage/savol ko'rinishini to'ldiradi. Listening esa faqat savol matnini (javob kaliti bari bir yo'q) alohida bo'limga ajratadi, Reading'ga tegmaydi.",
+      listeningQuestions: 'Listening savollari',
+      noListeningYet: 'Hali Listening savollari parse qilinmagan.',
     },
     books: {
       title: 'Oddiy kitob PDFlari',
