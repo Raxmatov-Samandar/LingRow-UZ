@@ -13,3 +13,6 @@ dist-ssr
 
 # TypeScript incremental build cache
 *.tsbuildinfo
+
+# Supabase CLI local link/cache state
+supabase/.temp

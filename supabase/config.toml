@@ -41,20 +41,10 @@ template = "Your LingRow verification code is {{ .Code }}"
 
 # We use Eskiz via custom edge function instead of built-in SMS provider.
 
-[auth.external.google]
-enabled = true
-client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
-secret = "env(SUPABASE_AUTH_GOOGLE_CLIENT_SECRET)"
-redirect_uri = ""
-url = ""
-
 [edge_runtime]
 enabled = true
 policy = "per_worker"
 inspector_port = 8083
-
-[functions]
-verify_jwt = true
 
 [functions.payme-merchant]
 verify_jwt = false  # called by Payme servers
