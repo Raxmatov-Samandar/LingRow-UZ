@@ -85,7 +85,7 @@ export function Sidebar({ forceExpanded }: Props = {}) {
   const closeDrawer = () => setMobileNav(false);
 
   return (
-    <aside className="relative flex flex-col p-3 pb-5 overflow-hidden rounded-3xl sidebar-glass"
+    <aside className="relative flex flex-col h-full p-3 pb-5 overflow-hidden rounded-3xl sidebar-glass"
            style={{
              // Very thin glass: cosmos starfield must bleed through.
              background: 'linear-gradient(180deg, rgba(120,160,255,0.06) 0%, rgba(60,80,160,0.03) 50%, rgba(30,40,90,0.02) 100%)',
@@ -140,7 +140,9 @@ export function Sidebar({ forceExpanded }: Props = {}) {
         )}
       </div>
 
-      <nav className="flex flex-col gap-1">
+      {/* Scrolls internally when the nav list is taller than the viewport —
+          brand header above and Dev Panel / Settings below stay pinned. */}
+      <nav className="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto overflow-x-hidden -mx-1 px-1">
         {items.map(it => {
           const label = t(it.labelKey);
           return (
@@ -160,9 +162,9 @@ export function Sidebar({ forceExpanded }: Props = {}) {
         })}
       </nav>
 
-      <div className="my-4 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+      <div className="my-4 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent shrink-0" />
 
-      <div className="mt-auto flex flex-col gap-1">
+      <div className="shrink-0 flex flex-col gap-1">
         {isDev && (
           <NavLink
             to="/dev"

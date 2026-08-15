@@ -47,12 +47,15 @@ export function AppShell({ children }: Props) {
                ? (collapsed ? '76px 1fr' : '260px 1fr')
                : '1fr',
          }}>
-      {/* Sidebar — desktop persistent */}
-      <div className="hidden lg:block">
+      {/* Sidebar — desktop persistent. min-h-0 + overflow-hidden on every
+          level down to <aside> stop a tall page's content from inflating
+          this column's grid row (and dragging the sidebar's height up
+          with it) — same containment `main` already has below. */}
+      <div className="hidden lg:block min-h-0 overflow-hidden">
         <motion.div
           animate={{ width: collapsed ? 76 : 260 }}
           transition={{ duration: 0.32, ease: [0.4, 0, 0.2, 1] }}
-          className="h-full"
+          className="h-full min-h-0 overflow-hidden"
         >
           <Sidebar />
         </motion.div>
