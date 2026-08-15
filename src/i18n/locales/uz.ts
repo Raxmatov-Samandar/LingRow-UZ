@@ -540,6 +540,9 @@ export const uz: Translation = {
       title: 'Cambridge Press materiallari',
       sub: "Faqat rasmiy Cambridge Press kitoblari. PDF yuklang va Parse tugmasini bosing — kitob avtomatik IELTS test formatiga aylantiriladi (Reading passage'lar + savollar). Vaqt o'tishi bilan bu yerga boshqa turdagi Cambridge Press materiallari ham qo'shiladi.",
       mockNotice: 'Siz mock rejimdasiz — kitob yuklash faqat real Supabase backendga ulanganda ishlaydi.',
+      audioTitle: 'Listening audio (4 bo\'lim)',
+      section: 'bo\'lim',
+      uploadAudio: 'MP3 yuklash',
     },
     books: {
       title: 'Oddiy kitob PDFlari',

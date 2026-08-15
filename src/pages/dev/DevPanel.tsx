@@ -554,7 +554,8 @@ function BookManager({ scope }: { scope: 'cambridge' | 'other' }) {
               {books.map(b => <BookCard key={b.id} book={b}
                                         onRemove={() => remove(b.id)}
                                         onReparse={() => reparse(b)}
-                                        busy={busy} />)}
+                                        busy={busy}
+                                        showAudio={scope === 'cambridge'} />)}
             </div>
           )}
       </div>
@@ -562,11 +563,12 @@ function BookManager({ scope }: { scope: 'cambridge' | 'other' }) {
   )
 }
 
-function BookCard({ book, onRemove, onReparse, busy }: {
+function BookCard({ book, onRemove, onReparse, busy, showAudio }: {
   book: CambridgeBook
   onRemove: () => void
   onReparse: () => void
   busy: boolean
+  showAudio?: boolean
 }) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
@@ -612,6 +614,8 @@ function BookCard({ book, onRemove, onReparse, busy }: {
         </button>
       </div>
 
+      {showAudio && <BookAudioPanel bookId={book.id} />}
+
       {book.warnings.length > 0 && (
         <details className="mt-2">
           <summary className="text-[10px] text-amber-300 cursor-pointer">
@@ -652,6 +656,100 @@ function BookCard({ book, onRemove, onReparse, busy }: {
           </details>
         </div>
       )}
+    </div>
+  )
+}
+
+// Per-book Listening audio — 4 sections (matches Cambridge's fixed 4-part
+// Listening format). One physical Cambridge book = one row per test here
+// (Test 1, Test 2, ...), so a book with 4 tests means 4 rows x 4 slots =
+// 16 audio files total, uploaded 4-at-a-time per test. Reuses the same
+// listening_audio table/bucket as the Audio tab (migration 0016) -- just a
+// different slot naming scheme (`<bookId>-p<n>`) so it doesn't collide with
+// the built-in Cambridge 18 Test 1 demo content's `c18-t1-p<n>` slots.
+const AUDIO_SECTIONS = [1, 2, 3, 4] as const
+
+function BookAudioPanel({ bookId }: { bookId: string }) {
+  const { t } = useTranslation()
+  const [audio, setAudio] = useState<ListeningAudioRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [uploadingPart, setUploadingPart] = useState<number | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const fileRefs = useRef<Record<number, HTMLInputElement | null>>({})
+
+  function refresh() {
+    setLoading(true)
+    admin.listListeningAudio()
+      .then(all => setAudio(all.filter(a => a.slot.startsWith(`${bookId}-p`))))
+      .finally(() => setLoading(false))
+  }
+  useEffect(refresh, []) // eslint-disable-line
+
+  async function upload(part: number, file: File) {
+    setUploadingPart(part)
+    setError(null)
+    try {
+      await admin.uploadListeningAudio(`${bookId}-p${part}`, file)
+      refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setUploadingPart(null)
+    }
+  }
+
+  async function remove(slot: string) {
+    try {
+      await admin.removeListeningAudio(slot)
+      refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    }
+  }
+
+  const bySlot = new Map(audio.map(a => [a.slot, a]))
+
+  return (
+    <div className="mt-3 border-t border-white/8 pt-3">
+      <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-2">
+        🎧 {t('dev.cambridge.audioTitle')}
+      </p>
+      {loading ? (
+        <p className="text-[11px] text-slate-500 italic">…</p>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {AUDIO_SECTIONS.map(part => {
+            const slot = `${bookId}-p${part}`
+            const row = bySlot.get(slot)
+            return (
+              <div key={part} className="rounded-lg bg-white/[0.02] border border-white/5 p-2 flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-cosmic-sky">{part}-{t('dev.cambridge.section')}</span>
+                  {row && (
+                    <button onClick={() => remove(slot)} className="text-[9px] text-rose-300 hover:text-rose-400">
+                      {t('dev.books.remove')}
+                    </button>
+                  )}
+                </div>
+                {row ? (
+                  <audio controls preload="metadata" className="w-full h-7" src={row.url} />
+                ) : (
+                  <>
+                    <input ref={el => { fileRefs.current[part] = el }} type="file" accept="audio/mpeg,audio/mp3,audio/*"
+                           className="hidden"
+                           onChange={e => { const f = e.target.files?.[0]; if (f) upload(part, f) }} />
+                    <button onClick={() => fileRefs.current[part]?.click()} disabled={uploadingPart === part}
+                            className="text-[10px] px-2 py-1.5 rounded-md border border-dashed border-white/15 text-slate-400 hover:border-cosmic-mint/50 hover:text-cosmic-mint transition disabled:opacity-40">
+                      {uploadingPart === part ? '…' : t('dev.cambridge.uploadAudio')}
+                    </button>
+                  </>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+      {error && <p className="text-[10px] text-rose-300 mt-2">{error}</p>}
     </div>
   )
 }

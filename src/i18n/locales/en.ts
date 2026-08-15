@@ -560,6 +560,9 @@ export const en = {
       title: 'Cambridge Press materials',
       sub: 'Official Cambridge Press books only. Upload a PDF, then click Parse to convert it into a structured IELTS test (Reading passages + questions). More Cambridge Press material types are coming to this tab over time.',
       mockNotice: "You're in mock mode — book upload only works connected to the live Supabase backend.",
+      audioTitle: 'Listening audio (4 sections)',
+      section: 'section',
+      uploadAudio: 'Upload MP3',
     },
     books: {
       title: 'General book PDFs',
