@@ -586,6 +586,12 @@ export const en = {
       preview: 'Preview',
       raw: 'Raw text',
       warnings: 'Warnings',
+      ocrRange: 'OCR page range (optional)',
+      ocrFrom: 'from',
+      ocrTo: 'to',
+      ocrRangeHint: 'Only used if the PDF turns out to be scanned (no text layer). Leave blank to OCR the whole file — slower, but fine for shorter documents.',
+      ocrRecognizing: 'reading',
+      ocrRendering: 'rendering',
     },
     audio: {
       title: 'Listening audio',

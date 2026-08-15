@@ -566,6 +566,12 @@ export const uz: Translation = {
       preview: "Ko'rib chiqish",
       raw: 'Xom matn',
       warnings: 'Ogohlantirishlar',
+      ocrRange: 'OCR sahifa oralig\'i (ixtiyoriy)',
+      ocrFrom: 'dan',
+      ocrTo: 'gacha',
+      ocrRangeHint: 'Faqat PDF skanerlangan (matn qatlami yo\'q) bo\'lsa ishlatiladi. Bo\'sh qoldirsangiz butun fayl OCR qilinadi — sekinroq, lekin qisqa hujjatlar uchun bemalol.',
+      ocrRecognizing: "o'qilmoqda",
+      ocrRendering: 'render qilinmoqda',
     },
     audio: {
       title: 'Listening audio',

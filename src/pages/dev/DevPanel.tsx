@@ -17,7 +17,7 @@ import { useDevContent, type DtmSubject, type DtmDocument } from '@/store/devCon
 import { useUserArticles } from '@/store/userArticles'
 import { isDevUser, DEV_EMAIL } from '@/lib/dev'
 import { cn } from '@/lib/cn'
-import { extractPdfText, parseCambridgeReading } from '@/lib/pdfParser'
+import { extractPdfText, parseCambridgeReading, looksScanned, ocrPdfPages, type OcrProgress, type PdfExtraction } from '@/lib/pdfParser'
 import { MediaPlayer } from '@/components/ui/MediaPlayer'
 import { admin, learning, isMockMode } from '@/lib/api'
 import type { RetentionRow, UserRole, ListeningAudioRow, LessonDetail, LessonLevel, LessonKind, CambridgeBook, BookKind } from '@/types'
@@ -378,6 +378,9 @@ function BookManager({ scope }: { scope: 'cambridge' | 'other' }) {
   const [title, setTitle] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [ocrFrom, setOcrFrom] = useState('')
+  const [ocrTo, setOcrTo] = useState('')
+  const [ocrProgress, setOcrProgress] = useState<OcrProgress | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const ok = !!picked && title.trim().length >= 2 && !busy && !isMockMode
@@ -390,15 +393,42 @@ function BookManager({ scope }: { scope: 'cambridge' | 'other' }) {
   }
   useEffect(refresh, []) // eslint-disable-line
 
+  /** Falls back to OCR when the PDF has no real text layer (scanned/photocopied
+   *  book) -- extractPdfText finds nothing to find in that case. OCR is slow
+   *  client-side, so an optional page range keeps it fast when the dev only
+   *  needs one section (e.g. just the Reading pages) rather than the whole book. */
+  async function resolveExtraction(file: File): Promise<{ extraction: PdfExtraction; usedOcr: boolean }> {
+    const extraction = await extractPdfText(file)
+    if (!looksScanned(extraction)) return { extraction, usedOcr: false }
+
+    setOcrProgress({ page: 0, totalPages: 0, status: 'rendering' })
+    try {
+      const ocred = await ocrPdfPages(file, {
+        fromPage: ocrFrom ? Number(ocrFrom) : undefined,
+        toPage: ocrTo ? Number(ocrTo) : undefined,
+        onProgress: setOcrProgress,
+      })
+      return { extraction: ocred, usedOcr: true }
+    } finally {
+      setOcrProgress(null)
+    }
+  }
+
   async function uploadAndParse() {
     if (!picked || !ok) return
     setBusy(true)
     setError(null)
     try {
-      const extraction = await extractPdfText(picked)
+      const { extraction, usedOcr } = await resolveExtraction(picked)
       const parsed = kind === 'cambridge_ielts'
         ? parseCambridgeReading(extraction, testNumber ?? 1)
         : { source: '', module: 'unknown' as const, parts: [], warnings: ['Auto-parse skipped for non-Cambridge book.'] }
+      if (usedOcr) {
+        parsed.warnings = [
+          'This PDF had no text layer -- OCR was used instead. Double-check the parsed passages/questions for recognition errors.',
+          ...parsed.warnings,
+        ]
+      }
 
       await admin.uploadCambridgeBook({
         title: title.trim(),
@@ -441,8 +471,14 @@ function BookManager({ scope }: { scope: 'cambridge' | 'other' }) {
       // Re-extract from the public PDF URL (bucket is public, so a plain fetch works).
       const blob = await (await fetch(book.pdfUrl)).blob()
       const file = new File([blob], book.pdfFilename, { type: 'application/pdf' })
-      const extraction = await extractPdfText(file)
+      const { extraction, usedOcr } = await resolveExtraction(file)
       const parsed = parseCambridgeReading(extraction, book.testNumber ?? 1)
+      if (usedOcr) {
+        parsed.warnings = [
+          'This PDF had no text layer -- OCR was used instead. Double-check the parsed passages/questions for recognition errors.',
+          ...parsed.warnings,
+        ]
+      }
       await admin.updateCambridgeBook(book.id, {
         rawText: extraction.fullText,
         numPages: extraction.numPages,
@@ -546,9 +582,22 @@ function BookManager({ scope }: { scope: 'cambridge' | 'other' }) {
                className="hidden"
                onChange={e => setPicked(e.target.files?.[0] ?? null)} />
 
+        <Field label={t('dev.books.ocrRange')}>
+          <div className="flex items-center gap-2">
+            <input className="input-glass w-20" type="number" min={1} placeholder={t('dev.books.ocrFrom')}
+                   value={ocrFrom} onChange={e => setOcrFrom(e.target.value)} />
+            <span className="text-slate-500 text-xs">–</span>
+            <input className="input-glass w-20" type="number" min={1} placeholder={t('dev.books.ocrTo')}
+                   value={ocrTo} onChange={e => setOcrTo(e.target.value)} />
+          </div>
+          <p className="text-[10px] text-slate-500 mt-1">{t('dev.books.ocrRangeHint')}</p>
+        </Field>
+
         <button onClick={uploadAndParse} disabled={!ok}
                 className="btn-mint disabled:opacity-40 disabled:cursor-not-allowed">
-          {busy ? t('dev.books.parsing') : t('dev.books.uploadBtn')}
+          {ocrProgress
+            ? `OCR: ${ocrProgress.page}/${ocrProgress.totalPages} (${ocrProgress.status === 'recognizing' ? t('dev.books.ocrRecognizing') : t('dev.books.ocrRendering')})…`
+            : busy ? t('dev.books.parsing') : t('dev.books.uploadBtn')}
         </button>
 
         {error && (
@@ -573,6 +622,7 @@ function BookManager({ scope }: { scope: 'cambridge' | 'other' }) {
                                         onRemove={() => remove(b.id)}
                                         onReparse={() => reparse(b)}
                                         busy={busy}
+                                        ocrProgress={ocrProgress}
                                         showAudio={scope === 'cambridge'} />)}
             </div>
           )}
@@ -581,11 +631,12 @@ function BookManager({ scope }: { scope: 'cambridge' | 'other' }) {
   )
 }
 
-function BookCard({ book, onRemove, onReparse, busy, showAudio }: {
+function BookCard({ book, onRemove, onReparse, busy, ocrProgress, showAudio }: {
   book: CambridgeBook
   onRemove: () => void
   onReparse: () => void
   busy: boolean
+  ocrProgress?: OcrProgress | null
   showAudio?: boolean
 }) {
   const { t } = useTranslation()
@@ -625,7 +676,9 @@ function BookCard({ book, onRemove, onReparse, busy, showAudio }: {
         </button>
         <button onClick={onReparse} disabled={busy}
                 className="px-2.5 py-1 rounded-md border border-cosmic-mint/40 text-cosmic-mint hover:bg-cosmic-mint/10 disabled:opacity-40">
-          {t('dev.books.reparse')}
+          {busy && ocrProgress
+            ? `OCR: ${ocrProgress.page}/${ocrProgress.totalPages}…`
+            : t('dev.books.reparse')}
         </button>
         <a href={book.pdfUrl} target="_blank" rel="noopener noreferrer"
            className="px-2.5 py-1 rounded-md border border-white/15 text-slate-200 hover:bg-white/[0.05]">

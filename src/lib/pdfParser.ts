@@ -62,6 +62,69 @@ export async function extractPdfText(file: File): Promise<PdfExtraction> {
   }
 }
 
+/** True when a PDF has essentially no embedded text layer -- a scanned
+ *  photocopy/image book, or a photocopy with just a distributor watermark
+ *  on each page (which is what "AFARINESH IELTS House" etc. turn out to
+ *  be: a few real words per page, no actual book content). Real Cambridge
+ *  text averages several hundred characters per page. */
+export function looksScanned(extraction: PdfExtraction): boolean {
+  if (extraction.numPages === 0) return false
+  const avgCharsPerPage = extraction.fullText.length / extraction.numPages
+  return avgCharsPerPage < 120
+}
+
+// ───────────────────────── OCR fallback ─────────────────────────
+// Scanned PDFs have no text to extract -- extractPdfText() finds nothing to
+// find. This renders each page to a canvas and runs Tesseract.js over the
+// image instead. Client-side OCR is slow (multiple seconds per page), so
+// callers should let the dev restrict it to a page range (e.g. just the
+// Reading section) rather than defaulting to the whole book.
+
+export interface OcrProgress {
+  page:       number
+  totalPages: number
+  status:     'rendering' | 'recognizing'
+}
+
+export async function ocrPdfPages(
+  file: File,
+  opts: { fromPage?: number; toPage?: number; onProgress?: (p: OcrProgress) => void } = {}
+): Promise<PdfExtraction> {
+  const { createWorker } = await import('tesseract.js')
+  const buf = await file.arrayBuffer()
+  const doc = await pdfjsLib.getDocument({ data: buf }).promise
+  const from = Math.max(1, opts.fromPage ?? 1)
+  const to = Math.min(doc.numPages, opts.toPage ?? doc.numPages)
+
+  const worker = await createWorker('eng')
+  const pages: PdfPage[] = []
+  try {
+    for (let i = from; i <= to; i++) {
+      opts.onProgress?.({ page: i, totalPages: to, status: 'rendering' })
+      const page = await doc.getPage(i)
+      const viewport = page.getViewport({ scale: 2.2 })
+      const canvas = document.createElement('canvas')
+      canvas.width = viewport.width
+      canvas.height = viewport.height
+      const ctx = canvas.getContext('2d')
+      if (!ctx) continue
+      await page.render({ canvasContext: ctx, viewport, canvas }).promise
+
+      opts.onProgress?.({ page: i, totalPages: to, status: 'recognizing' })
+      const { data } = await worker.recognize(canvas)
+      pages.push({ pageNum: i, text: data.text.trim() })
+    }
+  } finally {
+    await worker.terminate()
+  }
+
+  return {
+    numPages: pages.length,
+    pages,
+    fullText: pages.map(p => p.text).join('\n\f\n'),
+  }
+}
+
 // ───────────────────────── heuristic parser ─────────────────────────
 
 export type QuestionKind =
