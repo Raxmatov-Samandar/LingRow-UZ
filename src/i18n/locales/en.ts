@@ -563,6 +563,8 @@ export const en = {
       audioTitle: 'Listening audio (4 sections)',
       section: 'section',
       uploadAudio: 'Upload MP3',
+      testNumber: 'Test',
+      testBadge: 'Test {{n}}',
     },
     books: {
       title: 'General book PDFs',

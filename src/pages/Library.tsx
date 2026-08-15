@@ -287,7 +287,7 @@ function CambridgeMaterials() {
       return {
         to: `/reading?test=${b.id}`,
         emoji: '📘',
-        title: b.title,
+        title: b.testNumber != null ? `${b.title} — Test ${b.testNumber}` : b.title,
         desc: `${b.parts.length} section${b.parts.length === 1 ? '' : 's'} · ${totalQ} questions · Reading`,
         badge: b.module && b.module !== 'unknown' ? b.module : 'live',
       };

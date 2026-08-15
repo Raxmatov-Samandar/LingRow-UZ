@@ -52,9 +52,10 @@ function devBookToReadingTest(book: CambridgeBook): ReadingTest {
     }],
   }));
 
+  const baseSource = book.source || book.title;
   return {
     id: book.id,
-    source: book.source || book.title,
+    source: book.testNumber != null ? `${baseSource} — Test ${book.testNumber}` : baseSource,
     module: book.module === 'AC' ? 'AC' : 'GT',
     durationMin: 60,
     sections: sections.length > 0 ? sections : [{ num: 1, title: 'Section 1', parts: [{ partNum: 1, title: book.title, passage: '(Nothing was parsed from this PDF.)', questions: [] }] }],

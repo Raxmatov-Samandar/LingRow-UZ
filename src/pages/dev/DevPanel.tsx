@@ -374,6 +374,7 @@ function BookManager({ scope }: { scope: 'cambridge' | 'other' }) {
   const [loading, setLoading] = useState(true)
   const [picked, setPicked] = useState<File | null>(null)
   const [kind, setKind] = useState<BookKind>(kindOptions[0])
+  const [testNumber, setTestNumber] = useState<number | undefined>(scope === 'cambridge' ? 1 : undefined)
   const [title, setTitle] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -404,6 +405,7 @@ function BookManager({ scope }: { scope: 'cambridge' | 'other' }) {
         kind,
         module: parsed.module,
         source: parsed.source || undefined,
+        testNumber,
         file: picked,
         numPages: extraction.numPages,
         rawText: extraction.fullText,
@@ -516,6 +518,22 @@ function BookManager({ scope }: { scope: 'cambridge' | 'other' }) {
           </Field>
         )}
 
+        {scope === 'cambridge' && (
+          <Field label={t('dev.cambridge.testNumber')}>
+            <div className="flex gap-1.5">
+              {[1, 2, 3, 4].map(n => (
+                <button key={n} type="button" onClick={() => setTestNumber(n)}
+                        className={cn('flex-1 py-1.5 rounded-lg text-sm font-bold border transition',
+                          testNumber === n
+                            ? 'bg-cosmic-mint/15 border-cosmic-mint/45 text-cosmic-mint'
+                            : 'border-white/10 text-slate-400 hover:bg-white/[0.05]')}>
+                  {n}
+                </button>
+              ))}
+            </div>
+          </Field>
+        )}
+
         <button type="button" onClick={() => fileRef.current?.click()}
                 className="rounded-2xl border-2 border-dashed border-white/15 hover:border-cosmic-mint/50 hover:bg-white/[0.03] transition px-4 py-6 text-center mt-1">
           <p className="text-2xl mb-1">{scope === 'cambridge' ? '📘' : '📚'}</p>
@@ -583,6 +601,11 @@ function BookCard({ book, onRemove, onReparse, busy, showAudio }: {
         {book.module && book.module !== 'unknown' && (
           <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cosmic-mint/15 text-cosmic-mint border border-cosmic-mint/30">
             {book.module}
+          </span>
+        )}
+        {book.testNumber != null && (
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-violet-400/15 text-violet-300 border border-violet-400/30">
+            {t('dev.cambridge.testBadge', { n: book.testNumber })}
           </span>
         )}
         <p className="text-sm font-bold text-white truncate flex-1 min-w-0">{book.title}</p>

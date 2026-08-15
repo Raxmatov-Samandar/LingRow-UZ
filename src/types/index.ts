@@ -249,6 +249,10 @@ export interface CambridgeBook {
   /** 'AC' | 'GT' | 'unknown' */
   module?:     string;
   source?:     string;
+  /** Which test (1-4) within a multi-test Cambridge publication this
+   *  upload's content and Listening audio belong to. Optional -- older
+   *  uploads and non-Cambridge books leave this unset. */
+  testNumber?: number;
   pdfUrl:      string;
   pdfFilename: string;
   pdfSize:     number;

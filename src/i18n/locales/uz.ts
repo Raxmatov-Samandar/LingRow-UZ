@@ -543,6 +543,8 @@ export const uz: Translation = {
       audioTitle: 'Listening audio (4 bo\'lim)',
       section: 'bo\'lim',
       uploadAudio: 'MP3 yuklash',
+      testNumber: 'Test',
+      testBadge: 'Test {{n}}',
     },
     books: {
       title: 'Oddiy kitob PDFlari',

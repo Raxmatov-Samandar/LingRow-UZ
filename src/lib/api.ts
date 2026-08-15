@@ -304,12 +304,14 @@ export const learning = {
 
 function mapCambridgeBookRow(r: {
   id: string; title: string; kind: string; module: string | null; source: string | null;
+  test_number: number | null;
   pdf_url: string; pdf_filename: string; pdf_size: number; num_pages: number; raw_text: string;
   parts: CambridgeBookPart[]; warnings: string[]; created_at: string;
 }): CambridgeBook {
   return {
     id: r.id, title: r.title, kind: r.kind as BookKind,
     module: r.module ?? undefined, source: r.source ?? undefined,
+    testNumber: r.test_number ?? undefined,
     pdfUrl: r.pdf_url, pdfFilename: r.pdf_filename, pdfSize: r.pdf_size,
     numPages: r.num_pages, rawText: r.raw_text,
     parts: r.parts ?? [], warnings: r.warnings ?? [], createdAt: r.created_at,
@@ -751,7 +753,7 @@ export const admin = {
    *  itself (extractPdfText / parseCambridgeReading) stays client-side in
    *  the Dev Panel -- this just persists whatever it produced. */
   async uploadCambridgeBook(input: {
-    title: string; kind: BookKind; module?: string; source?: string; file: File;
+    title: string; kind: BookKind; module?: string; source?: string; testNumber?: number; file: File;
     numPages: number; rawText: string; parts: CambridgeBookPart[]; warnings: string[];
   }): Promise<CambridgeBook> {
     if (useMock) throw new Error('Kitob yuklash faqat real backend rejimida ishlaydi (mock rejimda emas).');
@@ -761,6 +763,7 @@ export const admin = {
     const { data: pub } = supabase!.storage.from('cambridge-books').getPublicUrl(path);
     const { data, error } = await supabase!.from('cambridge_books').insert({
       title: input.title, kind: input.kind, module: input.module ?? null, source: input.source ?? null,
+      test_number: input.testNumber ?? null,
       pdf_url: pub.publicUrl, pdf_filename: input.file.name, pdf_size: input.file.size,
       num_pages: input.numPages, raw_text: input.rawText, parts: input.parts, warnings: input.warnings,
     }).select().single();
