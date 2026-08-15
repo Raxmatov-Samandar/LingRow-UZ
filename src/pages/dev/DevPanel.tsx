@@ -397,7 +397,7 @@ function BookManager({ scope }: { scope: 'cambridge' | 'other' }) {
     try {
       const extraction = await extractPdfText(picked)
       const parsed = kind === 'cambridge_ielts'
-        ? parseCambridgeReading(extraction)
+        ? parseCambridgeReading(extraction, testNumber ?? 1)
         : { source: '', module: 'unknown' as const, parts: [], warnings: ['Auto-parse skipped for non-Cambridge book.'] }
 
       await admin.uploadCambridgeBook({
@@ -442,7 +442,7 @@ function BookManager({ scope }: { scope: 'cambridge' | 'other' }) {
       const blob = await (await fetch(book.pdfUrl)).blob()
       const file = new File([blob], book.pdfFilename, { type: 'application/pdf' })
       const extraction = await extractPdfText(file)
-      const parsed = parseCambridgeReading(extraction)
+      const parsed = parseCambridgeReading(extraction, book.testNumber ?? 1)
       await admin.updateCambridgeBook(book.id, {
         rawText: extraction.fullText,
         numPages: extraction.numPages,

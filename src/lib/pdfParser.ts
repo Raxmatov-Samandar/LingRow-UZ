@@ -97,16 +97,46 @@ const RE_PART = /(?:^|\n)\s*(?:SECTION|PART|READING\s+PASSAGE)\s+(\d+)\b[^\n]*/g
 const RE_QUESTIONS_BLOCK = /Questions?\s+(\d+)\s*[–\-to]+\s*(\d+)/i
 const RE_QNUM = /^\s*(\d{1,2})[.)\s]+(.+)/
 
-export function parseCambridgeReading(extraction: PdfExtraction): ParsedTest {
+// A real Cambridge book PDF bundles all four skills. Listening also uses
+// "Section 1-4" headings and Speaking also uses "Part 1-3" -- if RE_PART is
+// run over the whole document, it happily matches those too and mixes
+// Listening/Speaking text into what's supposed to be pure Reading content.
+// This isolates the text between a standalone "READING" skill heading and
+// the next skill heading (Writing/Speaking/Listening) before RE_PART ever
+// runs, so only genuine Reading passages get split into parts. A book with
+// multiple tests has multiple "READING" headings -- testIndex (1-based,
+// matching the Dev Panel's Test 1-4 picker) selects which one.
+const RE_SKILL_HEADING = /(?:^|\n)\s*(LISTENING|READING|WRITING|SPEAKING)\s*(?:\n|$)/gi
+
+function isolateReadingZone(text: string, testIndex: number): { zone: string; found: boolean } {
+  const matches = [...text.matchAll(RE_SKILL_HEADING)]
+  const readingHeadings = matches.filter(m => m[1].toUpperCase() === 'READING')
+  const target = readingHeadings[testIndex - 1]
+  if (!target || target.index === undefined) return { zone: text, found: false }
+
+  const start = target.index + target[0].length
+  const next = matches.find(m => m[1].toUpperCase() !== 'READING' && (m.index ?? 0) > target.index!)
+  const end = next?.index ?? text.length
+  return { zone: text.slice(start, end), found: true }
+}
+
+export function parseCambridgeReading(extraction: PdfExtraction, testIndex = 1): ParsedTest {
   const warnings: string[] = []
-  const text = extraction.fullText
+  const fullText = extraction.fullText
     .replace(/\r\n/g, '\n')
     .replace(/[ \t]+\n/g, '\n')
 
-  // detect module
+  const { zone, found } = isolateReadingZone(fullText, testIndex)
+  if (!found) {
+    warnings.push(`Could not find a "READING" heading for Test ${testIndex} — scanning the whole document instead (Listening/Speaking/Writing text may leak into the parsed parts).`)
+  }
+  const text = zone
+
+  // detect module -- title-page wording can sit outside the isolated
+  // Reading zone, so this still looks at the full document.
   const module: ParsedTest['module'] =
-    /general\s*training/i.test(text) ? 'GT'
-    : /academic/i.test(text)         ? 'AC'
+    /general\s*training/i.test(fullText) ? 'GT'
+    : /academic/i.test(fullText)         ? 'AC'
     : 'unknown'
 
   // Split by SECTION/PART markers
@@ -127,7 +157,7 @@ export function parseCambridgeReading(extraction: PdfExtraction): ParsedTest {
   }
 
   return {
-    source: detectSource(text),
+    source: detectSource(fullText),
     module,
     parts,
     warnings,
