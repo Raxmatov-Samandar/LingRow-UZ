@@ -22,7 +22,7 @@ import { MediaPlayer } from '@/components/ui/MediaPlayer'
 import { admin, learning, isMockMode } from '@/lib/api'
 import type { RetentionRow, UserRole, ListeningAudioRow, LessonDetail, LessonLevel, LessonKind, CambridgeBook, BookKind } from '@/types'
 
-type Tab = 'panels' | 'audio' | 'articles' | 'books' | 'dtm' | 'lessons' | 'stats' | 'retention'
+type Tab = 'panels' | 'audio' | 'articles' | 'cambridge' | 'books' | 'dtm' | 'lessons' | 'stats' | 'retention'
 
 export function DevPanel() {
   const { t } = useTranslation()
@@ -47,6 +47,7 @@ export function DevPanel() {
             ['panels',   '🧭', t('dev.tabs.panels')],
             ['audio',    '🎧', t('dev.tabs.audio')],
             ['articles', '📰', t('dev.tabs.articles')],
+            ['cambridge', '📘', t('dev.tabs.cambridge')],
             ['books',    '📚', t('dev.tabs.books')],
             ['dtm',      '🎓', t('dev.tabs.dtm')],
             ['lessons',  '🎬', t('dev.tabs.lessons')],
@@ -70,6 +71,7 @@ export function DevPanel() {
           {tab === 'panels'   && <PanelsTab />}
           {tab === 'audio'    && <AudioTab />}
           {tab === 'articles' && <ArticlesTab />}
+          {tab === 'cambridge' && <CambridgeTab />}
           {tab === 'books'    && <BooksTab />}
           {tab === 'dtm'      && <DtmTab />}
           {tab === 'lessons'  && <LessonsTab />}
@@ -350,17 +352,28 @@ function ArticlesTab() {
   )
 }
 
-// ───────────────────────── Books (PDF) ─────────────────────────
+// ───────────────────────── Cambridge Materials / Books (PDF) ─────────────────────────
+// Both tabs share one backend (the cambridge_books table) and split purely by
+// `kind`: 'cambridge_ielts' is official Cambridge Press content with its own
+// dedicated tab (more kinds of Cambridge Press material land here over time);
+// 'general' / 'other' are everything else, kept under the plain Books tab.
 
-const BOOK_KINDS: BookKind[] = ['cambridge_ielts', 'general', 'other']
+function CambridgeTab() {
+  return <BookManager scope="cambridge" />
+}
 
 function BooksTab() {
+  return <BookManager scope="other" />
+}
+
+function BookManager({ scope }: { scope: 'cambridge' | 'other' }) {
   const { t } = useTranslation()
+  const kindOptions: BookKind[] = scope === 'cambridge' ? ['cambridge_ielts'] : ['general', 'other']
 
   const [books, setBooks] = useState<CambridgeBook[]>([])
   const [loading, setLoading] = useState(true)
   const [picked, setPicked] = useState<File | null>(null)
-  const [kind, setKind] = useState<BookKind>('cambridge_ielts')
+  const [kind, setKind] = useState<BookKind>(kindOptions[0])
   const [title, setTitle] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -370,9 +383,11 @@ function BooksTab() {
 
   function refresh() {
     setLoading(true)
-    admin.listCambridgeBooks().then(setBooks).finally(() => setLoading(false))
+    admin.listCambridgeBooks()
+      .then(all => setBooks(all.filter(b => (b.kind === 'cambridge_ielts') === (scope === 'cambridge'))))
+      .finally(() => setLoading(false))
   }
-  useEffect(refresh, [])
+  useEffect(refresh, []) // eslint-disable-line
 
   async function uploadAndParse() {
     if (!picked || !ok) return
@@ -463,35 +478,47 @@ function BooksTab() {
       {/* Upload card */}
       <div className="glass-panel p-5 flex flex-col gap-3 h-fit">
         <header>
-          <h3 className="text-lg font-bold text-white">{t('dev.books.title')}</h3>
-          <p className="text-xs text-slate-400 mt-1 leading-relaxed">{t('dev.books.sub')}</p>
+          <h3 className="text-lg font-bold text-white">
+            {scope === 'cambridge' ? t('dev.cambridge.title') : t('dev.books.title')}
+          </h3>
+          <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+            {scope === 'cambridge' ? t('dev.cambridge.sub') : t('dev.books.sub')}
+          </p>
         </header>
 
         {isMockMode && (
           <p className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5">
-            {t('dev.books.mockNotice')}
+            {scope === 'cambridge' ? t('dev.cambridge.mockNotice') : t('dev.books.mockNotice')}
           </p>
         )}
 
         <Field label={t('dev.lessons.lessonTitle')}>
           <input className="input-glass" value={title}
                  onChange={e => setTitle(e.target.value)}
-                 placeholder="Cambridge IELTS 18 — GT" />
+                 placeholder={scope === 'cambridge' ? 'Cambridge IELTS 18 — GT' : 'My reading workbook'} />
         </Field>
 
-        <Field label={t('dev.books.pickKind')}>
-          <select className="input-glass" value={kind} onChange={e => setKind(e.target.value as BookKind)}>
-            {BOOK_KINDS.map(k => (
-              <option key={k} value={k} className="bg-slate-900 text-white">
-                {t(`dev.books.kinds.${k}`)}
-              </option>
-            ))}
-          </select>
-        </Field>
+        {kindOptions.length > 1 ? (
+          <Field label={t('dev.books.pickKind')}>
+            <select className="input-glass" value={kind} onChange={e => setKind(e.target.value as BookKind)}>
+              {kindOptions.map(k => (
+                <option key={k} value={k} className="bg-slate-900 text-white">
+                  {t(`dev.books.kinds.${k}`)}
+                </option>
+              ))}
+            </select>
+          </Field>
+        ) : (
+          <Field label={t('dev.books.pickKind')}>
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cosmic-mint/15 text-cosmic-mint border border-cosmic-mint/30 w-fit">
+              {t(`dev.books.kinds.${kindOptions[0]}`)}
+            </span>
+          </Field>
+        )}
 
         <button type="button" onClick={() => fileRef.current?.click()}
                 className="rounded-2xl border-2 border-dashed border-white/15 hover:border-cosmic-mint/50 hover:bg-white/[0.03] transition px-4 py-6 text-center mt-1">
-          <p className="text-2xl mb-1">📚</p>
+          <p className="text-2xl mb-1">{scope === 'cambridge' ? '📘' : '📚'}</p>
           {picked
             ? <p className="text-sm text-cosmic-mint font-semibold truncate">{picked.name}</p>
             : <p className="text-xs text-slate-400">{t('dev.books.drop')}</p>}
@@ -965,10 +992,14 @@ function StatsTab() {
     [audio, dtm, books]
   )
 
+  const cambridgeCount = books.filter(b => b.kind === 'cambridge_ielts').length
+  const otherBookCount = books.length - cambridgeCount
+
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-6 gap-5 p-1">
+    <div className="grid grid-cols-2 lg:grid-cols-7 gap-5 p-1">
       <StatCard label={t('dev.stats.audio')}    value={audio.length}    emoji="🎧" />
-      <StatCard label={t('dev.tabs.books')}     value={books.length}    emoji="📚" />
+      <StatCard label={t('dev.tabs.cambridge')} value={cambridgeCount}  emoji="📘" />
+      <StatCard label={t('dev.tabs.books')}     value={otherBookCount}  emoji="📚" />
       <StatCard label={t('dev.tabs.dtm')}       value={dtm.length}      emoji="🎓" />
       <StatCard label={t('dev.stats.articles')} value={articles.length} emoji="📰" />
       <StatCard label={t('dev.stats.lessons')}  value={lessons.length}  emoji="🎬" />
