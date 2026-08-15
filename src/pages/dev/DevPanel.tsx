@@ -13,14 +13,14 @@ import { Cosmos } from '@/components/layout/Cosmos'
 import { AppShell } from '@/components/layout/AppShell'
 import { Topbar } from '@/components/layout/Topbar'
 import { useAuth } from '@/store/auth'
-import { useDevContent, type BookKind, type DevBook, type DtmSubject, type DtmDocument } from '@/store/devContent'
+import { useDevContent, type DtmSubject, type DtmDocument } from '@/store/devContent'
 import { useUserArticles } from '@/store/userArticles'
 import { isDevUser, DEV_EMAIL } from '@/lib/dev'
 import { cn } from '@/lib/cn'
 import { extractPdfText, parseCambridgeReading } from '@/lib/pdfParser'
 import { MediaPlayer } from '@/components/ui/MediaPlayer'
 import { admin, learning, isMockMode } from '@/lib/api'
-import type { RetentionRow, UserRole, ListeningAudioRow, LessonDetail, LessonLevel, LessonKind } from '@/types'
+import type { RetentionRow, UserRole, ListeningAudioRow, LessonDetail, LessonLevel, LessonKind, CambridgeBook, BookKind } from '@/types'
 
 type Tab = 'panels' | 'audio' | 'articles' | 'books' | 'dtm' | 'lessons' | 'stats' | 'retention'
 
@@ -356,11 +356,9 @@ const BOOK_KINDS: BookKind[] = ['cambridge_ielts', 'general', 'other']
 
 function BooksTab() {
   const { t } = useTranslation()
-  const books = useDevContent(s => s.books)
-  const addBook = useDevContent(s => s.addBook)
-  const updateBook = useDevContent(s => s.updateBook)
-  const removeBook = useDevContent(s => s.removeBook)
 
+  const [books, setBooks] = useState<CambridgeBook[]>([])
+  const [loading, setLoading] = useState(true)
   const [picked, setPicked] = useState<File | null>(null)
   const [kind, setKind] = useState<BookKind>('cambridge_ielts')
   const [title, setTitle] = useState('')
@@ -368,27 +366,30 @@ function BooksTab() {
   const [error, setError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const ok = !!picked && title.trim().length >= 2 && !busy
+  const ok = !!picked && title.trim().length >= 2 && !busy && !isMockMode
+
+  function refresh() {
+    setLoading(true)
+    admin.listCambridgeBooks().then(setBooks).finally(() => setLoading(false))
+  }
+  useEffect(refresh, [])
 
   async function uploadAndParse() {
     if (!picked || !ok) return
     setBusy(true)
     setError(null)
     try {
-      const dataUrl = await fileToDataUrl(picked)
       const extraction = await extractPdfText(picked)
       const parsed = kind === 'cambridge_ielts'
         ? parseCambridgeReading(extraction)
         : { source: '', module: 'unknown' as const, parts: [], warnings: ['Auto-parse skipped for non-Cambridge book.'] }
 
-      addBook({
+      await admin.uploadCambridgeBook({
         title: title.trim(),
         kind,
         module: parsed.module,
         source: parsed.source || undefined,
-        pdfDataUrl: dataUrl,
-        pdfFilename: picked.name,
-        pdfSize: picked.size,
+        file: picked,
         numPages: extraction.numPages,
         rawText: extraction.fullText,
         parts: parsed.parts.map(p => ({
@@ -408,6 +409,7 @@ function BooksTab() {
       setPicked(null)
       setTitle('')
       if (fileRef.current) fileRef.current.value = ''
+      refresh()
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -415,16 +417,16 @@ function BooksTab() {
     }
   }
 
-  async function reparse(book: DevBook) {
+  async function reparse(book: CambridgeBook) {
     setBusy(true)
     setError(null)
     try {
-      // Re-extract from stored data URL
-      const blob = await (await fetch(book.pdfDataUrl)).blob()
+      // Re-extract from the public PDF URL (bucket is public, so a plain fetch works).
+      const blob = await (await fetch(book.pdfUrl)).blob()
       const file = new File([blob], book.pdfFilename, { type: 'application/pdf' })
       const extraction = await extractPdfText(file)
       const parsed = parseCambridgeReading(extraction)
-      updateBook(book.id, {
+      await admin.updateCambridgeBook(book.id, {
         rawText: extraction.fullText,
         numPages: extraction.numPages,
         module: parsed.module,
@@ -439,10 +441,20 @@ function BooksTab() {
         })),
         warnings: parsed.warnings,
       })
+      refresh()
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
       setBusy(false)
+    }
+  }
+
+  async function remove(id: string) {
+    try {
+      await admin.removeCambridgeBook(id)
+      refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
     }
   }
 
@@ -454,6 +466,12 @@ function BooksTab() {
           <h3 className="text-lg font-bold text-white">{t('dev.books.title')}</h3>
           <p className="text-xs text-slate-400 mt-1 leading-relaxed">{t('dev.books.sub')}</p>
         </header>
+
+        {isMockMode && (
+          <p className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5">
+            {t('dev.books.mockNotice')}
+          </p>
+        )}
 
         <Field label={t('dev.lessons.lessonTitle')}>
           <input className="input-glass" value={title}
@@ -500,12 +518,14 @@ function BooksTab() {
         <h4 className="text-sm font-bold text-white mb-3">
           {t('dev.books.uploaded')} ({books.length})
         </h4>
-        {books.length === 0
+        {loading ? (
+          <p className="text-xs text-slate-400 italic">…</p>
+        ) : books.length === 0
           ? <p className="text-xs text-slate-400 italic">{t('dev.books.noneYet')}</p>
           : (
             <div className="flex flex-col gap-3 max-h-[600px] overflow-auto pr-1">
               {books.map(b => <BookCard key={b.id} book={b}
-                                        onRemove={() => removeBook(b.id)}
+                                        onRemove={() => remove(b.id)}
                                         onReparse={() => reparse(b)}
                                         busy={busy} />)}
             </div>
@@ -516,7 +536,7 @@ function BooksTab() {
 }
 
 function BookCard({ book, onRemove, onReparse, busy }: {
-  book: DevBook
+  book: CambridgeBook
   onRemove: () => void
   onReparse: () => void
   busy: boolean
@@ -555,7 +575,7 @@ function BookCard({ book, onRemove, onReparse, busy }: {
                 className="px-2.5 py-1 rounded-md border border-cosmic-mint/40 text-cosmic-mint hover:bg-cosmic-mint/10 disabled:opacity-40">
           {t('dev.books.reparse')}
         </button>
-        <a href={book.pdfDataUrl} target="_blank" rel="noopener noreferrer"
+        <a href={book.pdfUrl} target="_blank" rel="noopener noreferrer"
            className="px-2.5 py-1 rounded-md border border-white/15 text-slate-200 hover:bg-white/[0.05]">
           PDF ↗
         </a>
@@ -928,18 +948,21 @@ function LessonsTab() {
 
 function StatsTab() {
   const { t } = useTranslation()
-  const books = useDevContent(s => s.books)
   const dtm = useDevContent(s => s.dtm)
   const articles = useUserArticles(s => s.list)
   const [audio, setAudio] = useState<ListeningAudioRow[]>([])
   const [lessons, setLessons] = useState<LessonDetail[]>([])
+  const [books, setBooks] = useState<CambridgeBook[]>([])
 
   useEffect(() => { admin.listListeningAudio().then(setAudio) }, [])
   useEffect(() => { learning.getLessonsList().then(setLessons) }, [])
+  useEffect(() => { admin.listCambridgeBooks().then(setBooks) }, [])
 
   const totalSize = useMemo(
-    () => audio.reduce((sum, a) => sum + a.sizeBytes, 0) + dtm.reduce((sum, d) => sum + d.pdfSize, 0),
-    [audio, dtm]
+    () => audio.reduce((sum, a) => sum + a.sizeBytes, 0)
+        + dtm.reduce((sum, d) => sum + d.pdfSize, 0)
+        + books.reduce((sum, b) => sum + b.pdfSize, 0),
+    [audio, dtm, books]
   )
 
   return (

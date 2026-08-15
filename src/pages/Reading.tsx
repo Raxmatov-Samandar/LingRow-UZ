@@ -6,12 +6,14 @@
 // end-of-test scoring.
 // =============================================================================
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Cosmos } from '@/components/layout/Cosmos';
 import { AppShell } from '@/components/layout/AppShell';
 import { Topbar } from '@/components/layout/Topbar';
 import { useActivity } from '@/store/activity';
 import { useWordNotes } from '@/store/wordNotes';
-import { useDevContent, type DevBook } from '@/store/devContent';
+import { learning } from '@/lib/api';
+import type { CambridgeBook } from '@/types';
 import { AnnotatedText } from '@/components/ui/AnnotatedText';
 import {
   TEST, type ReadingTest, type ReadingSection, type ReadingPart,
@@ -31,7 +33,7 @@ const VALID_KINDS = new Set<QuestionKind>([
  * questions are rendered but excluded from auto-grading below instead of
  * being silently — and incorrectly — marked wrong.
  */
-function devBookToReadingTest(book: DevBook): ReadingTest {
+function devBookToReadingTest(book: CambridgeBook): ReadingTest {
   const sections: ReadingSection[] = book.parts.map((p, i) => ({
     num: (Math.min(i + 1, 3) as 1 | 2 | 3),
     title: `Section ${i + 1}`,
@@ -61,14 +63,21 @@ function devBookToReadingTest(book: DevBook): ReadingTest {
 
 export function Reading() {
   const log = useActivity(s => s.log);
-  const devBooks = useDevContent(s => s.books).filter(b => b.kind === 'cambridge_ielts' && b.parts.length > 0);
+  const [searchParams] = useSearchParams();
+  const [devBooks, setDevBooks] = useState<CambridgeBook[]>([]);
+
+  useEffect(() => {
+    learning.getCambridgeBooksList().then(books =>
+      setDevBooks(books.filter(b => b.kind === 'cambridge_ielts' && b.parts.length > 0))
+    );
+  }, []);
 
   const availableTests = useMemo<ReadingTest[]>(
     () => [TEST, ...devBooks.map(devBookToReadingTest)],
     [devBooks]
   );
 
-  const [testId, setTestId] = useState(TEST.id);
+  const [testId, setTestId] = useState(searchParams.get('test') ?? TEST.id);
   const activeTest = availableTests.find(t => t.id === testId) ?? TEST;
 
   const [sectionIdx, setSectionIdx] = useState(0);

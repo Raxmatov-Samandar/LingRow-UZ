@@ -8,6 +8,7 @@ import type {
   ParentChild, ParentalControls, DailyReport, UserRole,
   DiagnosticQuestion, DiagnosticAnswerCheck, DnaScores, ErrorCategory, ErrorCatalogEntry,
   Subscription, Invoice, RetentionRow, ListeningAudioRow, LessonDetail, LessonLevel, LessonKind,
+  CambridgeBook, CambridgeBookPart, BookKind,
 } from '@/types';
 import {
   LEVELS, VOCAB, QUIZ, BADGES, LEADERBOARD,
@@ -288,7 +289,32 @@ export const learning = {
     if (error) throw error;
     return data ? mapLessonRow(data) : null;
   },
+
+  /** Dev-uploaded Cambridge Reading test PDFs, parsed + published from the
+   *  real cambridge_books table (not the local dev-content store). Empty in
+   *  mock mode -- Reading.tsx and Library.tsx fall back to the built-in
+   *  Cambridge 18 Test 1 content. */
+  async getCambridgeBooksList(): Promise<CambridgeBook[]> {
+    if (useMock) return [];
+    const { data, error } = await supabase!.from('cambridge_books').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map(mapCambridgeBookRow);
+  },
 };
+
+function mapCambridgeBookRow(r: {
+  id: string; title: string; kind: string; module: string | null; source: string | null;
+  pdf_url: string; pdf_filename: string; pdf_size: number; num_pages: number; raw_text: string;
+  parts: CambridgeBookPart[]; warnings: string[]; created_at: string;
+}): CambridgeBook {
+  return {
+    id: r.id, title: r.title, kind: r.kind as BookKind,
+    module: r.module ?? undefined, source: r.source ?? undefined,
+    pdfUrl: r.pdf_url, pdfFilename: r.pdf_filename, pdfSize: r.pdf_size,
+    numPages: r.num_pages, rawText: r.raw_text,
+    parts: r.parts ?? [], warnings: r.warnings ?? [], createdAt: r.created_at,
+  };
+}
 
 function mapLessonRow(r: {
   id: string; title: string; level: string; type: string; description: string | null;
@@ -711,6 +737,55 @@ export const admin = {
   async removeLesson(id: string): Promise<void> {
     if (useMock) return;
     const { error } = await supabase!.from('lessons').delete().eq('id', id);
+    if (error) throw error;
+  },
+
+  async listCambridgeBooks(): Promise<CambridgeBook[]> {
+    if (useMock) return [];
+    const { data, error } = await supabase!.from('cambridge_books').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map(mapCambridgeBookRow);
+  },
+
+  /** Uploads the PDF to Storage, then inserts the parsed result. The parsing
+   *  itself (extractPdfText / parseCambridgeReading) stays client-side in
+   *  the Dev Panel -- this just persists whatever it produced. */
+  async uploadCambridgeBook(input: {
+    title: string; kind: BookKind; module?: string; source?: string; file: File;
+    numPages: number; rawText: string; parts: CambridgeBookPart[]; warnings: string[];
+  }): Promise<CambridgeBook> {
+    if (useMock) throw new Error('Kitob yuklash faqat real backend rejimida ishlaydi (mock rejimda emas).');
+    const path = `${Date.now()}-${input.file.name}`;
+    const up = await supabase!.storage.from('cambridge-books').upload(path, input.file, { contentType: 'application/pdf' });
+    if (up.error) throw up.error;
+    const { data: pub } = supabase!.storage.from('cambridge-books').getPublicUrl(path);
+    const { data, error } = await supabase!.from('cambridge_books').insert({
+      title: input.title, kind: input.kind, module: input.module ?? null, source: input.source ?? null,
+      pdf_url: pub.publicUrl, pdf_filename: input.file.name, pdf_size: input.file.size,
+      num_pages: input.numPages, raw_text: input.rawText, parts: input.parts, warnings: input.warnings,
+    }).select().single();
+    if (error) throw error;
+    return mapCambridgeBookRow(data);
+  },
+
+  /** Re-parse in place (same PDF, freshly extracted text/parts) -- no new upload. */
+  async updateCambridgeBook(id: string, patch: {
+    numPages: number; rawText: string; module?: string; source?: string;
+    parts: CambridgeBookPart[]; warnings: string[];
+  }): Promise<CambridgeBook> {
+    if (useMock) throw new Error('Kitobni qayta tahlil qilish faqat real backend rejimida ishlaydi.');
+    const { data, error } = await supabase!.from('cambridge_books').update({
+      num_pages: patch.numPages, raw_text: patch.rawText,
+      module: patch.module ?? null, source: patch.source ?? null,
+      parts: patch.parts, warnings: patch.warnings,
+    }).eq('id', id).select().single();
+    if (error) throw error;
+    return mapCambridgeBookRow(data);
+  },
+
+  async removeCambridgeBook(id: string): Promise<void> {
+    if (useMock) return;
+    const { error } = await supabase!.from('cambridge_books').delete().eq('id', id);
     if (error) throw error;
   },
 };

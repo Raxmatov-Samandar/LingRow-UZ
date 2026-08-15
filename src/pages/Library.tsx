@@ -13,6 +13,8 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Topbar } from '@/components/layout/Topbar';
 import { useAuth } from '@/store/auth';
 import { useUserArticles } from '@/store/userArticles';
+import { learning } from '@/lib/api';
+import type { CambridgeBook } from '@/types';
 import {
   ARTICLES, ALL_ARTICLE_TOPICS, getTodaysArticle, searchArticles, type Article,
 } from '@/data/articles/daily-articles';
@@ -264,13 +266,32 @@ function ArchiveCard({ a }: { a: Article }) {
 // ───────────────────────── Cambridge materials (live) ─────────────────────────
 
 function CambridgeMaterials() {
+  // First 4 cards are the always-on built-in Test 1 content. The rest are
+  // real Cambridge Reading PDFs the dev has uploaded + parsed in /dev
+  // (Books tab) — read from Supabase so they show up for every real user,
+  // not just the founder's own browser.
+  const [books, setBooks] = useState<CambridgeBook[]>([]);
+  useEffect(() => {
+    learning.getCambridgeBooksList().then(list =>
+      setBooks(list.filter(b => b.kind === 'cambridge_ielts' && b.parts.length > 0))
+    );
+  }, []);
+
   const items = [
     { to: '/listening', emoji: '🎧', title: 'Cambridge IELTS 18 — Listening',  desc: '4 parts · 40 questions · ~30 minutes', badge: 'Test 1 ready' },
     { to: '/reading',   emoji: '📖', title: 'Cambridge IELTS 18 — Reading',    desc: '3 sections · 40 questions · 60 minutes', badge: 'Test 1 ready' },
     { to: '/writing',   emoji: '✍️', title: 'Cambridge IELTS 18 — Writing',    desc: 'Task 1 (letter) + Task 2 (essay) · 60 min', badge: 'AI graded' },
     { to: '/speaking',  emoji: '🎤', title: 'Speaking — full mock',            desc: '3 parts · cue card · AI feedback', badge: 'AI graded' },
-    { to: '#',          emoji: '📘', title: 'Cambridge IELTS 17 — Reading',    desc: 'Coming soon', badge: 'soon' },
-    { to: '#',          emoji: '📘', title: 'Cambridge IELTS 16 — Reading',    desc: 'Coming soon', badge: 'soon' },
+    ...books.map(b => {
+      const totalQ = b.parts.reduce((s, p) => s + p.questions.length, 0);
+      return {
+        to: `/reading?test=${b.id}`,
+        emoji: '📘',
+        title: b.title,
+        desc: `${b.parts.length} section${b.parts.length === 1 ? '' : 's'} · ${totalQ} questions · Reading`,
+        badge: b.module && b.module !== 'unknown' ? b.module : 'live',
+      };
+    }),
   ];
   return <LinkGrid items={items} />;
 }

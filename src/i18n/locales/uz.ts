@@ -538,6 +538,7 @@ export const uz: Translation = {
     books: {
       title: 'Cambridge / kitob PDFlari',
       sub: "PDF yuklang va Parse tugmasini bosing — kitob avtomatik IELTS test formatiga aylantiriladi (Reading passage'lar + savollar).",
+      mockNotice: 'Siz mock rejimdasiz — kitob yuklash faqat real Supabase backendga ulanganda ishlaydi.',
       uploadBtn: 'PDF yuklash',
       drop: "Bu yerga PDF tashlang yoki bosib tanlang",
       pickKind: 'Turi',

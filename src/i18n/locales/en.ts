@@ -558,6 +558,7 @@ export const en = {
     books: {
       title: 'Cambridge / book PDFs',
       sub: 'Upload a PDF, then click Parse to convert it into a structured IELTS test (Reading passages + questions).',
+      mockNotice: "You're in mock mode — book upload only works connected to the live Supabase backend.",
       uploadBtn: 'Upload PDF',
       drop: 'Drop a PDF here or click to browse',
       pickKind: 'Type',

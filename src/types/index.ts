@@ -217,3 +217,44 @@ export interface ListeningAudioRow {
   sizeBytes:  number;
   uploadedAt: string;
 }
+
+export type BookKind = 'cambridge_ielts' | 'general' | 'other';
+
+export interface CambridgeBookQuestion {
+  num:      number;
+  kind:     string;
+  prompt:   string;
+  options?: string[];
+  answers?: string[];
+}
+
+export interface CambridgeBookPart {
+  partNum:        number;
+  title:          string;
+  intro?:         string;
+  passage:        string;
+  questionRange?: [number, number];
+  questions:      CambridgeBookQuestion[];
+}
+
+/** One Cambridge-style Reading test PDF, uploaded + parsed via the Dev
+ *  Panel and stored in Supabase Storage + the cambridge_books table (not
+ *  the local dev-content store) — same real-backend fix as ListeningAudioRow
+ *  and LessonDetail, so a book uploaded from the founder's laptop is
+ *  visible to every real user, not just that one browser. */
+export interface CambridgeBook {
+  id:          string;
+  title:       string;
+  kind:        BookKind;
+  /** 'AC' | 'GT' | 'unknown' */
+  module?:     string;
+  source?:     string;
+  pdfUrl:      string;
+  pdfFilename: string;
+  pdfSize:     number;
+  numPages:    number;
+  rawText:     string;
+  parts:       CambridgeBookPart[];
+  warnings:    string[];
+  createdAt:   string;
+}
