@@ -126,14 +126,33 @@ git commit -m "..."
 - **Lesson quiz** — Kahoot-style overlay. Red triangle / blue diamond / yellow circle / green square. 18s per question, points scale with remaining time.
 - **Brand contact emails:** `EMAIL_HELLO`, `EMAIL_SUPPORT`, `EMAIL_LEGAL` in `src/lib/contacts.ts` — single source of truth.
 
+## Mobile app (Capacitor)
+
+Android + iOS ship from this repo via Capacitor (`android/`, `ios/`); package id
+`uz.lingrow.app`. Build notes, keystore location and Windows workarounds:
+`C:\Users\raxma\lingrow-android\README.md`. **Never commit the keystore.**
+
+> **Do not un-gate payments in the native app.** `src/lib/platform.ts` exposes
+> `canShowPayments()`, which is false inside Capacitor. Both the sidebar entry and the
+> `/parent/billing` route are gated by it. Google Play requires digital subscriptions to
+> go through Play Billing — the Payme/Click checkout would be a policy violation in the
+> Android app. Wire Play Billing first, then re-enable.
+
 ## Open tasks
 
+- [ ] **Google Play Billing** — required before payments can be re-enabled in the Android app.
 - [ ] Wire parsed dev-books → Reading page test selector (let users take the parsed PDF as an interactive Cambridge-style test).
 - [ ] Real Anthropic API key wiring for AI parsing (currently heuristic only).
-- [ ] Audio assets for Cambridge listening (`/public/audio/c18-t1-p*.mp3`).
-- [ ] Stats page hardcoded → connect to real activity store.
-- [ ] Speaking page real MediaRecorder API.
 - [ ] DTM content ingestion via Dev Panel once user uploads PDFs.
+- [ ] `SceneArt.tsx` logs invalid SVG `preserveAspectRatio` values (`xMidYEnd` / `xMinYEnd`
+      aren't valid — should be `…YMax`). Cosmetic, but noisy in the console.
+
+### Done (previously listed as open)
+
+- [x] Stats page → now reads the real activity store.
+- [x] Speaking page → real `MediaRecorder` implemented.
+- [x] Cambridge listening audio → moved to Supabase Storage (uploaded via Dev Panel),
+      so there is no `/public/audio/` directory by design.
 
 ## When you're stuck
 

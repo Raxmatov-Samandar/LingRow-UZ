@@ -14,7 +14,7 @@ export function MountainLayers({ season }: { season: Season }) {
   // we use CSS variables for the 3 mountain layers so a season switch crossfades
   void season
   return (
-    <svg viewBox="0 0 1200 500" preserveAspectRatio="xMidYEnd slice" aria-hidden>
+    <svg viewBox="0 0 1200 500" preserveAspectRatio="xMidYMax slice" aria-hidden>
       {/* far layer */}
       <path
         d="M0 500 L0 320 L80 250 L160 290 L260 200 L360 270 L460 230 L560 290 L660 220 L780 280 L900 240 L1020 290 L1140 250 L1200 280 L1200 500 Z"
@@ -73,7 +73,7 @@ export function PineForest() {
     { x: 600, scale: 0.95 },
   ]
   return (
-    <svg viewBox="0 0 660 600" preserveAspectRatio="xMinYEnd meet" aria-hidden>
+    <svg viewBox="0 0 660 600" preserveAspectRatio="xMinYMax meet" aria-hidden>
       <defs>
         <linearGradient id="pineLight" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%"  stopColor="var(--tree-bright)" />
@@ -215,7 +215,7 @@ export function ForegroundGrass() {
 
 export function CenterPath() {
   return (
-    <svg viewBox="0 0 800 220" preserveAspectRatio="xMidYEnd meet" aria-hidden>
+    <svg viewBox="0 0 800 220" preserveAspectRatio="xMidYMax meet" aria-hidden>
       <defs>
         <linearGradient id="pathGlow" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%"  stopColor="var(--tree-bright)" stopOpacity="0" />
