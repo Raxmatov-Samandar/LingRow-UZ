@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/store/auth';
 import { useUi } from '@/store/ui';
 import { isDevUser } from '@/lib/dev';
+import { canShowPayments } from '@/lib/platform';
 import { cn } from '@/lib/cn';
 
 const STUDENT_NAV = [
@@ -76,7 +77,12 @@ export function Sidebar({ forceExpanded }: Props = {}) {
   const collapsed      = forceExpanded ? false : collapsedPref;
   const toggle    = useUi(s => s.toggleSidebar);
   const setMobileNav = useUi(s => s.setMobileNav);
-  const items     = user?.role === 'parent' ? PARENT_NAV
+  // Billing is hidden inside the native app — Google Play requires digital
+  // subscriptions to go through Play Billing, not Payme/Click. See lib/platform.
+  const parentNav = canShowPayments()
+    ? PARENT_NAV
+    : PARENT_NAV.filter(i => i.to !== '/parent/billing');
+  const items     = user?.role === 'parent' ? parentNav
                   : user?.role === 'dtm'    ? DTM_NAV
                   : STUDENT_NAV;
   const { t }     = useTranslation();

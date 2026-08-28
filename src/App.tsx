@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
+import { canShowPayments } from '@/lib/platform';
 
 import { Landing }   from '@/pages/Landing';
 import { Login }     from '@/pages/Login';
@@ -31,6 +32,7 @@ import { ParentSettings }  from '@/pages/parent/ParentSettings';
 import { Billing }         from '@/pages/parent/Billing';
 
 import { DevPanel } from '@/pages/dev/DevPanel';
+import MobileConceptIOS from '@/pages/dev/MobileConceptIOS';
 
 import { Privacy, Terms } from '@/pages/Legal';
 
@@ -52,6 +54,7 @@ export default function App() {
       <Route path="/login"     element={<Login />} />
       <Route path="/register"  element={<Register />} />
       <Route path="/demo/sign-in" element={<GlassSignInDemo />} />
+      <Route path="/concept"   element={<MobileConceptIOS />} />
       <Route path="/legal/privacy" element={<Privacy />} />
       <Route path="/legal/terms"   element={<Terms />} />
 
@@ -100,7 +103,13 @@ export default function App() {
         <Route path="/parent/child/:id"  element={<ChildProfile />} />
         <Route path="/parent/reports"    element={<Reports />} />
         <Route path="/parent/settings"   element={<ParentSettings />} />
-        <Route path="/parent/billing"    element={<Billing />} />
+        {/* Billing is web-only. Google Play requires digital subscriptions to
+            use Play Billing, so the Payme/Click checkout must not be reachable
+            inside the native app — not even by typing the URL. */}
+        <Route
+          path="/parent/billing"
+          element={canShowPayments() ? <Billing /> : <Navigate to="/parent" replace />}
+        />
       </Route>
 
       {/* Dev route — gating happens inside DevPanel via isDevUser(email).
