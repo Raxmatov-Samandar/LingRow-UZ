@@ -15,7 +15,7 @@ import type { ErrorCategory } from '@/types';
 import {
   Home, BookOpen, BarChart3, Dna, User, UserRound, ChevronRight, Bell, Search, Play, Pause,
   TrendingUp, TrendingDown, CheckCircle2, Award, Lock, Info, Contrast,
-  Wifi, Signal, BatteryFull, ArrowUpRight, ArrowDownRight, ArrowLeft, Plus,
+  Wifi, Signal, BatteryFull, ArrowUpRight, ArrowDownRight, ArrowLeft,
   LogOut, Sparkles, Eye, Box,
   HelpCircle, Globe, Moon, Sun, Camera,
   X, AlertTriangle, Bot, Zap, Flame, Repeat2
@@ -145,16 +145,29 @@ const NOTIF_KEYFRAMES_CSS = `
     0% { transform: scaleX(1); }
     100% { transform: scaleX(0); }
   }
+
+  /* Segmented-control pill. The iOS curve: quick out of the gate, long tail,
+     no overshoot — a tab switch is a discrete tap, not a thrown object. */
+  .lesson-seg-pill {
+    transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lesson-seg-pill { transition: none; }
+  }
 `;
 
 function useNotifKeyframes() {
   useEffect(() => {
     const id = 'mobile-concept-ios-notif-keyframes';
-    if (document.getElementById(id)) return;
-    const styleEl = document.createElement('style');
+    // Reuse the existing tag but always refresh its contents — bailing out when
+    // the element exists leaves a stale stylesheet behind across Fast Refresh,
+    // so newly added rules silently never apply.
+    const styleEl = document.getElementById(id) ?? document.createElement('style');
     styleEl.id = id;
-    styleEl.textContent = NOTIF_KEYFRAMES_CSS;
-    document.head.appendChild(styleEl);
+    if (styleEl.textContent !== NOTIF_KEYFRAMES_CSS) {
+      styleEl.textContent = NOTIF_KEYFRAMES_CSS;
+    }
+    if (!styleEl.isConnected) document.head.appendChild(styleEl);
   }, []);
 }
 
@@ -1484,102 +1497,370 @@ function VideoLessonScreen({
   );
 }
 
+// ─── Arc wheel list ──────────────────────────────────────────────────────────
+// Lessons sit on the rim of a wheel: the row nearest the centre faces you, and
+// the ones above and below curve away along the arc.
+//
+// The scrolling itself is the browser's — momentum, rubber-banding and 1:1
+// finger tracking are already correct there, and re-implementing them in JS
+// would only make them worse. This adds a purely visual layer on top: each row
+// is transformed by how far it sits from the centre of the viewport.
+
+const WHEEL_ITEM_H = 68;   // px per row
+const WHEEL_RADIUS = 300;  // larger = gentler curve
+
+/** Live `prefers-reduced-motion`, so the wheel flattens the moment it's set. */
+function useReducedMotionPref(): boolean {
+  const [reduced, setReduced] = useState(
+    () => typeof window !== 'undefined'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
+  useEffect(() => {
+    const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onChange = () => setReduced(mql.matches);
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+  return reduced;
+}
+
+function wheelTransform(delta: number, flat: boolean) {
+  if (flat) return { x: 0, rot: 0, scale: 1, opacity: 1 };
+  // Cap how far round the rim a row may travel. Without this the furthest rows
+  // swing ~90px sideways on a 288px-wide screen, which stops reading as a curve
+  // and just looks broken.
+  const raw = delta / WHEEL_RADIUS;
+  const theta = Math.max(-0.6, Math.min(0.6, raw));
+  const cos = Math.cos(theta);
+  return {
+    // Rows recede as they leave the centre — that sideways drift is what reads
+    // as depth on a rim rather than a flat list sliding by. Damped, because the
+    // full geometric offset is far more than the effect needs.
+    x: WHEEL_RADIUS * (1 - cos) * 0.55,
+    rot: (theta * 180) / Math.PI * 0.42,
+    scale: 0.88 + 0.12 * cos,
+    opacity: Math.max(0.35, cos),
+  };
+}
+
+type LessonFilter = 'all' | 'active' | 'done';
+
+const LESSON_FILTERS: { key: LessonFilter; label: string }[] = [
+  { key: 'all',    label: 'Hammasi' },
+  { key: 'active', label: 'Davom etayotgan' },
+  { key: 'done',   label: 'Tugallangan' },
+];
+
+interface LessonRow {
+  name: string;
+  type: string;
+  progress: number;
+  duration: string;
+  color: string;
+}
+
+const LESSONS: LessonRow[] = [
+  { name: 'Present Perfect grammatika',      type: 'Grammar',    progress: 100, duration: '12 daqiqa', color: '#34c759' },
+  { name: 'Listening: Cambridge Test 3',     type: 'Listening',  progress: 65,  duration: '25 daqiqa', color: '#007aff' },
+  { name: "Vocabulary: Ish joyida so'zlar",  type: 'Vocabulary', progress: 40,  duration: '15 daqiqa', color: '#ff9500' },
+  { name: 'Reading: Academic matnlar',       type: 'Reading',    progress: 0,   duration: '30 daqiqa', color: '#5856d6' },
+  { name: 'Speaking: Intervyu mashqlari',    type: 'Speaking',   progress: 80,  duration: '20 daqiqa', color: '#ff2d55' },
+];
+
 function LessonsScreen({ isDark }: { isDark: boolean }) {
   const cardBg = isDark ? '#1c1c1e' : '#ffffff';
   const primaryText = isDark ? '#ffffff' : '#000000';
   const secondaryText = isDark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
+  const trackBg = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(60,60,67,0.12)';
 
   const [openLesson, setOpenLesson] = useState<string | null>(null);
-
-  const lessons = [
-    { name: 'Present Perfect grammatika', type: 'Grammar', progress: 100, duration: '12 daqiqa', color: '#34c759', isDone: true },
-    { name: 'Listening: Cambridge Test 3', type: 'Listening', progress: 65, duration: '25 daqiqa', color: '#007aff', isDone: false },
-    { name: "Vocabulary: Ish joyida so'zlar", type: 'Vocabulary', progress: 40, duration: '15 daqiqa', color: '#ff9500', isDone: false },
-    { name: 'Reading: Academic matnlar', type: 'Reading', progress: 0, duration: '30 daqiqa', color: '#5856d6', isDone: false },
-    { name: 'Speaking: Intervyu mashqlari', type: 'Speaking', progress: 80, duration: '20 daqiqa', color: '#ff2d55', isDone: false },
-  ];
+  const [filter, setFilter] = useState<LessonFilter>('all');
 
   if (openLesson) {
     return <VideoLessonScreen isDark={isDark} title={openLesson} onBack={() => setOpenLesson(null)} />;
   }
 
+  // "Davom etayotgan" means started but unfinished — a lesson at 0% hasn't been
+  // started, so it belongs under "Hammasi" only. This also keeps the filter in
+  // agreement with the count in the header.
+  const visible = LESSONS.filter(l =>
+    filter === 'all'  ? true
+    : filter === 'done' ? l.progress === 100
+    : l.progress > 0 && l.progress < 100,
+  );
+  const activeIdx = LESSON_FILTERS.findIndex(f => f.key === filter);
+
+  // Continue-watching is the most useful thing to surface, so the header
+  // answers "what was I doing?" before the list answers "what else is there?".
+  // Furthest-along first — the one you're most likely to finish next.
+  const inProgress = LESSONS
+    .filter(l => l.progress > 0 && l.progress < 100)
+    .sort((a, b) => b.progress - a.progress);
+
   return (
     <div className="px-4 pb-4">
-      <div className="flex items-center justify-between pb-3 pt-2">
-        <h1 className="text-[34px] font-bold leading-tight" style={{ color: primaryText }}>
+      <div className="pb-3 pt-2">
+        {/* Large type wants negative tracking — letters read too far apart as they grow. */}
+        <h1
+          className="text-[34px] font-bold"
+          style={{ color: primaryText, letterSpacing: '-0.022em', lineHeight: 1.05 }}
+        >
           Darslar
         </h1>
-        <button
-          className="flex h-9 w-9 items-center justify-center rounded-full"
-          style={{ background: '#007AFF' }}
-        >
-          <Plus className="h-4 w-4 text-white" strokeWidth={2.5} />
-        </button>
+        <p className="mt-0.5 text-[13px]" style={{ color: secondaryText }}>
+          {inProgress.length} ta davom etmoqda · {LESSONS.filter(l => l.progress === 100).length} ta tugallandi
+        </p>
       </div>
 
-      {/* Segmented control */}
-      <div
-        className="mb-4 flex rounded-lg p-1"
-        style={{ background: isDark ? '#1c1c1e' : '#e5e5ea' }}
-      >
-        {['Hammasi', 'Davom etayotgan', 'Tugallangan'].map((seg, i) => (
-          <button
-            key={seg}
-            className="flex-1 rounded-md py-1.5 text-[13px] font-medium transition"
-            style={{
-              background: i === 0 ? cardBg : 'transparent',
-              color: primaryText,
-              boxShadow: i === 0 ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
-            }}
-          >
-            {seg}
-          </button>
-        ))}
-      </div>
+      {/* Continue row. A carousel earns its place here — this is a small,
+          curated set you browse, not the full list you scan. Native scroll-snap
+          does the work: the browser already has correct momentum and rubber-
+          banding, so no JS animation is needed and it can't fight the touch. */}
+      {inProgress.length > 0 && filter === 'all' && (
+        <div className="mb-5">
+          <div className="mb-2 flex items-center gap-1.5 px-1">
+            <Play className="h-3 w-3" style={{ color: secondaryText }} fill="currentColor" />
+            <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: secondaryText }}>
+              Davom ettirish
+            </span>
+          </div>
 
-      <div className="space-y-2.5">
-        {lessons.map((l) => (
-          <button
-            type="button"
-            key={l.name}
-            onClick={() => setOpenLesson(l.name)}
-            className="flex w-full items-center gap-3 rounded-2xl p-3.5 text-left transition-transform active:scale-[0.98]"
-            style={{ background: cardBg }}
+          {/* Negative margin lets cards bleed to the screen edge while the
+              padding keeps the first one aligned with the rest of the page. */}
+          <div
+            className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1"
+            style={{ scrollPaddingLeft: '1rem' }}
           >
-            <div
-              className="flex h-12 w-12 flex-none items-center justify-center rounded-xl text-base font-bold text-white"
-              style={{ background: l.color }}
-            >
-              {l.name.charAt(0)}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <span className="truncate text-[15px] font-semibold" style={{ color: primaryText }}>
+            {inProgress.map((l) => (
+              <button
+                type="button"
+                key={l.name}
+                onClick={() => setOpenLesson(l.name)}
+                className="snap-start overflow-hidden rounded-2xl p-4 text-left transition-transform duration-100 active:scale-[0.97]"
+                style={{
+                  // Just under full width, so the next card peeks — that sliver
+                  // is the only affordance telling you the row scrolls. Enough
+                  // to notice, not so much that it steals room from the card.
+                  flex: '0 0 88%',
+                  background: `linear-gradient(135deg, ${l.color} 0%, ${l.color}cc 55%, #5856D6 100%)`,
+                }}
+              >
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-white/75">
+                  {l.type}
+                </div>
+                <div
+                  className="mt-1 text-[16px] font-semibold text-white"
+                  style={{
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    lineHeight: 1.25,
+                    minHeight: '2.5em',
+                  }}
+                >
                   {l.name}
-                </span>
-                {l.isDone && (
-                  <span
-                    className="flex-none rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase"
-                    style={{ background: '#34c75920', color: '#34c759' }}
-                  >
-                    Tugallandi
-                  </span>
-                )}
+                </div>
+                <div className="mt-3 h-1 overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.28)' }}>
+                  <div className="h-full rounded-full bg-white" style={{ width: `${l.progress}%` }} />
+                </div>
+                <div className="mt-1.5 text-[11px] text-white/85">
+                  {l.progress}% · {l.duration}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Segmented control — a sliding pill, so the change of state is a
+          movement you can follow rather than a jump between two paints. */}
+      <div
+        className="relative mb-4 flex rounded-xl p-1"
+        style={{ background: isDark ? 'rgba(120,120,128,0.24)' : 'rgba(120,120,128,0.12)' }}
+      >
+        <div
+          aria-hidden="true"
+          className="absolute top-1 bottom-1 rounded-lg lesson-seg-pill"
+          style={{
+            width: `calc((100% - 0.5rem) / ${LESSON_FILTERS.length})`,
+            left: '0.25rem',
+            transform: `translateX(calc(${activeIdx} * 100%))`,
+            background: cardBg,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+          }}
+        />
+        {LESSON_FILTERS.map((f) => {
+          const isActive = f.key === filter;
+          return (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setFilter(f.key)}
+              className="relative z-10 flex-1 rounded-lg py-1.5 text-[13px] transition-colors"
+              style={{
+                color: isActive ? primaryText : secondaryText,
+                fontWeight: isActive ? 600 : 400,
+              }}
+            >
+              {f.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {visible.length === 0 ? (
+        <div className="rounded-2xl px-4 py-10 text-center" style={{ background: cardBg }}>
+          <p className="text-[15px] font-medium" style={{ color: primaryText }}>
+            {filter === 'done' ? 'Hali tugallangan dars yo\'q' : 'Davom etayotgan dars yo\'q'}
+          </p>
+          <p className="mt-1 text-[13px]" style={{ color: secondaryText }}>
+            {filter === 'done'
+              ? 'Birinchi darsni tugatsangiz, shu yerda ko\'rinadi.'
+              : 'Yangi dars boshlang — ro\'yxatdan birini tanlang.'}
+          </p>
+        </div>
+      ) : (
+        <LessonWheel
+          lessons={visible}
+          isDark={isDark}
+          onOpen={setOpenLesson}
+        />
+      )}
+    </div>
+  );
+}
+
+function LessonWheel({
+  lessons,
+  isDark,
+  onOpen,
+}: {
+  lessons: LessonRow[];
+  isDark: boolean;
+  onOpen: (name: string) => void;
+}) {
+  const cardBg = isDark ? '#1c1c1e' : '#ffffff';
+  const primaryText = isDark ? '#ffffff' : '#000000';
+  const secondaryText = isDark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
+
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [centre, setCentre] = useState(0);
+
+  // Curving rows is decoration; for anyone who asked the OS to calm motion down,
+  // fall back to a plain flat list rather than a spinning rim.
+  const flat = useReducedMotionPref();
+
+  // Read the live scroll offset straight off the element. Scroll events already
+  // fire at most once per frame, and the work here is a single number — putting
+  // it behind requestAnimationFrame would only add a frame of lag between the
+  // finger and the curve.
+  const onScroll = () => {
+    const el = scrollRef.current;
+    if (el) setCentre(el.scrollTop + el.clientHeight / 2);
+  };
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) setCentre(el.scrollTop + el.clientHeight / 2);
+  }, [lessons.length]);
+
+  return (
+    <div className="relative">
+      {/* The rim fades at both ends so rows arrive and leave rather than being
+          clipped by a hard edge. */}
+      <div
+        ref={scrollRef}
+        onScroll={onScroll}
+        className="no-scrollbar overflow-y-auto"
+        style={{
+          height: WHEEL_ITEM_H * 4,
+          scrollSnapType: flat ? undefined : 'y proximity',
+          perspective: flat ? undefined : '700px',
+          maskImage: 'linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent)',
+          WebkitMaskImage: 'linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent)',
+        }}
+      >
+        {/* Half an item of padding top and bottom so the first and last rows can
+            reach the centre of the wheel. */}
+        <div style={{ paddingTop: WHEEL_ITEM_H * 1.5, paddingBottom: WHEEL_ITEM_H * 1.5 }}>
+          {lessons.map((l, i) => {
+            const rowCentre = i * WHEEL_ITEM_H + WHEEL_ITEM_H / 2 + WHEEL_ITEM_H * 1.5;
+            const delta = rowCentre - centre;
+            const t = wheelTransform(delta, flat);
+            const isFocused = Math.abs(delta) < WHEEL_ITEM_H / 2;
+            return (
+              <div
+                key={l.name}
+                style={{
+                  height: WHEEL_ITEM_H,
+                  scrollSnapAlign: flat ? undefined : 'center',
+                  transform: `translateX(${t.x}px) rotate(${t.rot}deg) scale(${t.scale})`,
+                  opacity: t.opacity,
+                  transformOrigin: 'left center',
+                  willChange: 'transform, opacity',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => onOpen(l.name)}
+                  className="flex h-full w-full items-center gap-3 rounded-2xl px-3.5 text-left transition-transform duration-100 active:scale-[0.98]"
+                  style={{
+                    background: cardBg,
+                    boxShadow: isFocused ? '0 6px 20px rgba(0,0,0,0.10)' : 'none',
+                  }}
+                >
+                  <div className="relative flex-none">
+                    <div
+                      className="flex h-10 w-10 items-center justify-center rounded-xl text-[14px] font-bold text-white"
+                      style={{ background: l.color }}
+                    >
+                      {l.name.charAt(0)}
+                    </div>
+                    {l.progress === 100 && (
+                      <span
+                        className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2"
+                        style={{ background: '#34c759', borderColor: cardBg }}
+                      >
+                        <CheckCircle2 className="h-2.5 w-2.5 text-white" strokeWidth={3} />
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div
+                      className="truncate text-[14px] font-semibold"
+                      style={{ color: primaryText }}
+                    >
+                      {l.name}
+                    </div>
+                    <div className="mt-0.5 flex items-center gap-2">
+                      <span className="flex-none text-[11px]" style={{ color: secondaryText }}>
+                        {l.type}
+                      </span>
+                      {l.progress > 0 && l.progress < 100 && (
+                        <>
+                          <span
+                            className="h-1 flex-1 overflow-hidden rounded-full"
+                            style={{ background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(60,60,67,0.12)' }}
+                          >
+                            <span
+                              className="block h-full rounded-full"
+                              style={{ width: `${l.progress}%`, background: l.color }}
+                            />
+                          </span>
+                          <span className="flex-none text-[11px] tabular-nums" style={{ color: secondaryText }}>
+                            {l.progress}%
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </button>
               </div>
-              <div className="text-[12px]" style={{ color: secondaryText }}>
-                {l.type} · {l.duration}
-              </div>
-            </div>
-            <div className="flex flex-none flex-col items-end">
-              <span className="text-[15px] font-bold" style={{ color: l.progress === 100 ? '#34c759' : primaryText }}>
-                {l.progress}%
-              </span>
-              <span className="text-[11px]" style={{ color: secondaryText }}>
-                bajarildi
-              </span>
-            </div>
-          </button>
-        ))}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
