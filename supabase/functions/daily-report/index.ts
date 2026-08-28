@@ -13,8 +13,16 @@ import { sendSms }                  from '../_shared/eskiz.ts';
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return preflight();
 
+  // Fail CLOSED. This endpoint runs with verify_jwt: false and sends SMS to
+  // every opted-in parent, so an unauthenticated call costs real money and
+  // spams real people. If the secret isn't configured we refuse outright —
+  // the previous `if (secret && ...)` left the endpoint wide open whenever
+  // DAILY_REPORT_SECRET was missing, which is exactly when it's least safe.
   const secret = Deno.env.get('DAILY_REPORT_SECRET');
-  if (secret && req.headers.get('X-Cron-Secret') !== secret) {
+  if (!secret) {
+    return jsonResponse({ error: 'DAILY_REPORT_SECRET not configured' }, { status: 503 });
+  }
+  if (req.headers.get('X-Cron-Secret') !== secret) {
     return jsonResponse({ error: 'forbidden' }, { status: 403 });
   }
 

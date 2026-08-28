@@ -15,8 +15,13 @@ import { serviceClient }           from '../_shared/supabase.ts';
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return preflight();
 
+  // Fail closed, same as daily-report: a missing secret must not mean
+  // "let anyone run the weekly refresh".
   const secret = Deno.env.get('DAILY_REPORT_SECRET');
-  if (secret && req.headers.get('X-Cron-Secret') !== secret) {
+  if (!secret) {
+    return jsonResponse({ error: 'DAILY_REPORT_SECRET not configured' }, { status: 503 });
+  }
+  if (req.headers.get('X-Cron-Secret') !== secret) {
     return jsonResponse({ error: 'forbidden' }, { status: 403 });
   }
 

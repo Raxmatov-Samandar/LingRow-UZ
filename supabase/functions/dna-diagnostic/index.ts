@@ -10,7 +10,7 @@
 
 import { corsHeaders, jsonResponse, preflight, serverError } from '../_shared/cors.ts';
 import { getCallerUser, serviceClient }         from '../_shared/supabase.ts';
-import { chat }                                 from '../_shared/anthropic.ts';
+import { chat, CHEAP_MODEL }                    from '../_shared/anthropic.ts';
 
 const MAX_ANSWERS = 40; // 20-question test; generous cap against abuse, not a hard business rule
 
@@ -55,6 +55,9 @@ Deno.serve(async (req) => {
       }], {
         system: 'You are a warm, concise IELTS coach. Two sentences max. No markdown.',
         maxTokens: 150, temperature: 0.4,
+        // Two throwaway sentences — the deterministic scores are the real
+        // output, so this runs on the cheap model regardless of ANTHROPIC_MODEL.
+        model: CHEAP_MODEL,
       });
       narrative = text;
     } catch (_) {
