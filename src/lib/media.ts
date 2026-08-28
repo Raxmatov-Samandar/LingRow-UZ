@@ -17,6 +17,12 @@ export interface MediaInfo {
   embedUrl: string
   /** Original input. */
   original: string
+  /**
+   * YouTube video id, when there is a single one. Needed by the YouTube IFrame
+   * API (the lesson player reads playback time through it — a plain <iframe>
+   * can't report currentTime). Undefined for playlists and non-YouTube media.
+   */
+  videoId?: string
 }
 
 const YT_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'music.youtube.com'])
@@ -48,7 +54,14 @@ export function detectMedia(raw: string): MediaInfo {
 
     if (path.startsWith('/embed/')) {
       // already an embed — keep it
-      return { kind: 'youtube', embedUrl: url, original: url }
+      const embedId = path.replace('/embed/', '').split('/')[0]
+      return {
+        kind: 'youtube',
+        embedUrl: url,
+        original: url,
+        // 'videoseries' is a playlist, not a single video.
+        videoId: embedId && embedId !== 'videoseries' ? embedId : undefined,
+      }
     }
     if (path === '/playlist' && list) {
       return { kind: 'youtube', embedUrl: `https://www.youtube.com/embed/videoseries?list=${list}`, original: url }
@@ -95,6 +108,7 @@ function ytEmbed(id: string, parsed: URL, original: string): MediaInfo {
     kind: 'youtube',
     embedUrl: `https://www.youtube.com/embed/${id}${params.toString() ? '?' + params.toString() : ''}`,
     original,
+    videoId: id,
   }
 }
 

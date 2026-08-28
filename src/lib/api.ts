@@ -8,7 +8,7 @@ import type {
   ParentChild, ParentalControls, DailyReport, UserRole,
   DiagnosticQuestion, DiagnosticAnswerCheck, DnaScores, ErrorCategory, ErrorCatalogEntry,
   Subscription, Invoice, RetentionRow, ListeningAudioRow, LessonDetail, LessonLevel, LessonKind,
-  CambridgeBook, CambridgeBookPart, BookKind,
+  CambridgeBook, CambridgeBookPart, BookKind, TranscriptCue,
 } from '@/types';
 import {
   LEVELS, VOCAB, QUIZ, BADGES, LEADERBOARD,
@@ -31,15 +31,21 @@ async function fn<T>(name: string, body?: unknown, init: RequestInit = {}): Prom
   if (!supabase) throw new Error('Supabase not configured');
   const { data: { session } } = await supabase.auth.getSession();
   const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${name}`;
+  const isForm = body instanceof FormData;
+  // Content-Type must be OMITTED for FormData — the browser adds it together
+  // with the multipart boundary. Sending an empty string produces a header with
+  // no boundary, which the edge function then can't parse.
+  const headers: Record<string, string> = {
+    Authorization: session?.access_token ? `Bearer ${session.access_token}` : `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+    apikey:        import.meta.env.VITE_SUPABASE_ANON_KEY ?? '',
+    ...(init.headers as Record<string, string> ?? {}),
+  };
+  if (!isForm) headers['Content-Type'] = 'application/json';
+
   const res = await fetch(url, {
     method:  init.method ?? 'POST',
-    headers: {
-      'Content-Type':  body instanceof FormData ? '' : 'application/json',
-      Authorization:   session?.access_token ? `Bearer ${session.access_token}` : `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-      apikey:          import.meta.env.VITE_SUPABASE_ANON_KEY ?? '',
-      ...(init.headers ?? {}),
-    },
-    body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
+    headers,
+    body: isForm ? body : body ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
@@ -264,6 +270,32 @@ export const learning = {
     return fn<{ accuracy: number; fluency: number; pronunciation: number; transcript: string; tip: string }>('grade-speaking', fd);
   },
 
+  /**
+   * Build a TIMED transcript for a lesson (Whisper segments → cues).
+   * Pass a File for uploads, or a direct media URL. Streaming pages
+   * (YouTube/Vimeo) can't be fetched server-side — upload the audio instead.
+   */
+  async transcribeLesson(source: File | string) {
+    if (useMock) {
+      await wait(900);
+      return {
+        cues: [
+          { start: 0,   end: 2.4, text: 'Oh, good morning, Miranda.' },
+          { start: 2.4, end: 5.1, text: "I don't see my breakfast here." },
+          { start: 5.1, end: 8.0, text: 'My eggs — where are my eggs?' },
+        ],
+        duration: 8,
+        language: 'en',
+      };
+    }
+    if (typeof source === 'string') {
+      return fn<{ cues: TranscriptCue[]; duration: number; language: string }>('transcribe-lesson', { url: source });
+    }
+    const fd = new FormData();
+    fd.append('media', source, source.name || 'lesson.mp3');
+    return fn<{ cues: TranscriptCue[]; duration: number; language: string }>('transcribe-lesson', fd);
+  },
+
   /** slot -> public URL, e.g. { 'c18-t1-p1': 'https://...listening-audio/....mp3' }.
    *  Empty in mock mode -- Listening.tsx falls back to the static /public/audio
    *  path for any slot missing from this map, so nothing breaks pre-upload. */
@@ -324,13 +356,14 @@ function mapCambridgeBookRow(r: {
 
 function mapLessonRow(r: {
   id: string; title: string; level: string; type: string; description: string | null;
-  order_index: number; duration_min: number | null; content: { body?: string; mediaUrl?: string } | null;
+  order_index: number; duration_min: number | null;
+  content: { body?: string; mediaUrl?: string; cues?: TranscriptCue[] } | null;
   is_published: boolean; created_at: string;
 }): LessonDetail {
   return {
     id: r.id, title: r.title, level: r.level as LessonLevel, kind: r.type as LessonKind,
     description: r.description ?? undefined, body: r.content?.body ?? '',
-    mediaUrl: r.content?.mediaUrl, durationMin: r.duration_min ?? undefined,
+    mediaUrl: r.content?.mediaUrl, cues: r.content?.cues, durationMin: r.duration_min ?? undefined,
     orderIndex: r.order_index, isPublished: r.is_published, createdAt: r.created_at,
   };
 }
@@ -726,18 +759,29 @@ export const admin = {
    *  the founder's own browser. */
   async publishLesson(input: {
     title: string; level: LessonLevel; kind: LessonKind; description?: string;
-    body: string; mediaUrl?: string; durationMin?: number;
+    body: string; mediaUrl?: string; durationMin?: number; cues?: TranscriptCue[];
   }): Promise<LessonDetail> {
     if (useMock) throw new Error('Dars nashr qilish faqat real backend rejimida ishlaydi (mock rejimda emas).');
     const { data, error } = await supabase!.from('lessons').insert({
       title: input.title, level: input.level, type: input.kind,
       description: input.description ?? null,
       duration_min: input.durationMin ?? null,
-      content: { body: input.body, mediaUrl: input.mediaUrl },
+      content: { body: input.body, mediaUrl: input.mediaUrl, cues: input.cues },
       is_published: true,
     }).select().single();
     if (error) throw error;
     return mapLessonRow(data);
+  },
+
+  /** Attach or replace the timed transcript on an existing lesson. */
+  async saveLessonCues(id: string, cues: TranscriptCue[]): Promise<void> {
+    if (useMock) throw new Error('Faqat real backend rejimida ishlaydi.');
+    const { data, error: readErr } = await supabase!
+      .from('lessons').select('content').eq('id', id).single();
+    if (readErr) throw readErr;
+    const content = { ...(data?.content ?? {}), cues };
+    const { error } = await supabase!.from('lessons').update({ content }).eq('id', id);
+    if (error) throw error;
   },
 
   async removeLesson(id: string): Promise<void> {

@@ -20,7 +20,8 @@ import { cn } from '@/lib/cn'
 import { extractPdfText, parseCambridgeReading, parseCambridgeListening, looksScanned, ocrPdfPages, type OcrProgress, type PdfExtraction, type ParsedPart } from '@/lib/pdfParser'
 import { MediaPlayer } from '@/components/ui/MediaPlayer'
 import { admin, learning, isMockMode } from '@/lib/api'
-import type { RetentionRow, UserRole, ListeningAudioRow, LessonDetail, LessonLevel, LessonKind, CambridgeBook, BookKind } from '@/types'
+import { detectMedia } from '@/lib/media'
+import type { RetentionRow, UserRole, ListeningAudioRow, LessonDetail, LessonLevel, LessonKind, CambridgeBook, BookKind, TranscriptCue } from '@/types'
 
 type Tab = 'panels' | 'audio' | 'articles' | 'cambridge' | 'books' | 'dtm' | 'lessons' | 'stats' | 'retention'
 
@@ -1047,6 +1048,7 @@ function LessonsTab() {
   const [desc,  setDesc]  = useState('')
   const [body,  setBody]  = useState('')
   const [mediaUrl, setMediaUrl] = useState('')
+  const [cues, setCues] = useState<TranscriptCue[]>([])
   const [duration, setDuration] = useState<number | ''>('')
   const [publishing, setPublishing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -1068,8 +1070,9 @@ function LessonsTab() {
         body: body.trim(),
         mediaUrl: mediaUrl.trim() || undefined,
         durationMin: typeof duration === 'number' ? duration : undefined,
+        cues: cues.length ? cues : undefined,
       })
-      setTitle(''); setDesc(''); setBody(''); setMediaUrl(''); setDuration('')
+      setTitle(''); setDesc(''); setBody(''); setMediaUrl(''); setDuration(''); setCues([])
       setAdding(false)
       refresh()
     } catch (e) {
@@ -1139,6 +1142,12 @@ function LessonsTab() {
                      placeholder="YouTube / Vimeo / mp3 / mp4 URL" />
               <MediaPreview url={mediaUrl} />
             </Field>
+
+            <TranscriptField
+              mediaUrl={mediaUrl}
+              cues={cues}
+              setCues={setCues}
+            />
             <div className="flex gap-2 justify-end mt-1">
               <button onClick={() => setAdding(false)} className="btn-ghost px-4 py-2 text-xs">×</button>
               <button onClick={publish} disabled={!title.trim() || !body.trim() || publishing || isMockMode}
@@ -1368,6 +1377,120 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold">{label}</span>
       <div className="mt-1">{children}</div>
     </label>
+  )
+}
+
+// ─── Timed transcript builder ────────────────────────────────────────────────
+// Whisper turns audio into cues with real start/end seconds, which is what lets
+// the lesson transcript follow playback. Streaming pages (YouTube/Vimeo) don't
+// serve their media at the page URL, so those need the audio uploaded instead —
+// the video still plays from YouTube, this is only for the timings.
+
+function fmt(s: number): string {
+  const m = Math.floor(s / 60)
+  const sec = Math.floor(s % 60)
+  return `${m}:${sec.toString().padStart(2, '0')}`
+}
+
+function TranscriptField({
+  mediaUrl, cues, setCues,
+}: {
+  mediaUrl: string
+  cues: TranscriptCue[]
+  setCues: (c: TranscriptCue[]) => void
+}) {
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement | null>(null)
+
+  const info = detectMedia(mediaUrl)
+  const isStream = info.kind === 'youtube' || info.kind === 'vimeo'
+  const canUseUrl = !!mediaUrl.trim() && !isStream && info.kind !== 'unknown'
+
+  async function run(source: File | string) {
+    setBusy(true); setErr(null)
+    try {
+      const res = await learning.transcribeLesson(source)
+      setCues(res.cues)
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Field label="Transkript (vaqt bilan)">
+      <input
+        ref={fileRef}
+        type="file"
+        accept="audio/*,video/*"
+        className="hidden"
+        onChange={e => {
+          const f = e.target.files?.[0]
+          if (f) run(f)
+          e.target.value = ''
+        }}
+      />
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={busy}
+          className="btn-ghost text-xs px-3 py-1.5 disabled:opacity-40"
+        >
+          {busy ? 'Yaratilmoqda…' : 'Audio yuklab yaratish'}
+        </button>
+        <button
+          type="button"
+          onClick={() => run(mediaUrl.trim())}
+          disabled={busy || !canUseUrl}
+          className="btn-ghost text-xs px-3 py-1.5 disabled:opacity-40"
+          title={isStream ? 'YouTube/Vimeo havolasidan server audio ololmaydi — faylni yuklang' : undefined}
+        >
+          URL dan yaratish
+        </button>
+        {cues.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setCues([])}
+            className="btn-ghost text-xs px-3 py-1.5 text-rose-300"
+          >
+            Tozalash
+          </button>
+        )}
+      </div>
+
+      {isStream && (
+        <p className="mt-2 text-[11px] text-amber-300/80">
+          YouTube/Vimeo uchun audio faylni alohida yuklang — video baribir o'sha
+          yerdan o'ynaydi, bu faqat vaqt belgilari uchun.
+        </p>
+      )}
+
+      {err && (
+        <p className="mt-2 text-[11px] text-rose-300 bg-rose-500/10 border border-rose-500/30 rounded-lg p-2">
+          {err}
+        </p>
+      )}
+
+      {cues.length > 0 && (
+        <div className="mt-2 rounded-lg border border-white/10 bg-black/20">
+          <div className="px-3 py-1.5 text-[11px] text-slate-400 border-b border-white/10">
+            {cues.length} qator · {fmt(cues[cues.length - 1].end)} davomiylik
+          </div>
+          <div className="max-h-40 overflow-y-auto px-3 py-2 space-y-1">
+            {cues.map((c, i) => (
+              <div key={i} className="flex gap-2 text-[11px]">
+                <span className="flex-none font-mono tabular-nums text-cosmic-mint">{fmt(c.start)}</span>
+                <span className="text-slate-300">{c.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </Field>
   )
 }
 

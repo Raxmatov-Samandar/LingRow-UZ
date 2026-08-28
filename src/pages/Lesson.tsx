@@ -10,6 +10,8 @@ import { useUi } from '@/store/ui';
 import { learning } from '@/lib/api';
 import type { LessonDetail } from '@/types';
 import { MediaPlayer } from '@/components/ui/MediaPlayer';
+import { LessonPlayer, type LessonPlayerHandle } from '@/components/lesson/LessonPlayer';
+import { SyncedTranscript } from '@/components/lesson/SyncedTranscript';
 import { LessonQuiz } from '@/components/lesson/LessonQuiz';
 
 interface VocabRow {
@@ -88,6 +90,11 @@ const VOCAB_ROWS: VocabRow[] = [
 export function Lesson() {
   const { id } = useParams<{ id: string }>();
   const [activeIdx, setActiveIdx] = useState(0);
+  // Playback position drives the synced transcript. When the learner pauses,
+  // this simply stops updating, so the highlight freezes where they stopped.
+  const [currentTime, setCurrentTime] = useState(0);
+  const [syncable, setSyncable] = useState(true);
+  const playerRef = useRef<LessonPlayerHandle | null>(null);
   const [quizOpen, setQuizOpen] = useState(false);
   const log = useActivity(s => s.log);
   const setSidebar = useUi(s => s.setSidebar);
@@ -113,7 +120,7 @@ export function Lesson() {
   }, [activeIdx, lessonTitle]); // eslint-disable-line
 
   // Keep idx in range when switching lessons
-  useEffect(() => { setActiveIdx(0); }, [activeLesson?.id]);
+  useEffect(() => { setActiveIdx(0); setCurrentTime(0); }, [activeLesson?.id]);
 
   return (
     <>
@@ -125,14 +132,30 @@ export function Lesson() {
           {/* Video block */}
           <div className="glass-panel flex flex-col gap-4 p-5 shrink-0">
             {activeLesson?.mediaUrl ? (
-              <MediaPlayer url={activeLesson.mediaUrl} title={activeLesson.title} />
+              <LessonPlayer
+                ref={playerRef}
+                url={activeLesson.mediaUrl}
+                onTime={setCurrentTime}
+                onSyncableChange={setSyncable}
+              />
             ) : (
               <DemoVideoPlaceholder title={lessonTitle} />
             )}
 
             {lessons.length > 0 && <LessonSwitcher lessons={lessons} activeId={activeLesson?.id} />}
 
-            <SubtitleBar activeIdx={activeIdx} setActiveIdx={setActiveIdx} />
+            {/* Timed transcript when the lesson has one; the old manually-stepped
+                card strip stays as the fallback for lessons without cues. */}
+            {activeLesson?.cues?.length ? (
+              <SyncedTranscript
+                cues={activeLesson.cues}
+                currentTime={currentTime}
+                syncable={syncable}
+                onSeek={(s) => playerRef.current?.seekTo(s)}
+              />
+            ) : (
+              <SubtitleBar activeIdx={activeIdx} setActiveIdx={setActiveIdx} />
+            )}
           </div>
 
           <aside className="flex flex-col gap-4 shrink-0 lg:min-h-0">
