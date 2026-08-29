@@ -16,3 +16,7 @@ dist-ssr
 
 # Supabase CLI local link/cache state
 supabase/.temp
+
+# Play release binaries — 20 MB each and rebuildable from source
+store/play/*.aab
+store/play/*.apk
