@@ -49,6 +49,16 @@ export const uz: Translation = {
     parentSub: "Farzandingizni kuzating va yo'naltiring",
   },
 
+  // Bottom tab labels are their own set: a tab is a thumb-sized target, so the
+  // sidebar's longer names ("Bosh sahifa", "Mening statistikam") do not fit.
+  tabs: {
+    ariaLabel: "Asosiy bo'limlar",
+    home: 'Bosh',
+    lessons: 'Darslar',
+    vocab: "Lug'at",
+    stats: 'Tahlil',
+    profile: 'Profil',
+  },
   nav: {
     dashboard: 'Bosh sahifa',
     aiTutor: 'AI Ustoz',
@@ -660,17 +670,23 @@ export const uz: Translation = {
   legal: {
     privacy: {
       title: 'Maxfiylik siyosati',
-      intro: "LingRow sizning maxfiyligingizni hurmat qiladi. Bu sahifa biz nima yig'ishimiz va undan qanday foydalanishimizning qisqacha mazmunidir. Ommaviy ishga tushirishdan oldin to'liq yuridik matn bilan almashtiriladi.",
+      intro: "LingRow sizning maxfiyligingizni hurmat qiladi. Ushbu sahifa biz qanday ma'lumot yig'ishimizni, undan qanday foydalanishimizni va u kim bilan bo'lishilishini tushuntiradi.",
       collectTitle: "Biz nima yig'amiz",
-      collect: "Akkaunt ma'lumotlari (ism, email, telefon), o'rganish jarayoni (tugatilgan darslar, lug'at, ballar) va asosiy foydalanish statistikasi.",
+      collect: "Akkaunt ma'lumotlari (ism, email, ixtiyoriy telefon raqami, yosh va rol); o'rganish jarayoni (tugatilgan darslar, saqlangan so'zlar, test natijalari, XP va streak); siz yuborgan yozma ishlar; va Speaking mashqlarida yozib olingan ovozingiz. Ovoz yozuvi faqat siz yozishni boshlaganingizda olinadi — ilova fonda tinglamaydi.",
       useTitle: "Qanday ishlatamiz",
-      use: "O'rganishingizni shaxsiylashtirish, qurilmalar bo'ylab progressni sinxronlash va platformani yaxshilash uchun. Shaxsiy ma'lumotlarni sotmaymiz.",
+      use: "O'rganishingizni shaxsiylashtirish, qurilmalar bo'ylab progressni sinxronlash, yozma va og'zaki ishlaringizni baholab fikr-mulohaza berish va platformani yaxshilash uchun. Shaxsiy ma'lumotlaringizni sotmaymiz va reklama uchun ishlatmaymiz.",
+      shareTitle: "Kim bilan bo'lishamiz",
+      share: "Ilova ishlashi uchun ma'lumotlaringiz quyidagi xizmatlar orqali o'tadi: Supabase (ma'lumotlar bazasi, autentifikatsiya va fayl saqlash), Vercel (veb-saytni yetkazib berish), OpenAI (Speaking mashqlarida ovozingizni matnga aylantirish) va Anthropic (yozma va og'zaki ishlaringizni baholash hamda AI Tutor javoblari). Ovoz yozuvingiz baholanishi uchun OpenAI'ga, matnga aylantirilgandan so'ng esa baho va maslahat olish uchun Anthropic'ga yuboriladi. Ular bu ma'lumotdan o'z modellarini o'qitish uchun foydalanmaydi.",
+      retentionTitle: "Qancha saqlaymiz",
+      retention: "Akkauntingiz va o'rganish tarixingiz siz uni o'chirmaguningizcha saqlanadi. Ovoz yozuvlari va AI baholari akkauntingizga bog'liq holda saqlanadi. Ma'lumotlaringizni o'chirishni so'rasangiz, akkauntingiz va unga bog'liq barcha yozuvlar, jumladan ovoz fayllari, 30 kun ichida o'chiriladi.",
+      childrenTitle: "Bolalar",
+      children: "LingRow 13 yoshdan katta foydalanuvchilar uchun mo'ljallangan. Agar farzandingiz undan foydalanayotgan bo'lsa va uning ma'lumotlarini o'chirishni istasangiz, quyidagi manzilga yozing.",
       contactTitle: "Bog'lanish",
       contact: "Maxfiylik bo'yicha savollar yoki ma'lumotlarni o'chirish so'rovlari uchun yozing:",
     },
     terms: {
       title: 'Foydalanish shartlari',
-      intro: "LingRow'dan foydalanish bilan ushbu shartlarga rozilik bildirasiz. Ommaviy ishga tushirishdan oldin to'liq yuridik matn bilan almashtiriladi.",
+      intro: "LingRow'dan foydalanish bilan ushbu shartlarga rozilik bildirasiz.",
       useTitle: "Xizmatdan foydalanish",
       use: "LingRow'dan shaxsiy, notijoriy til o'rganish maqsadida foydalanishingiz mumkin. Platformani noto'g'ri ishlatmaslik yoki ruxsatsiz kirish urinishini qilmaslikka rozilik bildirasiz.",
       accountsTitle: 'Akkauntlar',

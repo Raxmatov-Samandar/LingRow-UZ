@@ -35,6 +35,15 @@ export function Privacy() {
       <p>{t('legal.privacy.collect')}</p>
       <h3 className="text-white font-bold mt-4">{t('legal.privacy.useTitle')}</h3>
       <p>{t('legal.privacy.use')}</p>
+      {/* Speech grading sends a recording off the device to a transcription
+          service and a grading model. Play's Data Safety form has to declare
+          that, and the declaration has to match what this page says. */}
+      <h3 className="text-white font-bold mt-4">{t('legal.privacy.shareTitle')}</h3>
+      <p>{t('legal.privacy.share')}</p>
+      <h3 className="text-white font-bold mt-4">{t('legal.privacy.retentionTitle')}</h3>
+      <p>{t('legal.privacy.retention')}</p>
+      <h3 className="text-white font-bold mt-4">{t('legal.privacy.childrenTitle')}</h3>
+      <p>{t('legal.privacy.children')}</p>
       <h3 className="text-white font-bold mt-4">{t('legal.privacy.contactTitle')}</h3>
       <p>
         {t('legal.privacy.contact')}{' '}

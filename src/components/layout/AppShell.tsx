@@ -9,8 +9,10 @@
 import { useEffect, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Sidebar } from './Sidebar'
+import { BottomTabBar } from './BottomTabBar'
 import { FloatingTutor } from '@/components/ui/FloatingTutor'
 import { useUi } from '@/store/ui'
+import { useAuth } from '@/store/auth'
 
 interface Props { children: ReactNode }
 
@@ -18,6 +20,11 @@ export function AppShell({ children }: Props) {
   const collapsed     = useUi(s => s.sidebarCollapsed)
   const mobileNavOpen = useUi(s => s.mobileNavOpen)
   const setMobileNav  = useUi(s => s.setMobileNav)
+  const role          = useAuth(s => s.user?.role)
+
+  // Parents and the DTM track have their own destinations; the five tabs are the
+  // learner's set, so they only appear for the roles that use them.
+  const showTabs = role === 'student' || role === 'adult'
 
   // Close drawer when the viewport grows past lg
   useEffect(() => {
@@ -105,6 +112,11 @@ export function AppShell({ children }: Props) {
         <div className="flex flex-col gap-3 lg:gap-5 flex-1 min-h-0 overflow-hidden lg:pt-0 pt-12">
           {children}
         </div>
+
+        {/* A flex child rather than a fixed overlay: the content column shrinks
+            to make room instead of scrolling underneath the bar, and the body's
+            existing safe-area padding keeps applying. */}
+        {showTabs && <BottomTabBar />}
       </main>
 
       <FloatingTutor />

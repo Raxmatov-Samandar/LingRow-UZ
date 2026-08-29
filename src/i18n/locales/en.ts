@@ -51,6 +51,16 @@ export const en = {
   },
 
   // ──────────────── Sidebar nav ────────────────
+  // Bottom tab labels are their own set — a tab is a thumb-sized target, so the
+  // sidebar's longer names do not fit.
+  tabs: {
+    ariaLabel: 'Main sections',
+    home: 'Home',
+    lessons: 'Lessons',
+    vocab: 'Words',
+    stats: 'Progress',
+    profile: 'Profile',
+  },
   nav: {
     dashboard: 'Dashboard',
     aiTutor: 'AI Tutor',
@@ -680,17 +690,23 @@ export const en = {
   legal: {
     privacy: {
       title: 'Privacy Policy',
-      intro: 'LingRow respects your privacy. This page summarizes what we collect and how we use it. The full legal text will replace this summary before public launch.',
+      intro: 'LingRow respects your privacy. This page explains what we collect, how we use it, and who it is shared with.',
       collectTitle: 'What we collect',
-      collect: 'Account info (name, email, phone), learning progress (lessons completed, vocabulary, scores), and basic usage analytics.',
+      collect: 'Account details (name, email, optional phone number, age and role); learning progress (lessons completed, saved words, quiz scores, XP and streak); written work you submit; and the voice recordings you make in Speaking exercises. Audio is captured only when you start a recording — the app does not listen in the background.',
       useTitle: 'How we use it',
-      use: 'To personalize your learning, sync progress across devices, and improve the platform. We do not sell personal data.',
+      use: 'To personalize your learning, sync progress across devices, grade your written and spoken work and return feedback, and improve the platform. We do not sell your personal data and we do not use it for advertising.',
+      shareTitle: 'Who we share it with',
+      share: 'Your data passes through the services that run the app: Supabase (database, authentication and file storage), Vercel (website delivery), OpenAI (converting your Speaking audio to text) and Anthropic (grading your written and spoken work, and AI Tutor replies). Your recording is sent to OpenAI for transcription, and the resulting transcript is sent to Anthropic for scoring and advice. Neither uses this data to train their models.',
+      retentionTitle: 'How long we keep it',
+      retention: 'Your account and learning history are kept until you delete them. Voice recordings and AI feedback are stored against your account. If you ask us to delete your data, your account and everything attached to it — including audio files — is removed within 30 days.',
+      childrenTitle: 'Children',
+      children: 'LingRow is intended for users aged 13 and over. If your child uses it and you want their data removed, write to us at the address below.',
       contactTitle: 'Contact',
       contact: 'For privacy questions or data deletion requests, email',
     },
     terms: {
       title: 'Terms of Service',
-      intro: 'By using LingRow you agree to these terms. The full legal text will replace this summary before public launch.',
+      intro: 'By using LingRow you agree to these terms.',
       useTitle: 'Use of the service',
       use: 'You may use LingRow for personal, non-commercial language learning. You agree not to misuse the platform or attempt to access it in unauthorized ways.',
       accountsTitle: 'Accounts',
