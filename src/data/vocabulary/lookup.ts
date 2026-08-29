@@ -1,13 +1,17 @@
 // =============================================================================
 // One dictionary to search across every word bank we ship.
 //
-// The curated bank (`bilingual.ts`) is small but complete — IPA, definitions in
-// both languages, example sentences. The AWL bank (`awl.ts`) is large but
-// carries only what can be stated accurately at that scale. Merging them here
-// means callers get one list and one ranking rule instead of each screen
-// inventing its own.
+// Three banks of very different depth. Cambridge (`cambridge-bank.ts`) has full
+// entries — senses, idioms, word family. The curated bank (`bilingual.ts`) has
+// IPA, definitions in both languages and examples. The AWL bank (`awl.ts`) is
+// large but carries only what can be stated accurately at that scale.
+//
+// Before this they were searched separately, so which words you could find
+// depended on which screen you were on. Merging them here means callers get one
+// list and one ranking rule instead of each screen inventing its own.
 // =============================================================================
 
+import { CAMBRIDGE_BANK } from './cambridge-bank';
 import { VOCAB_BANK } from './bilingual';
 import { AWL_WORDS } from './awl';
 
@@ -24,18 +28,43 @@ export interface LookupEntry {
   exampleUz?: string;
   level?:     string;
   category?:  string;
-  /** 1–10 for AWL entries; absent for the curated bank. */
+  /** 1–10 for AWL entries; absent for the other banks. */
   sublist?:   number;
+  cefr?:      string;
+  /** Set when a full Cambridge entry exists — senses, idioms, word family.
+   *  The value is that entry's own id, so a caller can open the detail view. */
+  dictId?:    string;
 }
 
 /**
- * Curated entries win on collision — a word that already has IPA and an example
- * sentence is strictly richer than the AWL row for the same headword.
+ * Three banks, one list, richest wins on collision.
+ *
+ * Cambridge entries carry senses, idioms and a word family, so they outrank the
+ * curated bank; the curated bank has IPA and example sentences, so it outranks
+ * an AWL row for the same headword. Without this the same word could appear
+ * three times, each time shallower than the last.
  */
 function buildDictionary(): LookupEntry[] {
   const byWord = new Map<string, LookupEntry>();
 
+  for (const w of CAMBRIDGE_BANK) {
+    byWord.set(w.headword.toLowerCase(), {
+      id: `k:${w.id}`,
+      dictId: w.id,
+      en: w.headword,
+      uz: w.uz,
+      pos: w.senses[0]?.pos,
+      phonetic: w.pron?.uk,
+      defUz: w.senses[0]?.defUz,
+      defEn: w.senses[0]?.defEn,
+      exampleEn: w.senses[0]?.examples?.[0]?.en,
+      exampleUz: w.senses[0]?.examples?.[0]?.uz,
+      cefr: w.cefr,
+    });
+  }
+
   for (const w of VOCAB_BANK) {
+    if (byWord.has(w.en.toLowerCase())) continue;
     byWord.set(w.en.toLowerCase(), {
       id: `c:${w.id}`,
       en: w.en,
@@ -93,7 +122,7 @@ function score(e: LookupEntry, q: string): number {
 function haystack(e: LookupEntry): string {
   return [
     e.en, e.uz, ...(e.uzAlt ?? []),
-    e.defUz, e.defEn, e.phonetic, e.category, e.level,
+    e.defUz, e.defEn, e.phonetic, e.category, e.level, e.cefr,
   ].filter(Boolean).join(' ').toLowerCase();
 }
 

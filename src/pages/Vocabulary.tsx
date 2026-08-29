@@ -17,6 +17,8 @@ import {
   CAMBRIDGE_BANK, searchDictionary, ALL_CEFR, ALL_TOPICS,
   type DictEntry, type CEFR, type Sense,
 } from '@/data/vocabulary/cambridge-bank';
+// Every bank in one list, so a search here can find the academic words too.
+import { lookupWord } from '@/data/vocabulary/lookup';
 
 const CEFR_COLORS: Record<CEFR, string> = {
   A1: 'bg-emerald-400/15 text-emerald-300 border-emerald-400/40',
@@ -49,6 +51,17 @@ export function Vocabulary() {
     if (cefrFilter.size  > 0) list = list.filter(e => cefrFilter.has(e.cefr));
     if (topicFilter.size > 0) list = list.filter(e => (e.topics ?? []).some(t => topicFilter.has(t)));
     return list;
+  }, [query, cefrFilter, topicFilter]);
+
+  // Words that exist in the other banks but have no full Cambridge entry. They
+  // used to be unfindable here, so a search for an academic word came back empty
+  // even though the app ships it. They get a compact row rather than the detail
+  // pane, because there is no detail to show — the CEFR and topic filters are
+  // Cambridge-only metadata, so an active filter hides them rather than
+  // pretending they were considered.
+  const extras = useMemo(() => {
+    if (!query.trim() || cefrFilter.size > 0 || topicFilter.size > 0) return [];
+    return lookupWord(query).filter(e => !e.dictId);
   }, [query, cefrFilter, topicFilter]);
 
   // Auto-select first result if current selection no longer matches
@@ -157,6 +170,30 @@ export function Vocabulary() {
                 </button>
               ))}
             </div>
+
+            {extras.length > 0 && (
+              <>
+                <p className="text-[10px] tracking-[0.2em] text-slate-400 px-2 mb-2 mt-4">
+                  LUG'ATDAN — {extras.length}
+                </p>
+                <div className="flex flex-col gap-1">
+                  {extras.map(e => (
+                    <div key={e.id} className="rounded-xl p-2.5 border border-transparent">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-sm font-bold text-white truncate">{e.en}</span>
+                        {e.sublist && (
+                          <span className="ml-auto shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold border border-white/15 text-slate-300">
+                            AWL {e.sublist}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-cosmic-mint truncate">{e.uz}</p>
+                      {e.defUz && <p className="text-[10px] text-slate-400 mt-1 leading-snug">{e.defUz}</p>}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </aside>
 
           {/* Entry detail */}
