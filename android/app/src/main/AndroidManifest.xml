@@ -32,4 +32,12 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Speaking practice records the learner through getUserMedia. In a browser
+         that only needs the site prompt, but inside the WebView Android also
+         wants the permission declared here — without it getUserMedia fails and
+         the whole Speaking section is dead in the packaged app. Capacitor's
+         bridge asks the user at the moment recording starts. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 </manifest>
