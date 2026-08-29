@@ -13,8 +13,16 @@ function Shell({ title, children }: { title: string; children: React.ReactNode }
   return (
     <>
       <Cosmos />
-      <div className="h-screen overflow-y-auto flex flex-col items-center px-4 py-10">
-        <div className="w-full max-w-3xl glass-panel p-7">
+      {/* 100dvh, not h-screen: on a phone 100vh includes the URL bar, so the
+          bottom of the page sits under it and body's overflow:hidden makes it
+          unreachable. */}
+      <div className="h-[100dvh] overflow-y-auto flex flex-col items-center px-4 py-10">
+        {/* shrink-0 is what makes this page readable at all. As a flex item in a
+            fixed-height column the panel was being squeezed to fit the viewport,
+            and .glass-panel clips its overflow — so everything past the fold was
+            cut off with nothing to scroll. Keeping its natural height hands the
+            scrolling back to the container above. */}
+        <div className="w-full max-w-3xl shrink-0 glass-panel p-7">
           <Link to="/" className="text-xs text-cosmic-mint hover:underline">← {BRAND_NAME}</Link>
           <h1 className="mt-3 text-3xl font-extrabold text-white">{title}</h1>
           <div className="mt-5 prose prose-invert max-w-none text-slate-200 text-sm leading-relaxed space-y-3">
