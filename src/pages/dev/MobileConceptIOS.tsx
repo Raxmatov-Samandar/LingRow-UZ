@@ -12,6 +12,9 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 // (5 categories, 0-100 mastery where higher = stronger) instead of invented numbers.
 import { ERROR_CATALOG } from '@/data/errorDna';
 import type { ErrorCategory } from '@/types';
+// The real dictionary, not mock words — the search box is meant to be used.
+// `lookupWord` searches the curated bank and the academic word list together.
+import { lookupWord, DICTIONARY, type LookupEntry } from '@/data/vocabulary/lookup';
 import {
   Home, BookOpen, BarChart3, Dna, User, UserRound, ChevronRight, Bell, Search, Play, Pause,
   TrendingUp, TrendingDown, CheckCircle2, Award, Lock, Info, Contrast,
@@ -64,7 +67,7 @@ const DEMO_NOTIFICATIONS: AppNotification[] = [
     title: 'Bugungi dars tayyor',
     body: "Present Perfect grammatika darsi va 8 ta yangi so'z sizni kutmoqda.",
     time: 'hozir',
-    iconBg: 'linear-gradient(135deg, #007AFF, #5856D6)',
+    iconBg: 'linear-gradient(135deg, #2563EB, #8a4dff)',
     Icon: BookOpen,
   },
   {
@@ -74,7 +77,7 @@ const DEMO_NOTIFICATIONS: AppNotification[] = [
     title: "So'zlarni takrorlash vaqti",
     body: "12 ta so'z spaced repetition navbatida — unutmasdan oldin takrorlang.",
     time: '1 daq',
-    iconBg: 'linear-gradient(135deg, #FF9500, #FF3B30)',
+    iconBg: 'linear-gradient(135deg, #F59E0B, #ff453a)',
     Icon: Repeat2,
   },
   {
@@ -84,7 +87,7 @@ const DEMO_NOTIFICATIONS: AppNotification[] = [
     title: 'Yangi maslahat',
     body: "Artikllar (a/an/the) bilan ko'p xato qilyapsiz — shu mavzuga 10 daqiqa ajrating.",
     time: '5 daq',
-    iconBg: 'linear-gradient(135deg, #AF52DE, #FF2D55)',
+    iconBg: 'linear-gradient(135deg, #AF52DE, #a59bff)',
     Icon: Bot,
   },
   {
@@ -94,7 +97,7 @@ const DEMO_NOTIFICATIONS: AppNotification[] = [
     title: '7 kunlik streak!',
     body: 'Ajoyib! Ketma-ket 7 kun mashq qildingiz — davom eting.',
     time: '12 daq',
-    iconBg: 'linear-gradient(135deg, #34C759, #30D158)',
+    iconBg: 'linear-gradient(135deg, #22C55E, #30D158)',
     Icon: Flame,
   },
 ];
@@ -104,6 +107,39 @@ const DEMO_NOTIFICATIONS: AppNotification[] = [
 // Interactive iPhone 15 Pro mockup with 5 main screens.
 // All data is mocked — this is a design concept, not wired to live data.
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ─── LingRow surface language ────────────────────────────────────────────────
+// Lifted from the live app: a deep navy field, panels that are gradients rather
+// than flat fills, hairline light borders, and mint reserved for small
+// uppercase labels — mint is far too pale to sit under white text, but on the
+// dark field it's the brightest thing on screen, which is exactly what a label
+// wants to be.
+
+const LR = {
+  mint:   '#7ef7d3',
+  sky:    '#5aa9ff',
+  violet: '#a59bff',
+  /** Fills that carry white text — light tints fail contrast, these don't. */
+  blue:   '#2563EB',
+  purple: '#8a4dff',
+};
+
+/** Panel background: a gradient on dark, plain white on light. */
+function panelBg(isDark: boolean): string {
+  return isDark
+    ? 'linear-gradient(160deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.025) 45%, rgba(140,175,255,0.035) 100%), #0b1020'
+    : '#ffffff';
+}
+
+/** The hairline that makes a panel read as glass rather than a painted box. */
+function panelBorder(isDark: boolean): string {
+  return isDark ? '1px solid rgba(255,255,255,0.10)' : '1px solid rgba(60,60,67,0.10)';
+}
+
+/** Small uppercase label — mint on dark, muted ink on light. */
+function labelColor(isDark: boolean): string {
+  return isDark ? LR.mint : 'rgba(60,60,67,0.65)';
+}
 
 type TabKey = 'home' | 'lessons' | 'analytics' | 'dna' | 'profile';
 type DeviceColor = 'titanium' | 'natural' | 'blue' | 'white';
@@ -261,7 +297,7 @@ function NotificationBanner({
           <div
             className="h-full"
             style={{
-              background: 'linear-gradient(90deg, #007AFF, #5856D6)',
+              background: 'linear-gradient(90deg, #2563EB, #8a4dff)',
               animation: 'ios-banner-shrink 4.5s linear forwards',
               transformOrigin: 'left',
             }}
@@ -380,7 +416,7 @@ function NotificationCenter({
             onClick={onTriggerDemo}
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-[18px] py-3.5 text-[14px] font-semibold transition active:scale-[0.98]"
             style={{
-              background: 'linear-gradient(135deg, #007AFF, #5856D6)',
+              background: 'linear-gradient(135deg, #2563EB, #8a4dff)',
               color: '#ffffff',
               boxShadow: '0 4px 14px rgba(0,122,255,0.35)',
             }}
@@ -503,7 +539,7 @@ function ReportSheet({
   const data = REPORTS[reportKey];
   const primaryText = isDark ? '#ffffff' : '#000000';
   const secondaryText = isDark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
-  const tileBg = isDark ? 'rgba(255,255,255,0.06)' : '#F2F2F7';
+  const tileBg = isDark ? 'rgba(255,255,255,0.06)' : '#F8FAFF';
   const divider = isDark ? 'rgba(84,84,88,0.6)' : 'rgba(60,60,67,0.18)';
 
   return (
@@ -517,7 +553,7 @@ function ReportSheet({
         className="absolute bottom-0 left-0 right-0 flex max-h-[86%] flex-col overflow-hidden rounded-t-[28px]"
         style={{
           animation: 'ios-sheet-up 0.36s cubic-bezier(0.16, 1, 0.3, 1)',
-          background: isDark ? '#1c1c1e' : '#ffffff',
+          background: isDark ? '#0e1428' : '#ffffff',
           boxShadow: '0 -10px 40px rgba(0,0,0,0.3)',
         }}
       >
@@ -554,7 +590,7 @@ function ReportSheet({
                 <div className="text-[11px]" style={{ color: secondaryText }}>{s.label}</div>
                 <div
                   className="mt-0.5 text-[19px] font-bold"
-                  style={{ color: s.accent === 'up' ? '#34c759' : s.accent === 'down' ? '#ff3b30' : primaryText }}
+                  style={{ color: s.accent === 'up' ? '#22C55E' : s.accent === 'down' ? '#ff453a' : primaryText }}
                 >
                   {s.value}
                 </div>
@@ -622,7 +658,9 @@ export default function MobileConceptIOS() {
   useNotifKeyframes();
 
   const [activeTab, setActiveTab] = useState<TabKey>('home');
-  const [isDark, setIsDark] = useState(false);
+  // The product itself is dark-first (globals.css paints the body #02030c),
+  // so the mockup opens the way a real user sees the app.
+  const [isDark, setIsDark] = useState(true);
   const [deviceColor, setDeviceColor] = useState<DeviceColor>('titanium');
   const [platform, setPlatform] = useState<'ios' | 'android'>('ios');
   const isMobile = useIsMobile();
@@ -656,8 +694,10 @@ export default function MobileConceptIOS() {
     return (
       <div
         className="fixed inset-0 flex flex-col overflow-hidden"
-        style={{ background: isDark ? '#000000' : '#F2F2F7' }}
+        style={{ background: isDark ? '#02030c' : '#F8FAFF' }}
       >
+        {/* Same sky on a real phone as in the desktop mockup. */}
+        {isDark && <PhoneCosmos />}
         <StatusBar isDark={isDark} mobile />
         <ScreenContent
           activeTab={activeTab}
@@ -907,13 +947,105 @@ function PhoneFrame({
   );
 }
 
+/**
+ * One of the floating ABC letters from the brand banner.
+ */
+function BrandLetter({
+  char, className, size, tilt, tone, under,
+}: {
+  char: string; className?: string; size: number; tilt: number; tone: string; under: string;
+}) {
+  return (
+    <span
+      className={`absolute font-black leading-none ${className ?? ''}`}
+      style={{
+        fontSize: size,
+        color: tone,
+        transform: `rotate(${tilt}deg)`,
+        textShadow: `0 2px 0 ${under}, 0 4px 8px rgba(24,6,58,0.35)`,
+      }}
+    >
+      {char}
+    </span>
+  );
+}
+
+/**
+ * The concave four-point sparkle from the brand artwork. Inline rather than a
+ * lucide import because lucide's `Sparkles` is a three-star cluster — a
+ * different mark from the one the banner uses.
+ */
+function Sparkle4({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
+      <path d="M12 0c.6 6.2 5.2 10.8 12 12-6.8 1.2-11.4 5.8-12 12-.6-6.2-5.2-10.8-12-12C6.8 10.8 11.4 6.2 12 0z" />
+    </svg>
+  );
+}
+
+/**
+ * The web app's starfield, scaled to a phone screen.
+ *
+ * Reuses the global `.stars i` rule and the `twinkle` keyframe from
+ * globals.css rather than inventing a second star treatment, so the mockup and
+ * the real product drift in step. Absolute (never fixed) so it stays inside the
+ * phone frame, and pointer-events-none so it can't swallow a tap.
+ */
+function PhoneCosmos() {
+  const starsRef = useRef<HTMLDivElement>(null);
+  const reduced = useReducedMotionPref();
+
+  useEffect(() => {
+    const layer = starsRef.current;
+    if (!layer) return;
+    // A phone screen is a fraction of a desktop viewport — 320 stars here reads
+    // as noise rather than sky.
+    const count = 90;
+    let html = '';
+    for (let i = 0; i < count; i++) {
+      const x = Math.random() * 100;
+      const y = Math.random() * 100;
+      const size = Math.random() * 1.4 + 0.4;
+      const delay = Math.random() * 6;
+      const dur = 2.5 + Math.random() * 5;
+      const opacity = 0.35 + Math.random() * 0.55;
+      html += `<i style="left:${x}%;top:${y}%;width:${size}px;height:${size}px;`
+        + `animation-delay:${delay}s;animation-duration:${dur}s;opacity:${opacity}`
+        // A continuous 3s pulse is exactly the kind of looping motion that makes
+        // reduced-motion users unwell — keep the sky, drop the flicker.
+        + `${reduced ? ';animation:none' : ''}"></i>`;
+    }
+    layer.innerHTML = html;
+  }, [reduced]);
+
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
+      style={{
+        background: `
+          radial-gradient(280px 220px at 78% 18%, #3d1d80 0%, transparent 58%),
+          radial-gradient(240px 200px at 92% 72%, #1d3a8a 0%, transparent 62%),
+          radial-gradient(200px 180px at 6% 28%, #112a5a 0%, transparent 66%),
+          linear-gradient(180deg, #03061a 0%, #04081f 50%, #02040f 100%)`,
+      }}
+    >
+      <div ref={starsRef} className="stars absolute inset-0" />
+    </div>
+  );
+}
+
 function PhoneScreen({ children, isDark }: { children: React.ReactNode; isDark: boolean }) {
   return (
     <div
       className="relative flex h-full w-full flex-col"
-      style={{ background: isDark ? '#000000' : '#F2F2F7' }}
+      style={{ background: isDark ? '#02030c' : '#F8FAFF' }}
     >
-      {children}
+      {isDark && <PhoneCosmos />}
+      {/* Content sits above the sky. */}
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col">
+        {children}
+      </div>
     </div>
   );
 }
@@ -967,6 +1099,15 @@ function StatusBar({
 // Tab Bar
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Tab-bubble motion. The reference used .55s; a tab switch is a direct tap, and
+ * past ~400ms direct manipulation starts reading as sluggish, so this is that
+ * curve at 0.8x. The curve itself overshoots slightly, which is what gives the
+ * bubble its snap on arrival.
+ */
+const BUBBLE_DURATION = '0.44s';
+const BUBBLE_EASE = 'cubic-bezier(.68,-0.15,.25,1.25)';
+
 function TabBar({
   activeTab,
   setActiveTab,
@@ -978,6 +1119,18 @@ function TabBar({
   isDark: boolean;
   mobile?: boolean;
 }) {
+  const reduced = useReducedMotionPref();
+  const activeIndex = Math.max(0, TABS.findIndex((t) => t.key === activeTab));
+  const idleColor = isDark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
+
+  // The bubble travels on `transform`, not `left`. Same motion, but it stays on
+  // the compositor instead of asking for layout on every frame — and because the
+  // step is a percentage of one tab's width, it survives any resize with no
+  // measuring and no resize listener.
+  const travel = reduced
+    ? 'none'
+    : `transform ${BUBBLE_DURATION} ${BUBBLE_EASE}`;
+
   return (
     <div
       className="relative z-30 flex flex-none items-start justify-around border-t px-2 pt-2 backdrop-blur-2xl"
@@ -988,34 +1141,52 @@ function TabBar({
         paddingBottom: mobile ? 'env(safe-area-inset-bottom, 0px)' : '0',
       }}
     >
+      {/* Bubble track — spans the same box the buttons share, so one step is
+          exactly one tab regardless of width. */}
+      <div className="pointer-events-none absolute inset-x-2 top-0" aria-hidden="true">
+        <div
+          className="flex justify-center"
+          style={{
+            width: `${100 / TABS.length}%`,
+            transform: `translateX(${activeIndex * 100}%)`,
+            transition: travel,
+            willChange: 'transform',
+          }}
+        >
+          <span
+            className="block h-[42px] w-[42px] rounded-full"
+            style={{
+              marginTop: -10,
+              background: 'linear-gradient(135deg, #2563EB, #8a4dff)',
+              boxShadow: '0 6px 14px rgba(37,99,235,0.45), inset 0 1px 2px rgba(255,255,255,0.25)',
+            }}
+          />
+        </div>
+      </div>
+
       {TABS.map(({ key, label, icon: Icon }) => {
         const isActive = activeTab === key;
         return (
           <button
             key={key}
             onClick={() => setActiveTab(key)}
-            className="flex flex-1 flex-col items-center gap-0.5 pt-1 transition active:scale-95"
+            aria-current={isActive ? 'page' : undefined}
+            className="relative z-10 flex flex-1 flex-col items-center gap-0.5 pt-1 transition active:scale-95"
           >
             <Icon
               className="h-6 w-6"
               strokeWidth={isActive ? 2.4 : 2}
               style={{
-                color: isActive
-                  ? '#007AFF'
-                  : isDark
-                  ? 'rgba(235,235,245,0.6)'
-                  : 'rgba(60,60,67,0.6)',
+                // The active icon rises into the bubble; both move on the same
+                // curve so the icon and the bubble arrive together.
+                transform: isActive ? 'translateY(-13px)' : 'none',
+                transition: reduced ? 'none' : `transform ${BUBBLE_DURATION} ${BUBBLE_EASE}`,
+                color: isActive ? '#ffffff' : idleColor,
               }}
             />
             <span
               className="text-[10px] font-medium"
-              style={{
-                color: isActive
-                  ? '#007AFF'
-                  : isDark
-                  ? 'rgba(235,235,245,0.6)'
-                  : 'rgba(60,60,67,0.6)',
-              }}
+              style={{ color: isActive ? LR.sky : idleColor }}
             >
               {label}
             </span>
@@ -1060,6 +1231,158 @@ function ScreenContent({
 // HOME SCREEN — Dashboard
 // ─────────────────────────────────────────────────────────────────────────────
 
+const POS_UZ: Record<string, string> = {
+  noun: 'ot', verb: "fe'l", adj: 'sifat', adv: 'ravish',
+  prep: 'predlog', conj: "bog'lovchi", phrase: 'ibora', interj: 'undov',
+};
+const LEVEL_UZ: Record<string, string> = {
+  beginner: "boshlang'ich", intermediate: "o'rta", advanced: 'yuqori', mastery: 'mukammal',
+};
+
+/**
+ * How many hits to render before asking the user to narrow the query.
+ *
+ * Measured, not guessed: filtering the whole dictionary costs ~2 ms, while each
+ * rendered row costs ~0.27 ms — so the row count, not the word count, is what
+ * makes typing feel slow. The first keystroke of any search matches almost
+ * everything, so that worst case happens on every lookup. Twelve keeps it near
+ * one frame on a phone, and ranking means the answer is in the first few rows.
+ */
+const VOCAB_RESULT_CAP = 12;
+
+function VocabResults({ query, isDark }: { query: string; isDark: boolean }) {
+  const primaryText = isDark ? '#ffffff' : '#000000';
+  const secondaryText = isDark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
+  const cardBg = isDark ? '#0e1428' : '#ffffff';
+  const divider = isDark ? 'rgba(84,84,88,0.6)' : 'rgba(60,60,67,0.18)';
+
+  const [openId, setOpenId] = useState<string | null>(null);
+
+  const hits = useMemo(() => lookupWord(query), [query]);
+  const shown = hits.slice(0, VOCAB_RESULT_CAP);
+
+  if (hits.length === 0) {
+    return (
+      <div className="rounded-2xl px-4 py-10 text-center" style={{ background: cardBg }}>
+        <p className="text-[15px] font-medium" style={{ color: primaryText }}>
+          "{query.trim()}" topilmadi
+        </p>
+        <p className="mt-1 text-[13px]" style={{ color: secondaryText }}>
+          Inglizcha yoki o'zbekcha yozib ko'ring — lug'atda {DICTIONARY.length} ta so'z bor.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <p className="mb-2 px-1 text-[12px]" style={{ color: secondaryText }}>
+        {hits.length} ta natija
+        {hits.length > VOCAB_RESULT_CAP && ` · birinchi ${VOCAB_RESULT_CAP} tasi`}
+      </p>
+
+      <div className="overflow-hidden rounded-2xl" style={{ background: cardBg }}>
+        {shown.map((w, i) => {
+          const open = openId === w.id;
+          return (
+            <div
+              key={w.id}
+              style={{ borderBottom: i < shown.length - 1 ? `0.5px solid ${divider}` : 'none' }}
+            >
+              {/* Tapping expands the entry in place — the definition belongs to
+                  the row you tapped, not to a sheet that covers it. */}
+              <button
+                type="button"
+                onClick={() => setOpenId(open ? null : w.id)}
+                aria-expanded={open}
+                className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors active:opacity-70"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline gap-2">
+                    <span className="truncate text-[15px] font-semibold" style={{ color: primaryText }}>
+                      {w.en}
+                    </span>
+                    {w.phonetic && (
+                      <span className="flex-none text-[11px]" style={{ color: secondaryText }}>
+                        {w.phonetic}
+                      </span>
+                    )}
+                  </div>
+                  <div className="truncate text-[13px]" style={{ color: secondaryText }}>
+                    {w.uz}
+                  </div>
+                </div>
+                {w.pos && (
+                  <span
+                    className="flex-none rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
+                    style={{
+                      background: isDark ? 'rgba(90,169,255,0.16)' : 'rgba(37,99,235,0.10)',
+                      color: isDark ? LR.sky : LR.blue,
+                    }}
+                  >
+                    {POS_UZ[w.pos] ?? w.pos}
+                  </span>
+                )}
+                <ChevronRight
+                  className="h-4 w-4 flex-none transition-transform duration-200"
+                  style={{ color: secondaryText, transform: open ? 'rotate(90deg)' : 'none' }}
+                />
+              </button>
+
+              {open && (
+                <div className="px-4 pb-3.5 pt-0.5">
+                  {w.defUz && (
+                    <p className="text-[13px] leading-snug" style={{ color: primaryText }}>
+                      {w.defUz}
+                    </p>
+                  )}
+                  {w.defEn && (
+                    <p className="mt-1 text-[12px] leading-snug" style={{ color: secondaryText }}>
+                      {w.defEn}
+                    </p>
+                  )}
+                  {w.exampleEn && (
+                    <div
+                      className="mt-2.5 rounded-xl px-3 py-2"
+                      style={{ background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(60,60,67,0.05)' }}
+                    >
+                      <p className="text-[13px] italic" style={{ color: primaryText }}>
+                        {w.exampleEn}
+                      </p>
+                      {w.exampleUz && (
+                        <p className="mt-0.5 text-[12px]" style={{ color: secondaryText }}>
+                          {w.exampleUz}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {[
+                      w.level ? (LEVEL_UZ[w.level] ?? w.level) : null,
+                      w.category,
+                      // Sublist 1 is the highest-value academic vocabulary, so
+                      // saying which band a word sits in is real guidance.
+                      w.sublist ? `AWL ${w.sublist}-ro'yxat` : null,
+                    ].filter(Boolean).map((tag) => (
+                      <span
+                        key={tag as string}
+                        className="rounded-md px-1.5 py-0.5 text-[10px] font-medium"
+                        style={{ background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(60,60,67,0.08)', color: secondaryText }}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function HomeScreen({
   isDark,
   onOpenNotifCenter,
@@ -1067,9 +1390,12 @@ function HomeScreen({
   isDark: boolean;
   onOpenNotifCenter?: () => void;
 }) {
-  const cardBg = isDark ? '#1c1c1e' : '#ffffff';
+  const cardBg = isDark ? '#0e1428' : '#ffffff';
   const primaryText = isDark ? '#ffffff' : '#000000';
   const secondaryText = isDark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
+
+  const [query, setQuery] = useState('');
+  const searching = query.trim().length > 0;
 
   return (
     <div className="px-4 pb-4">
@@ -1084,11 +1410,11 @@ function HomeScreen({
           style={{ background: cardBg }}
           aria-label="Bildirishnomalar"
         >
-          <Bell className="h-4 w-4" style={{ color: '#007AFF' }} />
+          <Bell className="h-4 w-4" style={{ color: '#5aa9ff' }} />
           {/* Unread badge */}
           <span
             className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white"
-            style={{ background: '#FF3B30' }}
+            style={{ background: '#ff453a' }}
           >
             4
           </span>
@@ -1098,39 +1424,110 @@ function HomeScreen({
         Salom, Aziz 👋
       </p>
 
-      {/* Search */}
+      {/* Search — a real field wired to the dictionary. Filtering 60 local words
+          costs nothing, so there is no debounce: results land on the keystroke
+          rather than a beat after it. */}
       <div
         className="mb-4 flex items-center gap-2 rounded-xl px-3 py-2"
-        style={{ background: isDark ? '#1c1c1e' : '#e5e5ea' }}
+        style={{ background: isDark ? '#0e1428' : '#E6ECFA' }}
       >
-        <Search className="h-4 w-4" style={{ color: secondaryText }} />
-        <span className="text-[15px]" style={{ color: secondaryText }}>
-          Qidiruv
-        </span>
+        <Search className="h-4 w-4 flex-none" style={{ color: secondaryText }} />
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Escape') setQuery(''); }}
+          placeholder="So'z qidiring — inglizcha yoki o'zbekcha"
+          aria-label="Lug'atdan so'z qidirish"
+          className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:opacity-70"
+          style={{ color: primaryText }}
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={() => setQuery('')}
+            className="flex h-5 w-5 flex-none items-center justify-center rounded-full transition active:scale-90"
+            style={{ background: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(60,60,67,0.12)' }}
+            aria-label="Qidiruvni tozalash"
+          >
+            <X className="h-3 w-3" style={{ color: secondaryText }} />
+          </button>
+        )}
       </div>
 
-      {/* Hero card — streak */}
+      {searching ? (
+        <VocabResults query={query} isDark={isDark} />
+      ) : (
+      <>
+      {/* Hero — the brand's streak band: a violet field that lightens toward the
+          right, the mascot standing in it, and the day's progress as a bar along
+          the floor. Copy is inset on the right so nothing runs under the art. */}
       <div
-        className="mb-4 overflow-hidden rounded-3xl p-5"
+        className="relative mb-4 overflow-hidden rounded-3xl px-4 pb-3.5 pt-3.5"
         style={{
-          background: 'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)',
+          background: 'linear-gradient(110deg, #6D28D9 0%, #7C3AED 52%, #A855F7 100%)',
+          border: '1px solid rgba(255,255,255,0.14)',
         }}
       >
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-medium uppercase tracking-wider text-white/70">
-            Joriy streak
-          </span>
-          <div className="flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5">
-            <ArrowUpRight className="h-3 w-3 text-white" />
-            <span className="text-[10px] font-semibold text-white">+3 kun</span>
+        {/* Art layer. Entirely decorative, so it is hidden from screen readers
+            and cannot intercept a tap meant for anything beneath it. */}
+        <div className="pointer-events-none absolute inset-0 select-none" aria-hidden="true">
+          <Sparkle4 className="absolute right-[140px] top-[24px] h-4 w-4 text-white/30" />
+          <Sparkle4 className="absolute bottom-[34px] right-[8px] h-2.5 w-2.5 text-white/25" />
+          <Sparkle4 className="absolute bottom-[24px] right-[110px] h-2 w-2 text-white/20" />
+
+          <img
+            src="/mascot-card.png"
+            alt=""
+            draggable={false}
+            className="absolute bottom-[20px] right-[76px] h-[84px] w-auto"
+            style={{ filter: 'drop-shadow(0 6px 14px rgba(28,7,66,0.45))' }}
+          />
+
+          {/* The banner's floating letters. Flat type with a hard offset shadow
+              reads as the same toy-plastic material as the mascot. */}
+          <BrandLetter char="B" className="bottom-[44px] right-[134px]" size={15} tilt={-13} tone="#F59E0B" under="#B45309" />
+          <BrandLetter char="A" className="top-[38px] right-[40px]" size={16} tilt={9}   tone="#FBBF24" under="#D97706" />
+          <BrandLetter char="C" className="top-[62px] right-[30px]" size={17} tilt={-7}  tone="#FCD34D" under="#D97706" />
+        </div>
+
+        <div className="relative">
+          <div className="flex items-start justify-between">
+            <span
+              className="text-[10px] font-bold uppercase text-white"
+              style={{ letterSpacing: '0.12em' }}
+            >
+              Joriy streak
+            </span>
+            <div className="flex flex-none items-center gap-1 rounded-full bg-white/20 px-2 py-0.5">
+              <ArrowUpRight className="h-3 w-3 text-white" />
+              <span className="text-[10px] font-semibold text-white">+3 kun</span>
+            </div>
           </div>
-        </div>
-        <div className="mt-2 text-[32px] font-bold text-white">
-          7 <span className="text-base font-medium opacity-70">kun ketma-ket</span>
-        </div>
-        <div className="mt-3 flex items-center justify-between">
-          <span className="text-xs text-white/70">Bugun 42 XP · Band 6.5 maqsad</span>
-          <ChevronRight className="h-4 w-4 text-white/70" />
+
+          <div
+            className="mt-2.5 pr-[119px] text-[30px] font-bold leading-none text-white"
+            style={{ letterSpacing: '-0.025em' }}
+          >
+            7 <span className="text-[15px] font-medium text-white/80">kun ketma-ket</span>
+          </div>
+
+          <div className="mt-2 pr-[119px] text-[12px] leading-snug text-white/80">
+            Bugun 42 XP · Band 6.5 maqsad
+          </div>
+
+          {/* Today's XP against the daily goal — the bar runs the full width so it
+              reads as the card's floor rather than another inset row. */}
+          <div
+            className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/25"
+            role="progressbar"
+            aria-valuenow={42}
+            aria-valuemin={0}
+            aria-valuemax={60}
+            aria-label="Bugungi XP maqsadi"
+          >
+            <div className="h-full rounded-full bg-white" style={{ width: '70%' }} />
+          </div>
         </div>
       </div>
 
@@ -1142,7 +1539,7 @@ function HomeScreen({
           delta="+5.2%"
           deltaPositive
           icon={BookOpen}
-          iconBg="#34c759"
+          iconBg="#22C55E"
           isDark={isDark}
         />
         <KPICard
@@ -1151,7 +1548,7 @@ function HomeScreen({
           delta="+8.7%"
           deltaPositive
           icon={CheckCircle2}
-          iconBg="#ff9500"
+          iconBg="#F59E0B"
           isDark={isDark}
         />
         <KPICard
@@ -1160,7 +1557,7 @@ function HomeScreen({
           delta="+0.5"
           deltaPositive
           icon={Award}
-          iconBg="#ff2d55"
+          iconBg="#a59bff"
           isDark={isDark}
         />
         <KPICard
@@ -1169,123 +1566,12 @@ function HomeScreen({
           delta="-0.5%"
           deltaPositive={false}
           icon={TrendingUp}
-          iconBg="#5856d6"
+          iconBg="#8a4dff"
           isDark={isDark}
         />
       </div>
-
-      {/* Xato DNA widget */}
-      <div className="mb-4">
-        <div className="mb-2 flex items-center justify-between px-1">
-          <div className="flex items-center gap-1.5">
-            <h2 className="text-[20px] font-bold" style={{ color: primaryText }}>Xato DNA</h2>
-            <span
-              className="rounded-md px-1.5 py-0.5 text-[10px] font-bold text-white"
-              style={{ background: 'linear-gradient(135deg, #007AFF, #5856D6)' }}
-            >PRO</span>
-          </div>
-          <a
-            href="/dna"
-            className="text-[13px] font-medium"
-            style={{ color: '#007AFF' }}
-          >
-            Batafsil →
-          </a>
-        </div>
-
-        {/* Hero — top insight */}
-        <div
-          className="mb-3 overflow-hidden rounded-2xl p-4"
-          style={{
-            background: 'linear-gradient(135deg, #34C759 0%, #30D158 100%)',
-          }}
-        >
-          <div className="flex items-start justify-between">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-white" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-white/80">
-                  Eng zaif nuqta
-                </span>
-              </div>
-              <div className="mt-1.5 text-[18px] font-bold leading-tight text-white">
-                Artikllar (a/an/the) bilan ko'p xato
-              </div>
-              <div className="mt-1 text-[12px] text-white/80">
-                42% xato darajasi — shu mavzuga e'tibor bering
-              </div>
-            </div>
-            <ChevronRight className="h-4 w-4 text-white/70 mt-0.5 flex-none" />
-          </div>
-        </div>
-
-        {/* 4 mini KPIs */}
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          <ProKpiTile isDark={isDark} icon={Flame} iconBg="#FF6B35" label="Kunlik mashqlar" value="12" />
-          <ProKpiTile isDark={isDark} icon={Award} iconBg="#34C759" label="Jami ball" value="2,840" />
-          <ProKpiTile isDark={isDark} icon={CheckCircle2} iconBg="#007AFF" label="Tuzatilgan xatolar" value="156" />
-          <ProKpiTile isDark={isDark} icon={Zap} iconBg="#5856D6" label="Mukammal seriya" value="9" />
-        </div>
-
-        {/* Reminder alert */}
-        <div
-          className="rounded-2xl p-3.5 flex items-center gap-3"
-          style={{ background: cardBg, border: '1px solid rgba(255, 59, 48, 0.3)' }}
-        >
-          <div
-            className="flex h-9 w-9 flex-none items-center justify-center rounded-lg"
-            style={{ background: '#FF3B30' }}
-          >
-            <AlertTriangle className="h-4 w-4 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-[14px] font-semibold" style={{ color: primaryText }}>
-              5 ta so'zni takrorlash vaqti keldi
-            </div>
-            <div className="text-[12px]" style={{ color: secondaryText }}>
-              Spaced repetition navbatida kutilmoqda
-            </div>
-          </div>
-          <ChevronRight className="h-4 w-4" style={{ color: secondaryText }} />
-        </div>
-      </div>
-
-      {/* Recent activity */}
-      <SectionHeader title="So'nggi faollik" isDark={isDark} action="Hammasi" />
-      <div className="rounded-2xl" style={{ background: cardBg }}>
-        {[
-          { title: 'Reading test yakunlandi', sub: 'Band 6.5 · Cambridge IELTS 18', time: '2 daq', color: '#34c759' },
-          { title: "5 ta yangi so'z saqlandi", sub: 'Vocabulary · Travel mavzusi', time: '15 daq', color: '#007aff' },
-          { title: "So'zlarni takrorlash vaqti", sub: "12 ta so'z navbatda", time: '1 soat', color: '#ff9500' },
-          { title: 'AI Tutor bilan suhbat', sub: 'Grammatika maslahati olindi', time: '3 soat', color: '#ff2d55' },
-        ].map((a, i, arr) => (
-          <div
-            key={i}
-            className="flex items-center gap-3 px-4 py-3"
-            style={{
-              borderBottom: i < arr.length - 1
-                ? `0.5px solid ${isDark ? 'rgba(84,84,88,0.6)' : 'rgba(60,60,67,0.18)'}`
-                : 'none',
-            }}
-          >
-            <div
-              className="h-2.5 w-2.5 flex-none rounded-full"
-              style={{ background: a.color }}
-            />
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-[15px] font-medium" style={{ color: primaryText }}>
-                {a.title}
-              </div>
-              <div className="truncate text-[13px]" style={{ color: secondaryText }}>
-                {a.sub}
-              </div>
-            </div>
-            <span className="text-[11px]" style={{ color: secondaryText }}>
-              {a.time}
-            </span>
-          </div>
-        ))}
-      </div>
+      </>
+      )}
     </div>
   );
 }
@@ -1334,11 +1620,11 @@ function VideoLessonScreen({
   title: string;
   onBack: () => void;
 }) {
-  const cardBg = isDark ? '#1c1c1e' : '#ffffff';
+  const cardBg = isDark ? '#0e1428' : '#ffffff';
   const primaryText = isDark ? '#ffffff' : '#000000';
   const secondaryText = isDark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
   const dividerColor = isDark ? 'rgba(84,84,88,0.6)' : 'rgba(60,60,67,0.18)';
-  const trackBg = isDark ? '#3a3a3c' : '#e5e5ea';
+  const trackBg = isDark ? '#1b2340' : '#E6ECFA';
 
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -1433,7 +1719,7 @@ function VideoLessonScreen({
         <div className="h-1.5 overflow-hidden rounded-full" style={{ background: trackBg }}>
           <div
             className="h-full rounded-full"
-            style={{ width: `${(time / DEMO_DURATION) * 100}%`, background: '#007AFF' }}
+            style={{ width: `${(time / DEMO_DURATION) * 100}%`, background: '#5aa9ff' }}
           />
         </div>
         <div className="mt-1 flex justify-between text-[10px]" style={{ color: secondaryText }}>
@@ -1467,7 +1753,7 @@ function VideoLessonScreen({
             >
               <span
                 className="mt-0.5 flex-none font-mono text-[10px] tabular-nums"
-                style={{ color: isActive ? '#007AFF' : secondaryText }}
+                style={{ color: isActive ? '#5aa9ff' : secondaryText }}
               >
                 {fmtClock(c.start)}
               </span>
@@ -1560,15 +1846,15 @@ interface LessonRow {
 }
 
 const LESSONS: LessonRow[] = [
-  { name: 'Present Perfect grammatika',      type: 'Grammar',    progress: 100, duration: '12 daqiqa', color: '#34c759' },
-  { name: 'Listening: Cambridge Test 3',     type: 'Listening',  progress: 65,  duration: '25 daqiqa', color: '#007aff' },
-  { name: "Vocabulary: Ish joyida so'zlar",  type: 'Vocabulary', progress: 40,  duration: '15 daqiqa', color: '#ff9500' },
-  { name: 'Reading: Academic matnlar',       type: 'Reading',    progress: 0,   duration: '30 daqiqa', color: '#5856d6' },
-  { name: 'Speaking: Intervyu mashqlari',    type: 'Speaking',   progress: 80,  duration: '20 daqiqa', color: '#ff2d55' },
+  { name: 'Present Perfect grammatika',      type: 'Grammar',    progress: 100, duration: '12 daqiqa', color: '#22C55E' },
+  { name: 'Listening: Cambridge Test 3',     type: 'Listening',  progress: 65,  duration: '25 daqiqa', color: '#5aa9ff' },
+  { name: "Vocabulary: Ish joyida so'zlar",  type: 'Vocabulary', progress: 40,  duration: '15 daqiqa', color: '#F59E0B' },
+  { name: 'Reading: Academic matnlar',       type: 'Reading',    progress: 0,   duration: '30 daqiqa', color: '#8a4dff' },
+  { name: 'Speaking: Intervyu mashqlari',    type: 'Speaking',   progress: 80,  duration: '20 daqiqa', color: '#a59bff' },
 ];
 
 function LessonsScreen({ isDark }: { isDark: boolean }) {
-  const cardBg = isDark ? '#1c1c1e' : '#ffffff';
+  const cardBg = isDark ? '#0e1428' : '#ffffff';
   const primaryText = isDark ? '#ffffff' : '#000000';
   const secondaryText = isDark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
   const trackBg = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(60,60,67,0.12)';
@@ -1642,7 +1928,7 @@ function LessonsScreen({ isDark }: { isDark: boolean }) {
                   // is the only affordance telling you the row scrolls. Enough
                   // to notice, not so much that it steals room from the card.
                   flex: '0 0 88%',
-                  background: `linear-gradient(135deg, ${l.color} 0%, ${l.color}cc 55%, #5856D6 100%)`,
+                  background: `linear-gradient(135deg, ${l.color} 0%, ${l.color}cc 55%, #8a4dff 100%)`,
                 }}
               >
                 <div className="text-[10px] font-semibold uppercase tracking-wider text-white/75">
@@ -1740,7 +2026,7 @@ function LessonWheel({
   isDark: boolean;
   onOpen: (name: string) => void;
 }) {
-  const cardBg = isDark ? '#1c1c1e' : '#ffffff';
+  const cardBg = isDark ? '#0e1428' : '#ffffff';
   const primaryText = isDark ? '#ffffff' : '#000000';
   const secondaryText = isDark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
 
@@ -1820,7 +2106,7 @@ function LessonWheel({
                     {l.progress === 100 && (
                       <span
                         className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2"
-                        style={{ background: '#34c759', borderColor: cardBg }}
+                        style={{ background: '#22C55E', borderColor: cardBg }}
                       >
                         <CheckCircle2 className="h-2.5 w-2.5 text-white" strokeWidth={3} />
                       </span>
@@ -1915,18 +2201,18 @@ const PERIOD_DATA: Record<AnalyticsPeriod, PeriodData> = {
 
 /** Share of practice time per skill. Covers all four IELTS skills + vocabulary. */
 const SKILL_SPLIT = [
-  { name: 'Listening',  pct: 26, color: '#007aff' },
-  { name: 'Reading',    pct: 22, color: '#34c759' },
-  { name: 'Vocabulary', pct: 21, color: '#ff9500' },
-  { name: 'Speaking',   pct: 17, color: '#ff2d55' },
-  { name: 'Writing',    pct: 14, color: '#5856d6' },
+  { name: 'Listening',  pct: 26, color: '#5aa9ff' },
+  { name: 'Reading',    pct: 22, color: '#22C55E' },
+  { name: 'Vocabulary', pct: 21, color: '#F59E0B' },
+  { name: 'Speaking',   pct: 17, color: '#a59bff' },
+  { name: 'Writing',    pct: 14, color: '#8a4dff' },
 ];
 
 function AnalyticsScreen({ isDark }: { isDark: boolean }) {
-  const cardBg = isDark ? '#1c1c1e' : '#ffffff';
+  const cardBg = isDark ? '#0e1428' : '#ffffff';
   const primaryText = isDark ? '#ffffff' : '#000000';
   const secondaryText = isDark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
-  const trackBg = isDark ? '#3a3a3c' : '#e5e5ea';
+  const trackBg = isDark ? '#1b2340' : '#E6ECFA';
 
   const [period, setPeriod] = useState<AnalyticsPeriod>('7d');
   const data = PERIOD_DATA[period];
@@ -1942,7 +2228,7 @@ function AnalyticsScreen({ isDark }: { isDark: boolean }) {
       </div>
 
       {/* Period selector */}
-      <div className="mb-4 flex rounded-lg p-1" style={{ background: isDark ? '#1c1c1e' : '#e5e5ea' }}>
+      <div className="mb-4 flex rounded-lg p-1" style={{ background: isDark ? '#0e1428' : '#E6ECFA' }}>
         {(['7d', '30d', '3m', 'y'] as AnalyticsPeriod[]).map((p) => {
           const isActive = period === p;
           return (
@@ -1990,7 +2276,7 @@ function AnalyticsScreen({ isDark }: { isDark: boolean }) {
                     style={{
                       height: `${(v / maxVal) * 100}%`,
                       background: isLast
-                        ? 'linear-gradient(to top, #007AFF, #5856D6)'
+                        ? 'linear-gradient(to top, #5aa9ff, #8a4dff)'
                         : trackBg,
                     }}
                   />
@@ -2034,9 +2320,9 @@ function AnalyticsScreen({ isDark }: { isDark: boolean }) {
               {data.band.toFixed(1)}
             </div>
           </div>
-          <div className="flex items-center gap-1 rounded-full px-2 py-1" style={{ background: '#34c75920' }}>
-            <ArrowUpRight className="h-3 w-3" style={{ color: '#34c759' }} />
-            <span className="text-[11px] font-semibold" style={{ color: '#34c759' }}>
+          <div className="flex items-center gap-1 rounded-full px-2 py-1" style={{ background: '#22C55E20' }}>
+            <ArrowUpRight className="h-3 w-3" style={{ color: '#22C55E' }} />
+            <span className="text-[11px] font-semibold" style={{ color: '#22C55E' }}>
               +{data.bandDelta.toFixed(1)}
             </span>
           </div>
@@ -2109,16 +2395,16 @@ const DNA_LABELS_UZ: Record<ErrorCategory, string> = {
 
 /** Mastery → colour. Red below 60, amber to 75, green above. */
 function masteryColor(m: number): string {
-  if (m < 60) return '#ff3b30';
-  if (m < 76) return '#ff9500';
-  return '#34c759';
+  if (m < 60) return '#ff453a';
+  if (m < 76) return '#F59E0B';
+  return '#22C55E';
 }
 
 function ErrorDnaScreen({ isDark }: { isDark: boolean }) {
-  const cardBg = isDark ? '#1c1c1e' : '#ffffff';
+  const cardBg = isDark ? '#0e1428' : '#ffffff';
   const primaryText = isDark ? '#ffffff' : '#000000';
   const secondaryText = isDark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
-  const trackBg = isDark ? '#3a3a3c' : '#e5e5ea';
+  const trackBg = isDark ? '#1b2340' : '#E6ECFA';
 
   const [expanded, setExpanded] = useState<ErrorCategory | null>(null);
 
@@ -2132,12 +2418,12 @@ function ErrorDnaScreen({ isDark }: { isDark: boolean }) {
         <h1 className="text-[34px] font-bold leading-tight" style={{ color: primaryText }}>
           Xato DNA
         </h1>
-        <div className="mt-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1" style={{ background: '#34c75920' }}>
+        <div className="mt-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1" style={{ background: '#22C55E20' }}>
           <span className="relative flex h-1.5 w-1.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
             <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
           </span>
-          <span className="text-[11px] font-medium" style={{ color: '#34c759' }}>
+          <span className="text-[11px] font-medium" style={{ color: '#22C55E' }}>
             20 savollik diagnostika · 3 marta topshirilgan
           </span>
         </div>
@@ -2153,15 +2439,15 @@ function ErrorDnaScreen({ isDark }: { isDark: boolean }) {
               <span className="text-[13px]" style={{ color: secondaryText }}>/ 100</span>
             </div>
           </div>
-          <div className="flex items-center gap-1 rounded-full px-2 py-1" style={{ background: '#34c75920' }}>
-            <ArrowUpRight className="h-3 w-3" style={{ color: '#34c759' }} />
-            <span className="text-[11px] font-semibold" style={{ color: '#34c759' }}>+2.8 bu hafta</span>
+          <div className="flex items-center gap-1 rounded-full px-2 py-1" style={{ background: '#22C55E20' }}>
+            <ArrowUpRight className="h-3 w-3" style={{ color: '#22C55E' }} />
+            <span className="text-[11px] font-semibold" style={{ color: '#22C55E' }}>+2.8 bu hafta</span>
           </div>
         </div>
         <div className="mt-3 h-2 overflow-hidden rounded-full" style={{ background: trackBg }}>
           <div
             className="h-full rounded-full transition-all"
-            style={{ width: `${overall}%`, background: 'linear-gradient(90deg, #007AFF, #5856D6)' }}
+            style={{ width: `${overall}%`, background: 'linear-gradient(90deg, #2563EB, #8a4dff)' }}
           />
         </div>
         <div className="mt-2 text-[11px]" style={{ color: secondaryText }}>
@@ -2172,7 +2458,7 @@ function ErrorDnaScreen({ isDark }: { isDark: boolean }) {
       {/* Weakest category — what the diagnostic actually surfaces first */}
       <div
         className="mb-4 overflow-hidden rounded-2xl p-4"
-        style={{ background: 'linear-gradient(135deg, #FF3B30 0%, #FF9500 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #ff453a 0%, #F59E0B 100%)' }}
       >
         <div className="flex items-center gap-1.5">
           <AlertTriangle className="h-3.5 w-3.5 text-white" />
@@ -2217,7 +2503,7 @@ function ErrorDnaScreen({ isDark }: { isDark: boolean }) {
                   <div className="flex flex-none items-center gap-2">
                     <span
                       className="flex items-center gap-0.5 text-[11px] font-medium"
-                      style={{ color: d.delta >= 0 ? '#34c759' : '#ff3b30' }}
+                      style={{ color: d.delta >= 0 ? '#22C55E' : '#ff453a' }}
                     >
                       {d.delta >= 0
                         ? <ArrowUpRight className="h-2.5 w-2.5" />
@@ -2240,15 +2526,15 @@ function ErrorDnaScreen({ isDark }: { isDark: boolean }) {
               {/* Real catalog example — wrong → correct + why an Uzbek speaker slips */}
               {isOpen && example && (
                 <div className="px-4 pb-3.5" style={{ animation: 'ios-fade-in 0.2s ease-out' }}>
-                  <div className="rounded-xl p-3" style={{ background: isDark ? 'rgba(255,255,255,0.05)' : '#F2F2F7' }}>
+                  <div className="rounded-xl p-3" style={{ background: isDark ? 'rgba(255,255,255,0.05)' : '#F8FAFF' }}>
                     <div className="flex items-start gap-1.5">
-                      <X className="mt-0.5 h-3 w-3 flex-none" style={{ color: '#ff3b30' }} strokeWidth={3} />
+                      <X className="mt-0.5 h-3 w-3 flex-none" style={{ color: '#ff453a' }} strokeWidth={3} />
                       <span className="text-[12px] line-through" style={{ color: secondaryText }}>
                         {example.wrongExample}
                       </span>
                     </div>
                     <div className="mt-1.5 flex items-start gap-1.5">
-                      <CheckCircle2 className="mt-0.5 h-3 w-3 flex-none" style={{ color: '#34c759' }} />
+                      <CheckCircle2 className="mt-0.5 h-3 w-3 flex-none" style={{ color: '#22C55E' }} />
                       <span className="text-[12px] font-medium" style={{ color: primaryText }}>
                         {example.correctExample}
                       </span>
@@ -2308,10 +2594,10 @@ function ProfileScreen({
   onToggleTheme?: () => void;
   onOpenReport?: (key: ReportKey) => void;
 }) {
-  const cardBg = isDark ? '#1c1c1e' : '#ffffff';
+  const cardBg = isDark ? '#0e1428' : '#ffffff';
   const primaryText = isDark ? '#ffffff' : '#000000';
   const secondaryText = isDark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
-  const sheetBg = isDark ? '#1c1c1e' : '#ffffff';
+  const sheetBg = isDark ? '#0e1428' : '#ffffff';
   const dividerColor = isDark ? 'rgba(84,84,88,0.6)' : 'rgba(60,60,67,0.18)';
 
   const [activeSheet, setActiveSheet] = useState<ProfileAction | null>(null);
@@ -2440,7 +2726,7 @@ function ProfileScreen({
             <div className="relative mb-2">
               <div
                 className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full text-3xl font-bold text-white"
-                style={{ background: avatarUrl ? undefined : 'linear-gradient(135deg, #007AFF, #5856D6)' }}
+                style={{ background: avatarUrl ? undefined : 'linear-gradient(135deg, #2563EB, #8a4dff)' }}
               >
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="Profil rasmi" className="h-full w-full object-cover" />
@@ -2452,7 +2738,7 @@ function ProfileScreen({
                 type="button"
                 onClick={() => avatarInputRef.current?.click()}
                 className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border-2 transition active:scale-90"
-                style={{ background: cardBg, borderColor: isDark ? '#000000' : '#F2F2F7' }}
+                style={{ background: cardBg, borderColor: isDark ? '#000000' : '#F8FAFF' }}
                 aria-label="Rasm yuklash"
               >
                 <Camera className="h-3 w-3" style={{ color: primaryText }} />
@@ -2478,7 +2764,7 @@ function ProfileScreen({
               <div key={d.label} className="rounded-2xl p-3" style={{ background: cardBg, border: `1px solid ${dividerColor}` }}>
                 <div
                   className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg"
-                  style={{ background: isDark ? 'rgba(255,255,255,0.08)' : '#F2F2F7' }}
+                  style={{ background: isDark ? 'rgba(255,255,255,0.08)' : '#F8FAFF' }}
                 >
                   <Award className="h-4 w-4" style={{ color: primaryText }} />
                 </div>
@@ -2528,7 +2814,7 @@ function ProfileScreen({
               >
                 <span className="text-[16px]" style={{ color: primaryText }}>{LANG_LABEL[code]}</span>
                 {lang === code && (
-                  <span className="text-[16px] font-medium" style={{ color: '#007AFF' }}>✓</span>
+                  <span className="text-[16px] font-medium" style={{ color: '#5aa9ff' }}>✓</span>
                 )}
               </button>
             ))}
@@ -2600,7 +2886,7 @@ function ProfileScreen({
           >
             <div
               className="flex h-16 w-16 flex-none items-center justify-center overflow-hidden rounded-full text-2xl font-bold text-white"
-              style={{ background: avatarUrl ? undefined : 'linear-gradient(135deg, #007AFF, #5856D6)' }}
+              style={{ background: avatarUrl ? undefined : 'linear-gradient(135deg, #2563EB, #8a4dff)' }}
             >
               {avatarUrl ? (
                 <img src={avatarUrl} alt="Profil rasmi" className="h-full w-full object-cover" />
@@ -2634,11 +2920,11 @@ function ProfileScreen({
                       <Icon
                         className="h-5 w-5 flex-none"
                         strokeWidth={1.8}
-                        style={{ color: item.isDestructive ? '#ff3b30' : secondaryText }}
+                        style={{ color: item.isDestructive ? '#ff453a' : secondaryText }}
                       />
                       <span
                         className="flex-1 text-[15px]"
-                        style={{ color: item.isDestructive ? '#ff3b30' : primaryText }}
+                        style={{ color: item.isDestructive ? '#ff453a' : primaryText }}
                       >
                         {item.label}
                       </span>
@@ -2702,7 +2988,7 @@ function ProfileScreen({
               type="button"
               onClick={() => setConfirmingLogout(true)}
               className="flex w-full items-center justify-center gap-2 px-4 py-3.5 text-[15px] font-medium transition-colors active:bg-black/5 dark:active:bg-white/5"
-              style={{ color: '#ff3b30' }}
+              style={{ color: '#ff453a' }}
             >
               <LogOut className="h-4 w-4" />
               Chiqish
@@ -2732,7 +3018,7 @@ function ProfileScreen({
                 type="button"
                 onClick={() => setConfirmingLogout(false)}
                 className="flex-1 py-3 text-[16px]"
-                style={{ color: '#007AFF', borderRight: `0.5px solid ${dividerColor}` }}
+                style={{ color: '#5aa9ff', borderRight: `0.5px solid ${dividerColor}` }}
               >
                 Bekor qilish
               </button>
@@ -2740,7 +3026,7 @@ function ProfileScreen({
                 type="button"
                 onClick={confirmLogout}
                 className="flex-1 py-3 text-[16px] font-semibold"
-                style={{ color: '#FF3B30' }}
+                style={{ color: '#ff453a' }}
               >
                 Chiqish
               </button>
@@ -2753,8 +3039,8 @@ function ProfileScreen({
       {loggedOut && (
         <div className="fixed inset-0 z-[55] flex items-center justify-center" style={{ background: isDark ? '#000' : '#fff' }}>
           <div className="text-center">
-            <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full" style={{ background: '#34C75920' }}>
-              <LogOut className="h-7 w-7" style={{ color: '#34C759' }} />
+            <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full" style={{ background: '#22C55E20' }}>
+              <LogOut className="h-7 w-7" style={{ color: '#22C55E' }} />
             </div>
             <div className="text-[18px] font-semibold" style={{ color: primaryText }}>Xayr! 👋</div>
             <div className="mt-1 text-[13px]" style={{ color: secondaryText }}>Tizimdan muvaffaqiyatli chiqdingiz</div>
@@ -2853,7 +3139,7 @@ function IOSToggle({ checked, onChange }: { checked: boolean; onChange: () => vo
         onChange();
       }}
       className="relative h-[31px] w-[51px] flex-none rounded-full transition-colors"
-      style={{ background: checked ? '#34C759' : 'rgba(120,120,128,0.32)' }}
+      style={{ background: checked ? '#22C55E' : 'rgba(120,120,128,0.32)' }}
     >
       <span
         className="absolute top-[2px] h-[27px] w-[27px] rounded-full bg-white shadow-md transition-all"
@@ -2884,33 +3170,68 @@ function KPICard({
   iconBg: string;
   isDark: boolean;
 }) {
-  const cardBg = isDark ? '#1c1c1e' : '#ffffff';
   const primaryText = isDark ? '#ffffff' : '#000000';
-  const secondaryText = isDark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
 
+  // On dark the tile is real glass over the starfield — the app's own
+  // `.crystal-card`, not a second look invented here. On light it stays a solid
+  // card: a translucent surface over a light ground has nothing to refract and
+  // only costs legibility.
+  const glass = isDark;
+
+  // Label above value, the way the web app stacks them: a small mint caption
+  // introduces the number rather than trailing it.
   return (
-    <div className="rounded-2xl p-3.5" style={{ background: cardBg }}>
-      <div className="mb-2 flex items-center justify-between">
+    <div
+      className={glass ? 'crystal-card crystal-tile relative p-3.5' : 'rounded-2xl p-3.5'}
+      style={glass ? undefined : { background: panelBg(isDark), border: panelBorder(isDark) }}
+    >
+      {/* The diagonal streak that makes the surface read as a lit pane of glass
+          rather than a grey wash. */}
+      {glass && <span className="refract" aria-hidden="true" />}
+
+      <div className="relative mb-2 flex items-center justify-between">
         <div
-          className="flex h-7 w-7 items-center justify-center rounded-md"
-          style={{ background: iconBg }}
+          className="flex h-7 w-7 items-center justify-center rounded-lg"
+          style={{
+            background: iconBg,
+            // Colour belongs on a solid layer, and a small shadow lifts it off
+            // the glass instead of letting it float flat on the surface.
+            boxShadow: glass ? `0 4px 10px ${iconBg}55, inset 0 1px 0 rgba(255,255,255,0.28)` : 'none',
+          }}
         >
           <Icon className="h-3.5 w-3.5 text-white" strokeWidth={2.4} />
         </div>
         <span
           className="rounded-full px-1.5 py-0.5 text-[9px] font-bold"
           style={{
-            background: deltaPositive ? '#34c75920' : '#ff3b3020',
-            color: deltaPositive ? '#34c759' : '#ff3b30',
+            // Over glass the chip carries its own near-solid ground rather than
+            // tinting whatever happens to be behind it. As a 12% tint its text
+            // fell to 3.2:1 above a bright nebula; on this ground it holds ~6.4:1
+            // at the worst point, so the badge is readable wherever the card lands.
+            background: glass
+              ? (deltaPositive ? 'rgba(16,58,35,0.90)' : 'rgba(64,24,22,0.90)')
+              : (deltaPositive ? '#22C55E20' : '#ff453a20'),
+            border: glass
+              ? `1px solid ${deltaPositive ? 'rgba(74,222,128,0.35)' : 'rgba(255,138,128,0.35)'}`
+              : '1px solid transparent',
+            color: glass
+              ? (deltaPositive ? '#4ADE80' : '#FF8A80')
+              : (deltaPositive ? '#22C55E' : '#ff453a'),
           }}
         >
           {delta}
         </span>
       </div>
-      <div className="text-[13px]" style={{ color: secondaryText }}>
+      <div
+        className="relative text-[10px] font-bold uppercase"
+        style={{ color: labelColor(isDark), letterSpacing: '0.07em' }}
+      >
         {title}
       </div>
-      <div className="text-[20px] font-bold" style={{ color: primaryText }}>
+      <div
+        className="relative mt-0.5 text-[22px] font-bold"
+        style={{ color: primaryText, letterSpacing: '-0.02em' }}
+      >
         {value}
       </div>
     </div>
@@ -2930,7 +3251,7 @@ function ProKpiTile({
   label: string;
   value: string;
 }) {
-  const cardBg = isDark ? '#1c1c1e' : '#ffffff';
+  const cardBg = isDark ? '#0e1428' : '#ffffff';
   const primaryText = isDark ? '#ffffff' : '#000000';
   const secondaryText = isDark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
   return (
@@ -2965,7 +3286,7 @@ function SectionHeader({
         {title}
       </h2>
       {action && (
-        <button className="text-[13px] font-medium" style={{ color: '#007AFF' }}>
+        <button className="text-[13px] font-medium" style={{ color: '#5aa9ff' }}>
           {action}
         </button>
       )}
