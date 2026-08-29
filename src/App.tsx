@@ -54,6 +54,8 @@ const MobileConceptIOS = lazy(() => import('@/pages/dev/MobileConceptIOS'));
 
 const Privacy = named(() => import('@/pages/Legal'), 'Privacy');
 const Terms   = named(() => import('@/pages/Legal'), 'Terms');
+// Play needs this reachable without the app installed, so it is public.
+const DeleteAccount = named(() => import('@/pages/Legal'), 'DeleteAccount');
 
 const DtmHome       = named(() => import('@/pages/dtm/DtmHome'), 'DtmHome');
 const DtmMath       = named(() => import('@/pages/dtm/DtmSubjects'), 'DtmMath');
@@ -86,6 +88,7 @@ export default function App() {
         <Route path="/concept"   element={<MobileConceptIOS />} />
         <Route path="/legal/privacy" element={<Privacy />} />
         <Route path="/legal/terms"   element={<Terms />} />
+        <Route path="/legal/delete-account" element={<DeleteAccount />} />
 
         {/* Authenticated (any role) */}
         <Route element={<ProtectedRoute />}>

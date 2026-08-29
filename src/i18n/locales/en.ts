@@ -704,6 +704,16 @@ export const en = {
       contactTitle: 'Contact',
       contact: 'For privacy questions or data deletion requests, email',
     },
+    deletion: {
+      title: 'Delete your account',
+      intro: 'You can ask us to delete your account and everything attached to it at any time. You do not need the app installed to do this.',
+      howTitle: 'How to ask',
+      how: 'Email us from the address your account is registered with, with "Account deletion request" as the subject:',
+      whatTitle: 'What gets deleted',
+      what: 'Your profile (name, email, phone, age), your learning history (lessons completed, saved words, quiz scores, XP and streak), your written work, the voice recordings from Speaking exercises and the AI feedback on them. Nothing is kept in an archive.',
+      whenTitle: 'How long it takes',
+      when: 'Within 30 days of receiving your request. We email you a confirmation once it is done.',
+    },
     terms: {
       title: 'Terms of Service',
       intro: 'By using LingRow you agree to these terms.',

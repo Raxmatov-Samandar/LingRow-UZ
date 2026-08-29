@@ -5,7 +5,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Topbar } from '@/components/layout/Topbar';
 import { useAuth } from '@/store/auth';
 import { isDevUser } from '@/lib/dev';
-import { EMAIL_SUPPORT, EMAIL_LEGAL, mailto } from '@/lib/contacts';
+import { EMAIL_SUPPORT, mailto } from '@/lib/contacts';
 import { parentApi } from '@/lib/api';
 import { Link } from 'react-router-dom';
 
@@ -46,10 +46,13 @@ export function Profile() {
                  className="text-slate-300 hover:text-white">📨 {t('profile.help')}</a>
               <Link to="/legal/privacy" className="text-slate-400 hover:text-white">{t('footer.privacy')}</Link>
               <Link to="/legal/terms"   className="text-slate-400 hover:text-white">{t('footer.terms')}</Link>
-              <a href={mailto(EMAIL_LEGAL, 'Account deletion request')}
-                 className="text-slate-500 hover:text-rose-300 text-[11px] mt-1">
+              {/* Points at the page rather than straight at a mail client: the
+                  page says what actually gets deleted and how long it takes, and
+                  it is the URL Play's data-deletion declaration refers to. */}
+              <Link to="/legal/delete-account"
+                    className="text-slate-500 hover:text-rose-300 text-[11px] mt-1">
                 {t('profile.deleteAccount')}
-              </a>
+              </Link>
             </div>
           </aside>
 

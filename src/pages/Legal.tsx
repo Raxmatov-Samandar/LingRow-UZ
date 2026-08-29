@@ -1,8 +1,8 @@
 // =============================================================================
-// Privacy Policy + Terms of Service pages.
-// Public, no auth required. Both render via the same shell component.
-// Content is intentionally short and plain-language; replace with the
-// final legal text once it's ready.
+// Privacy Policy + Terms of Service + account deletion pages.
+// Public, no auth required — Play requires the deletion page to be reachable
+// without installing the app, and the privacy page to be reachable without
+// signing in. All three render via the same shell component.
 // =============================================================================
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -70,6 +70,43 @@ export function Terms() {
         <a href={mailto(EMAIL_SUPPORT, 'Terms inquiry')} className="text-cosmic-mint hover:underline">{EMAIL_SUPPORT}</a>
         {' · '}
         <a href={mailto(EMAIL_LEGAL, 'Legal inquiry')} className="text-cosmic-mint hover:underline">{EMAIL_LEGAL}</a>
+      </p>
+    </Shell>
+  )
+}
+
+/**
+ * Account deletion request page.
+ *
+ * Play requires apps that create accounts to document deletion at a URL a
+ * person can reach without the app installed — an in-app mailto link alone
+ * does not satisfy it. This page is that URL; it also states exactly what is
+ * removed, which the Data Safety declaration has to match.
+ */
+export function DeleteAccount() {
+  const { t } = useTranslation()
+  return (
+    <Shell title={t('legal.deletion.title')}>
+      <p>{t('legal.deletion.intro')}</p>
+
+      <h3 className="text-white font-bold mt-4">{t('legal.deletion.howTitle')}</h3>
+      <p>
+        {t('legal.deletion.how')}{' '}
+        <a href={mailto(EMAIL_LEGAL, 'Account deletion request')} className="text-cosmic-mint hover:underline">
+          {EMAIL_LEGAL}
+        </a>
+      </p>
+
+      <h3 className="text-white font-bold mt-4">{t('legal.deletion.whatTitle')}</h3>
+      <p>{t('legal.deletion.what')}</p>
+
+      <h3 className="text-white font-bold mt-4">{t('legal.deletion.whenTitle')}</h3>
+      <p>{t('legal.deletion.when')}</p>
+
+      <p className="mt-4">
+        <Link to="/legal/privacy" className="text-cosmic-mint hover:underline">
+          {t('footer.privacy')}
+        </Link>
       </p>
     </Shell>
   )

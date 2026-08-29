@@ -684,6 +684,16 @@ export const uz: Translation = {
       contactTitle: "Bog'lanish",
       contact: "Maxfiylik bo'yicha savollar yoki ma'lumotlarni o'chirish so'rovlari uchun yozing:",
     },
+    deletion: {
+      title: "Akkauntni o'chirish",
+      intro: "Akkauntingizni va unga bog'liq barcha ma'lumotlarni istalgan vaqtda o'chirishni so'rashingiz mumkin. Buning uchun ilovani o'rnatgan bo'lishingiz shart emas.",
+      howTitle: "Qanday so'raladi",
+      how: "Akkauntingiz ro'yxatdan o'tkazilgan email manzilidan quyidagi manzilga xat yuboring — mavzuga \"Account deletion request\" deb yozing:",
+      whatTitle: "Nima o'chiriladi",
+      what: "Profilingiz (ism, email, telefon, yosh), o'rganish tarixingiz (tugatilgan darslar, saqlangan so'zlar, test natijalari, XP va streak), yozma ishlaringiz, Speaking mashqlaridagi ovoz yozuvlari va ularga berilgan AI baholari — hammasi butunlay o'chiriladi. Hech narsa arxivda qolmaydi.",
+      whenTitle: "Qancha vaqtda",
+      when: "So'rovingizni olganimizdan keyin 30 kun ichida. Tugagach, tasdiq xatini yuboramiz.",
+    },
     terms: {
       title: 'Foydalanish shartlari',
       intro: "LingRow'dan foydalanish bilan ushbu shartlarga rozilik bildirasiz.",
