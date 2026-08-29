@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Cosmos } from '@/components/layout/Cosmos';
 import { AppShell } from '@/components/layout/AppShell';
 import { Topbar } from '@/components/layout/Topbar';
+import { DnaSummary } from '@/components/stats/DnaSummary';
 import { FloatingDecor } from '@/components/ui/FloatingDecor';
 import { useQuery } from '@tanstack/react-query';
 import { gamify, learning } from '@/lib/api';
@@ -211,6 +212,11 @@ export function Stats() {
               </div>
             </div>
           </div>
+
+          {/* Measurement above, diagnosis below — same question, so the answer
+              to "what should I fix?" sits under the evidence for it instead of
+              behind another tap. */}
+          <DnaSummary />
 
           <p className="text-center text-[11px] text-slate-500 py-1">{t('stats.poweredBy')} V2.1</p>
         </section>
