@@ -141,14 +141,17 @@ function labelColor(isDark: boolean): string {
   return isDark ? LR.mint : 'rgba(60,60,67,0.65)';
 }
 
-type TabKey = 'home' | 'lessons' | 'analytics' | 'dna' | 'profile';
+type TabKey = 'home' | 'lessons' | 'vocab' | 'analytics' | 'profile';
 type DeviceColor = 'titanium' | 'natural' | 'blue' | 'white';
 
+// Five slots, and the middle one is the reach-for-it action. Merging the two
+// analytics screens freed a slot; the dictionary earns it because looking a word
+// up is the thing a learner does most often and from anywhere.
 const TABS: { key: TabKey; label: string; icon: typeof Home }[] = [
   { key: 'home', label: 'Bosh', icon: Home },
   { key: 'lessons', label: 'Darslar', icon: BookOpen },
+  { key: 'vocab', label: "Lug'at", icon: Search },
   { key: 'analytics', label: 'Tahlil', icon: BarChart3 },
-  { key: 'dna', label: 'Xato DNA', icon: Dna },
   { key: 'profile', label: 'Profil', icon: User },
 ];
 
@@ -1218,8 +1221,8 @@ function ScreenContent({
     <div className="flex-1 overflow-y-auto overflow-x-hidden">
       {activeTab === 'home' && <HomeScreen isDark={isDark} onOpenNotifCenter={onOpenNotifCenter} />}
       {activeTab === 'lessons' && <LessonsScreen isDark={isDark} />}
-      {activeTab === 'analytics' && <AnalyticsScreen isDark={isDark} />}
-      {activeTab === 'dna' && <ErrorDnaScreen isDark={isDark} />}
+      {activeTab === 'vocab' && <VocabScreen isDark={isDark} />}
+      {activeTab === 'analytics' && <InsightsScreen isDark={isDark} />}
       {activeTab === 'profile' && (
         <ProfileScreen isDark={isDark} onToggleTheme={onToggleTheme} onOpenReport={onOpenReport} />
       )}
@@ -1250,37 +1253,21 @@ const LEVEL_UZ: Record<string, string> = {
  */
 const VOCAB_RESULT_CAP = 12;
 
-function VocabResults({ query, isDark }: { query: string; isDark: boolean }) {
+/**
+ * The shared row list. Search results and the browse view show identical rows,
+ * so there is one implementation and one expand behaviour rather than two that
+ * drift apart.
+ */
+function VocabList({ entries, isDark }: { entries: LookupEntry[]; isDark: boolean }) {
   const primaryText = isDark ? '#ffffff' : '#000000';
   const secondaryText = isDark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
   const cardBg = isDark ? '#0e1428' : '#ffffff';
   const divider = isDark ? 'rgba(84,84,88,0.6)' : 'rgba(60,60,67,0.18)';
 
   const [openId, setOpenId] = useState<string | null>(null);
-
-  const hits = useMemo(() => lookupWord(query), [query]);
-  const shown = hits.slice(0, VOCAB_RESULT_CAP);
-
-  if (hits.length === 0) {
-    return (
-      <div className="rounded-2xl px-4 py-10 text-center" style={{ background: cardBg }}>
-        <p className="text-[15px] font-medium" style={{ color: primaryText }}>
-          "{query.trim()}" topilmadi
-        </p>
-        <p className="mt-1 text-[13px]" style={{ color: secondaryText }}>
-          Inglizcha yoki o'zbekcha yozib ko'ring — lug'atda {DICTIONARY.length} ta so'z bor.
-        </p>
-      </div>
-    );
-  }
+  const shown = entries;
 
   return (
-    <div>
-      <p className="mb-2 px-1 text-[12px]" style={{ color: secondaryText }}>
-        {hits.length} ta natija
-        {hits.length > VOCAB_RESULT_CAP && ` · birinchi ${VOCAB_RESULT_CAP} tasi`}
-      </p>
-
       <div className="overflow-hidden rounded-2xl" style={{ background: cardBg }}>
         {shown.map((w, i) => {
           const open = openId === w.id;
@@ -1379,6 +1366,183 @@ function VocabResults({ query, isDark }: { query: string; isDark: boolean }) {
           );
         })}
       </div>
+  );
+}
+
+function VocabResults({ query, isDark }: { query: string; isDark: boolean }) {
+  const primaryText = isDark ? '#ffffff' : '#000000';
+  const secondaryText = isDark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
+  const cardBg = isDark ? '#0e1428' : '#ffffff';
+
+  const hits = useMemo(() => lookupWord(query), [query]);
+
+  if (hits.length === 0) {
+    return (
+      <div className="rounded-2xl px-4 py-10 text-center" style={{ background: cardBg }}>
+        <p className="text-[15px] font-medium" style={{ color: primaryText }}>
+          "{query.trim()}" topilmadi
+        </p>
+        <p className="mt-1 text-[13px]" style={{ color: secondaryText }}>
+          Inglizcha yoki o'zbekcha yozib ko'ring — lug'atda {DICTIONARY.length} ta so'z bor.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <p className="mb-2 px-1 text-[12px]" style={{ color: secondaryText }}>
+        {hits.length} ta natija
+        {hits.length > VOCAB_RESULT_CAP && ` · birinchi ${VOCAB_RESULT_CAP} tasi`}
+      </p>
+      <VocabList entries={hits.slice(0, VOCAB_RESULT_CAP)} isDark={isDark} />
+    </div>
+  );
+}
+
+/** One search field, used by the home shortcut and the dictionary tab alike. */
+function VocabSearchField({
+  value, onChange, isDark, className,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  isDark: boolean;
+  className?: string;
+}) {
+  const primaryText = isDark ? '#ffffff' : '#000000';
+  const secondaryText = isDark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
+  return (
+    <div
+      className={`flex items-center gap-2 rounded-xl px-3 py-2 ${className ?? ''}`}
+      style={{ background: isDark ? '#0e1428' : '#E6ECFA' }}
+    >
+      <Search className="h-4 w-4 flex-none" style={{ color: secondaryText }} />
+      <input
+        type="search"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Escape') onChange(''); }}
+        placeholder="So'z qidiring — inglizcha yoki o'zbekcha"
+        aria-label="Lug'atdan so'z qidirish"
+        className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:opacity-70"
+        style={{ color: primaryText }}
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange('')}
+          className="flex h-5 w-5 flex-none items-center justify-center rounded-full transition active:scale-90"
+          style={{ background: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(60,60,67,0.12)' }}
+          aria-label="Qidiruvni tozalash"
+        >
+          <X className="h-3 w-3" style={{ color: secondaryText }} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Lug'at — the dictionary tab.
+ *
+ * Search alone only helps someone who already knows the word they want. The
+ * browse view exists for the other case: the AWL bands are ordered by how often
+ * a word shows up in academic text, so working down from band 1 is a study path
+ * rather than an alphabetical dump.
+ */
+function VocabScreen({ isDark }: { isDark: boolean }) {
+  const primaryText = isDark ? '#ffffff' : '#000000';
+  const secondaryText = isDark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
+  const cardBg = isDark ? '#0e1428' : '#ffffff';
+  const divider = isDark ? 'rgba(84,84,88,0.6)' : 'rgba(60,60,67,0.18)';
+
+  const [query, setQuery] = useState('');
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const searching = query.trim().length > 0;
+
+  const groups = useMemo(() => {
+    const curated = DICTIONARY.filter((e) => e.sublist === undefined);
+    const bands = Array.from({ length: 10 }, (_, i) => ({
+      key: `awl${i + 1}`,
+      title: `${i + 1}-ro'yxat`,
+      entries: DICTIONARY.filter((e) => e.sublist === i + 1),
+    })).filter((g) => g.entries.length > 0);
+    return [
+      { key: 'curated', title: "Kundalik so'zlar", entries: curated },
+      ...bands,
+    ];
+  }, []);
+
+  const open = groups.find((g) => g.key === openGroup) ?? null;
+
+  return (
+    <div className="px-4 pb-4">
+      <div className="pb-3 pt-2">
+        <h1
+          className="text-[34px] font-bold leading-tight"
+          style={{ color: primaryText, letterSpacing: '-0.022em' }}
+        >
+          Lug'at
+        </h1>
+        <p className="mt-0.5 text-[13px]" style={{ color: secondaryText }}>
+          {DICTIONARY.length} ta so'z · inglizcha va o'zbekcha
+        </p>
+      </div>
+
+      <VocabSearchField value={query} onChange={setQuery} isDark={isDark} className="mb-4" />
+
+      {searching ? (
+        <VocabResults query={query} isDark={isDark} />
+      ) : open ? (
+        <div>
+          <button
+            type="button"
+            onClick={() => setOpenGroup(null)}
+            className="mb-3 flex items-center gap-1.5 text-[14px] transition active:opacity-60"
+            style={{ color: LR.sky }}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Barcha ro'yxatlar
+          </button>
+          <p className="mb-2 px-1 text-[12px]" style={{ color: secondaryText }}>
+            {open.title} · {open.entries.length} ta so'z
+          </p>
+          <VocabList entries={open.entries} isDark={isDark} />
+        </div>
+      ) : (
+        <div>
+          <p className="mb-2 px-1 text-[12px] leading-snug" style={{ color: secondaryText }}>
+            Ro'yxat raqami kichik bo'lsa, so'z akademik matnlarda shunchalik ko'p
+            uchraydi — 1-ro'yxatdan boshlagan foydaliroq.
+          </p>
+          <div className="overflow-hidden rounded-2xl" style={{ background: cardBg }}>
+            {groups.map((g, i) => (
+              <button
+                key={g.key}
+                type="button"
+                onClick={() => setOpenGroup(g.key)}
+                className="flex w-full items-center gap-3 px-4 py-3 text-left transition active:opacity-70"
+                style={{ borderBottom: i < groups.length - 1 ? `0.5px solid ${divider}` : 'none' }}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="text-[15px] font-medium" style={{ color: primaryText }}>
+                    {g.title}
+                  </div>
+                  <div className="text-[12px]" style={{ color: secondaryText }}>
+                    {g.key === 'curated'
+                      ? "Talaffuz va misol jumlalar bilan"
+                      : 'Akademik so\'zlar'}
+                  </div>
+                </div>
+                <span className="flex-none text-[13px] tabular-nums" style={{ color: secondaryText }}>
+                  {g.entries.length}
+                </span>
+                <ChevronRight className="h-4 w-4 flex-none" style={{ color: secondaryText }} />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1424,36 +1588,8 @@ function HomeScreen({
         Salom, Aziz 👋
       </p>
 
-      {/* Search — a real field wired to the dictionary. Filtering 60 local words
-          costs nothing, so there is no debounce: results land on the keystroke
-          rather than a beat after it. */}
-      <div
-        className="mb-4 flex items-center gap-2 rounded-xl px-3 py-2"
-        style={{ background: isDark ? '#0e1428' : '#E6ECFA' }}
-      >
-        <Search className="h-4 w-4 flex-none" style={{ color: secondaryText }} />
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Escape') setQuery(''); }}
-          placeholder="So'z qidiring — inglizcha yoki o'zbekcha"
-          aria-label="Lug'atdan so'z qidirish"
-          className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:opacity-70"
-          style={{ color: primaryText }}
-        />
-        {query && (
-          <button
-            type="button"
-            onClick={() => setQuery('')}
-            className="flex h-5 w-5 flex-none items-center justify-center rounded-full transition active:scale-90"
-            style={{ background: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(60,60,67,0.12)' }}
-            aria-label="Qidiruvni tozalash"
-          >
-            <X className="h-3 w-3" style={{ color: secondaryText }} />
-          </button>
-        )}
-      </div>
+      {/* Quick lookup without leaving home; the Lug'at tab is the full one. */}
+      <VocabSearchField value={query} onChange={setQuery} isDark={isDark} className="mb-4" />
 
       {searching ? (
         <VocabResults query={query} isDark={isDark} />
@@ -2208,6 +2344,20 @@ const SKILL_SPLIT = [
   { name: 'Writing',    pct: 14, color: '#8a4dff' },
 ];
 
+/**
+ * Tahlil — activity and diagnosis in one scroll. They were two tabs answering
+ * halves of the same question, which made the useful part (what to fix) a tab
+ * away from the evidence for it.
+ */
+function InsightsScreen({ isDark }: { isDark: boolean }) {
+  return (
+    <>
+      <AnalyticsScreen isDark={isDark} />
+      <ErrorDnaSection isDark={isDark} />
+    </>
+  );
+}
+
 function AnalyticsScreen({ isDark }: { isDark: boolean }) {
   const cardBg = isDark ? '#0e1428' : '#ffffff';
   const primaryText = isDark ? '#ffffff' : '#000000';
@@ -2400,7 +2550,7 @@ function masteryColor(m: number): string {
   return '#22C55E';
 }
 
-function ErrorDnaScreen({ isDark }: { isDark: boolean }) {
+function ErrorDnaSection({ isDark }: { isDark: boolean }) {
   const cardBg = isDark ? '#0e1428' : '#ffffff';
   const primaryText = isDark ? '#ffffff' : '#000000';
   const secondaryText = isDark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
@@ -2414,10 +2564,21 @@ function ErrorDnaScreen({ isDark }: { isDark: boolean }) {
 
   return (
     <div className="px-4 pb-4">
-      <div className="pb-3 pt-2">
-        <h1 className="text-[34px] font-bold leading-tight" style={{ color: primaryText }}>
+      {/* The half above answers "how much and how well". This one answers "what
+          is actually going wrong" — same question, so it belongs on the same
+          page, but it gets a rule and a smaller heading so the page still reads
+          as measurement first, diagnosis second. */}
+      <div
+        className="mb-5 mt-1 border-t"
+        style={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(60,60,67,0.12)' }}
+      />
+      <div className="pb-3">
+        <h2
+          className="text-[24px] font-bold leading-tight"
+          style={{ color: primaryText, letterSpacing: '-0.02em' }}
+        >
           Xato DNA
-        </h1>
+        </h2>
         <div className="mt-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1" style={{ background: '#22C55E20' }}>
           <span className="relative flex h-1.5 w-1.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
