@@ -86,8 +86,8 @@ export const en = {
     getStarted: 'Get Started',
     createAccount: 'Create Account',
     stats: {
-      activeLearners: 'Active learners',
-      avgBand: 'Avg. IELTS band',
+      ieltsSkills: 'IELTS skills with AI feedback',
+      errorDna: 'Error DNA: your mistake map',
       tutor247: 'AI tutor',
       parentPanel: 'Parent panel',
     },

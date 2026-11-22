@@ -136,7 +136,7 @@ export function Sidebar({ forceExpanded }: Props = {}) {
              style={{
                backgroundImage: "url('/logo.png')",
                backgroundPosition: 'center',
-               backgroundSize: '180% auto',
+               backgroundSize: 'contain',
                filter: 'drop-shadow(0 0 14px rgba(126,247,180,0.40)) drop-shadow(0 4px 8px rgba(0,0,0,0.4))',
              }} />
         {!collapsed && (

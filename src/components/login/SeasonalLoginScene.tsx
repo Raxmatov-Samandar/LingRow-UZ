@@ -36,6 +36,7 @@ export function detectSeason(d: Date = new Date()): Season {
 interface Props {
   children: ReactNode
   initialSeason?: Season
+  backgroundOnly?: boolean
 }
 
 const SEASON_ORDER: Season[] = ['spring', 'summer', 'autumn', 'winter']
@@ -46,7 +47,7 @@ const SEASON_EMOJI: Record<Season, string> = {
   winter: '❄️',
 }
 
-export function SeasonalLoginScene({ children, initialSeason }: Props) {
+export function SeasonalLoginScene({ children, initialSeason, backgroundOnly = false }: Props) {
   const [season, setSeason] = useState<Season>(initialSeason ?? detectSeason())
 
   // Mouse parallax — gentle sun drift only (tree movement would feel jittery
@@ -179,7 +180,7 @@ export function SeasonalLoginScene({ children, initialSeason }: Props) {
         </div>
 
         {/* season switcher */}
-        <div className="season-switcher">
+        {!backgroundOnly && <div className="season-switcher">
           {SEASON_ORDER.map(s => (
             <button key={s}
                     onClick={() => setSeason(s)}
@@ -189,15 +190,15 @@ export function SeasonalLoginScene({ children, initialSeason }: Props) {
               {SEASON_EMOJI[s]}
             </button>
           ))}
-        </div>
+        </div>}
 
         {/* glass card slot */}
-        <div className="season-card-wrapper">
+        {!backgroundOnly && <div className="season-card-wrapper">
           <div className="season-card">
             <div className="season-card-shine" />
             {children}
           </div>
-        </div>
+        </div>}
       </div>
     </div>
   )

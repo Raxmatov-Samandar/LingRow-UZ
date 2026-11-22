@@ -1,0 +1,28 @@
+.winter-scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -2;
+  opacity: 0;
+}
+.winter-scene.is-ready { opacity: 1; }
+.winter-interactions { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; }
+.valley-card { z-index: 1; transform: translateZ(0); }
+.valley-window { background-image: url('/images/winter/scene.webp'); background-color: #173963; }
+.valley-card { background: #24395566; border-color: #c7dcf3a6; box-shadow: 0 14px 48px #081c4355; }
+.valley-window[data-season='spring'] { background-image: url('/images/spring/scene.webp'); }
+.valley-window[data-season='summer'] { background-image: url('/images/login-valley.png'); }
+.valley-window[data-season='autumn'] { background-image: url('/images/autumn/scene.webp'); background-color: #b86c29; }
+.valley-window[data-season='spring'] .valley-card,
+.valley-window[data-season='summer'] .valley-card,
+.valley-window[data-season='autumn'] .valley-card { background: #53566555; }
+.valley-water { z-index: -2; }
+.valley-autumn { position: absolute; inset: 0; z-index: -2; pointer-events: none; }
+.valley-seasons { position: absolute; top: 20px; left: 20px; z-index: 3; display: flex; gap: 4px; padding: 5px; border: 1px solid #ffffff66; border-radius: 24px; background: #183b5d55; backdrop-filter: blur(12px); }
+.valley-seasons button { min-height: 34px; padding: 6px 15px; color: white; border-radius: 19px; font-size: 13px; font-weight: 600; }
+.valley-seasons button[aria-pressed='true'] { background: #ffffff36; box-shadow: inset 0 0 0 1px #ffffff66; }
+.valley-seasons button:hover { background: #ffffff26; }
+.valley-window { padding-top: 82px; }
+@media(max-width:480px) { .valley-window { padding-top: 82px; }.valley-seasons { top: 16px; left: 50%; transform: translateX(-50%); white-space: nowrap; }.valley-seasons button { padding-inline: 13px; } }

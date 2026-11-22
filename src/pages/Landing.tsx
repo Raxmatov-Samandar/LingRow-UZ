@@ -8,8 +8,9 @@ export function Landing() {
   const { t } = useTranslation();
 
   const stats = [
-    { t: '50K+', s: t('landing.stats.activeLearners') },
-    { t: '6.5+',  s: t('landing.stats.avgBand') },
+    // Haqiqiy funksiyalar — tasdiqlanmagan raqamlar (foydalanuvchilar soni, o'rtacha bal) o'rniga.
+    { t: '4/4',   s: t('landing.stats.ieltsSkills') },
+    { t: '🧬',    s: t('landing.stats.errorDna') },
     { t: '24/7',  s: t('landing.stats.tutor247') },
     { t: '👨‍👩‍👧', s: t('landing.stats.parentPanel') },
   ];
@@ -21,11 +22,12 @@ export function Landing() {
       <div className="h-screen overflow-y-auto flex flex-col items-center px-6 py-12">
         <div className="flex flex-col items-center justify-center w-full min-h-[calc(100vh-100px)]">
         <div className="text-center max-w-2xl">
-          <div className="mx-auto mb-8 w-32 h-32 bg-no-repeat"
+          <div className="mx-auto mb-8 w-48 h-[132px] bg-no-repeat"
                style={{
                  backgroundImage: "url('/logo.png')",
                  backgroundPosition: 'center',
-                 backgroundSize: '170% auto',
+                 // 'contain' — logo (1024x705) qirqilmasdan to'liq ko'rinadi.
+                 backgroundSize: 'contain',
                  filter: 'drop-shadow(0 0 32px rgba(126,247,180,0.55))',
                }} />
 

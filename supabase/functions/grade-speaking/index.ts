@@ -30,7 +30,9 @@ async function transcribe(audio: Blob): Promise<string> {
   const apiKey = Deno.env.get('OPENAI_API_KEY');
   if (!apiKey) throw new Error('OPENAI_API_KEY not configured');
   const fd = new FormData();
-  fd.append('file', audio, 'audio.webm');
+  // Whisper formatni fayl kengaytmasidan aniqlaydi: veb .webm yuboradi,
+  // Flutter ilova esa .m4a — shuning uchun asl nomni saqlaymiz.
+  fd.append('file', audio, (audio as File).name || 'audio.webm');
   fd.append('model', 'whisper-1');
   fd.append('response_format', 'json');
   fd.append('language', 'en');

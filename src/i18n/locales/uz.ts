@@ -84,8 +84,8 @@ export const uz: Translation = {
     getStarted: 'Boshlash',
     createAccount: 'Akkaunt yaratish',
     stats: {
-      activeLearners: 'Faol o\'rganuvchilar',
-      avgBand: "O'rtacha IELTS bal",
+      ieltsSkills: "IELTS ko'nikmalari, AI baholaydi",
+      errorDna: 'Error DNA: xatolar xaritasi',
       tutor247: 'AI ustoz',
       parentPanel: 'Ota-ona paneli',
     },

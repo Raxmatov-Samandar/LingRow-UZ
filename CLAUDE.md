@@ -1,5 +1,9 @@
 # LingRow — Claude Code Context
 
+> **2026-11-23 eslatma:** Android ilova endi Flutter'da (`../lingrow_flutter`). Umumiy kontekst,
+> imzolash holati va checkpoint jurnali: `../CLAUDE.md` va `../CHECKPOINT.md`. Bu fayl faqat veb
+> (React) versiya uchun.
+
 > AI-powered English / IELTS / DTM learning platform for Uzbekistan.
 > Keep this file up to date so future Claude sessions get oriented in seconds.
 

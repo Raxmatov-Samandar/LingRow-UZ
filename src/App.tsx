@@ -6,6 +6,7 @@ import { canShowPayments } from '@/lib/platform';
 // Eager — these sit on the first-paint path. Anyone opening the app lands on one
 // of them, so splitting them would only add a round trip before anything shows.
 import { Landing }   from '@/pages/Landing';
+import { ValleyAuthLayout } from '@/components/login/ValleyAuthLayout';
 import { Login }     from '@/pages/Login';
 import { Register }  from '@/pages/Register';
 import { NotFound }  from '@/pages/NotFound';
@@ -82,8 +83,10 @@ export default function App() {
       <Routes>
         {/* Public */}
         <Route path="/"          element={<Landing />} />
-        <Route path="/login"     element={<Login />} />
-        <Route path="/register"  element={<Register />} />
+        <Route element={<ValleyAuthLayout />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+        </Route>
         <Route path="/demo/sign-in" element={<GlassSignInDemo />} />
         <Route path="/concept"   element={<MobileConceptIOS />} />
         <Route path="/legal/privacy" element={<Privacy />} />
