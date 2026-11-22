@@ -7,9 +7,10 @@ import '@/pages/login-valley.css';
 
 /** Both account routes share one persistent landscape and animation. */
 export function ValleyAuthLayout() {
+  // Always opens on the real current season; a manual pick only lasts for this visit.
   const [season, setSeason] = useState<Season>(() => {
-    const saved = localStorage.getItem('lr-auth-season');
-    return saved === 'spring' || saved === 'summer' || saved === 'autumn' || saved === 'winter' ? saved : detectSeason();
+    localStorage.removeItem('lr-auth-season');
+    return detectSeason();
   });
   const seasons: { id: Season; label: string }[] = [
     { id: 'spring', label: 'Bahor' }, { id: 'summer', label: 'Yoz' },
@@ -20,7 +21,7 @@ export function ValleyAuthLayout() {
       {season === 'summer' ? <WaterSurface /> : <WinterScene season={season} />}
       <div className="valley-seasons" role="group" aria-label="Faslni tanlash">
         {seasons.map(item => <button key={item.id} type="button" aria-pressed={season === item.id} onClick={() => {
-          setSeason(item.id); localStorage.setItem('lr-auth-season', item.id);
+          setSeason(item.id);
         }}>{item.label}</button>)}
       </div>
       <Outlet />
