@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/store/auth';
+import { PasswordField } from '@/components/login/PasswordField';
 import type { UserRole } from '@/types';
 
 const ROLES: { id: UserRole; label: string }[] = [
@@ -52,7 +53,7 @@ export function Register() {
         <label className="valley-field"><span className="sr-only">Ism va familiya</span><input placeholder="Ism va familiya" autoComplete="name" value={name} onChange={e => setName(e.target.value)} required /></label>
         {role !== 'parent' && <label className="valley-field"><span className="sr-only">Yosh</span><input type="number" placeholder="Yosh" min={6} max={99} value={age} onChange={e => setAge(e.target.value ? Number(e.target.value) : '')} required /></label>}
         <label className="valley-field"><span className="sr-only">Email</span><input type="email" placeholder="Email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required /></label>
-        <label className="valley-field"><span className="sr-only">Parol</span><input type="password" placeholder="Parol (kamida 6 belgi)" autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} minLength={6} required /></label>
+        <PasswordField placeholder="Parol (kamida 6 belgi)" autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} minLength={6} required />
         {error && <p className="valley-message" role="alert">{error}</p>}
         <button className="valley-submit" disabled={loading}>{loading ? 'Yaratilmoqda…' : 'Ro‘yxatdan o‘tish'}</button>
       </form>

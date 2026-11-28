@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/store/auth';
+import { PasswordField } from '@/components/login/PasswordField';
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -26,7 +27,7 @@ export function Login() {
           <h1>Kirish</h1>
           <form onSubmit={submit}>
             <label className="valley-field"><span className="sr-only">Email</span><input id="valley-email" type="email" placeholder="Email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required /></label>
-            <label className="valley-field"><span className="sr-only">Parol</span><input type="password" placeholder="Parol" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} required /></label>
+            <PasswordField placeholder="Parol" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} required />
             {message && <p className="valley-message" role="status">{message}</p>}
             <button className="valley-submit" disabled={loading}>{loading ? 'Kirilmoqda…' : 'Kirish'}</button>
           </form>
