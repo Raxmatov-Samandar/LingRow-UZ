@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Cosmos } from '@/components/layout/Cosmos';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
@@ -8,11 +8,15 @@ import { parentApi } from '@/lib/api';
 
 export function Onboarding() {
   const { t } = useTranslation();
-  const { user, setOnboarding } = useAuth();
+  const { user, finishOnboarding } = useAuth();
   const navigate = useNavigate();
+  // Read once per visit: finishing must not swap the page out mid-render.
+  const [allowed] = useState(() => useAuth.getState().needsOnboarding);
 
   if (!user) { navigate('/login'); return null; }
   if (user.role === 'parent') return <ParentOnboarding />;
+  // Already-registered users never see the questions again (back button, old link).
+  if (!allowed) return <Navigate to={user.role === 'dtm' ? '/dtm/home' : '/home'} replace />;
 
   const isAdult = user.role === 'adult';
   const isDtm   = user.role === 'dtm';
@@ -24,8 +28,8 @@ export function Onboarding() {
   const [dailyMinutes, setDailyMinutes] = useState(30);
 
   function finish() {
-    setOnboarding({ goal, level, bandTarget: isAdult ? bandTarget : undefined,
-                    examDate: examDate || undefined, dailyMinutes });
+    finishOnboarding({ goal, level, bandTarget: isAdult ? bandTarget : undefined,
+                       examDate: examDate || undefined, dailyMinutes });
     navigate(isDtm ? '/dtm/home' : '/home');
   }
 

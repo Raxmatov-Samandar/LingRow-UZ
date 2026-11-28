@@ -8,7 +8,7 @@ import type {
   ParentChild, ParentalControls, DailyReport, UserRole,
   DiagnosticQuestion, DiagnosticAnswerCheck, DnaScores, ErrorCategory, ErrorCatalogEntry,
   Subscription, Invoice, RetentionRow, ListeningAudioRow, LessonDetail, LessonLevel, LessonKind,
-  CambridgeBook, CambridgeBookPart, BookKind, TranscriptCue,
+  CambridgeBook, CambridgeBookPart, BookKind, TranscriptCue, OnboardingState,
 } from '@/types';
 import {
   LEVELS, VOCAB, QUIZ, BADGES, LEADERBOARD,
@@ -123,6 +123,28 @@ export const auth = {
   },
 
   async signOut() { if (!useMock && supabase) await supabase.auth.signOut(); },
+
+  /** Onboarding answers saved on the profile, or null if never saved. */
+  async loadOnboarding(userId: string): Promise<OnboardingState | null> {
+    if (useMock) return null;
+    const { data } = await supabase!.from('profiles')
+      .select('goal, level, band_target, exam_date, daily_minutes').eq('id', userId).single();
+    if (!data?.goal) return null;
+    return {
+      goal: data.goal, level: data.level ?? undefined,
+      bandTarget: data.band_target == null ? undefined : Number(data.band_target),
+      examDate: data.exam_date ?? undefined, dailyMinutes: data.daily_minutes,
+    };
+  },
+
+  async saveOnboarding(userId: string, o: OnboardingState) {
+    if (useMock) return;
+    const { error } = await supabase!.from('profiles').update({
+      goal: o.goal, level: o.level, band_target: o.bandTarget ?? null,
+      exam_date: o.examDate ?? null, daily_minutes: o.dailyMinutes,
+    }).eq('id', userId);
+    if (error) console.warn('Onboarding was not saved to the profile:', error.message);
+  },
 };
 
 async function loadProfile(userId: string): Promise<User> {

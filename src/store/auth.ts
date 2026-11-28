@@ -7,9 +7,12 @@ interface AuthState {
   user: User | null;
   onboarding: OnboardingState;
   selectedRole: UserRole | null;
+  /** True only between a fresh sign-up and finishing the onboarding questions. */
+  needsOnboarding: boolean;
 
   setRole: (role: UserRole) => void;
   setOnboarding: (patch: Partial<OnboardingState>) => void;
+  finishOnboarding: (answers: OnboardingState) => void;
   signIn: (email: string, password: string, role?: UserRole) => Promise<User>;
   signUp: (opts: { name: string; email: string; password: string; role: UserRole; age?: number }) => Promise<User>;
   signOut: () => Promise<void>;
@@ -25,25 +28,32 @@ export const useAuth = create<AuthState>()(
       user: null,
       onboarding: {},
       selectedRole: null,
+      needsOnboarding: false,
 
       setRole: role => set({ selectedRole: role }),
       setOnboarding: patch => set({ onboarding: { ...get().onboarding, ...patch } }),
+      finishOnboarding: answers => {
+        set({ onboarding: answers, needsOnboarding: false });
+        const user = get().user;
+        if (user) void auth.saveOnboarding(user.id, answers);
+      },
 
       async signIn(email, password, role) {
         const user = await auth.signIn(email, password, role ?? get().selectedRole ?? 'student');
-        set({ user });
+        const saved = await auth.loadOnboarding(user.id).catch(() => null);
+        set({ user, needsOnboarding: false, ...(saved ? { onboarding: saved } : {}) });
         return user;
       },
 
       async signUp(opts) {
         const user = await auth.signUp(opts);
-        set({ user });
+        set({ user, onboarding: {}, needsOnboarding: true });
         return user;
       },
 
       async signOut() {
         await auth.signOut();
-        set({ user: null, onboarding: {}, selectedRole: null });
+        set({ user: null, onboarding: {}, selectedRole: null, needsOnboarding: false });
       },
 
       previewRole(role) {
